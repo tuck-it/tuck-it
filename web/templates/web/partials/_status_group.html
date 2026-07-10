@@ -1,0 +1,10 @@
+<section class="group">
+  <div class="group-label">{{ label }}</div>
+  {% if slices %}
+    <div class="panel">
+      {% for slice in slices %}{% include "web/partials/_slice_row.html" %}{% endfor %}
+    </div>
+  {% else %}
+    <div class="empty muted">{{ empty_text|default:"" }}</div>
+  {% endif %}
+</section>

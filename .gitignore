@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.sqlite3
+.env
+.venv/
+.pytest_cache/
+
+# Terraform / infra — kept local, NOT published (contains real secrets in tfvars)
+terraform/
+crash.log
+
+# Local tooling & scratch — NOT published
+.claude/
+.superpowers/
+.serena/
+.DS_Store
+
+# Internal docs (cloud/monetization strategy, dev-process plans & specs) — NOT published
+docs/cloud-deployment-spec.md
+docs/superpowers/

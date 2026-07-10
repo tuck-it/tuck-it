@@ -1,0 +1,9 @@
+{% load web_extras %}
+<div class="slice-card" data-slice-id="{{ slice.id }}"
+     hx-get="{% url 'web:slice' slice.id %}?panel=1" hx-target="#panel" hx-push-url="{% url 'web:slice' slice.id %}">
+  <div class="card-title">{{ slice.title }}</div>
+  <div class="card-meta">
+    {% include "web/partials/_tag_text.html" %}
+    <span class="card-bites">{% bite_progress slice %}</span>
+  </div>
+</div>

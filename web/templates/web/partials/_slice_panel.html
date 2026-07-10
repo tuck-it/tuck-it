@@ -1,0 +1,48 @@
+{% load web_extras %}
+<div class="panel-inner" x-data="{open:true, editTitle:false, editSpec:false}">
+  <div class="panel-head">
+    <span class="panel-title" x-show="!editTitle" x-on:click="editTitle=true">{{ slice.title }}</span>
+    <input name="title" value="{{ slice.title }}" class="title-edit" x-show="editTitle" x-cloak
+           hx-post="{% url 'web:slice_edit' slice.id %}" hx-trigger="blur, keydown[key=='Enter']"
+           hx-target="closest .panel-inner" hx-swap="outerHTML">
+    <a class="ghost" href="{% url 'web:slice' slice.id %}">전체</a>
+    <button class="ghost" hx-on:click="document.getElementById('panel').innerHTML=''">✕</button>
+  </div>
+  <div class="status-row">
+    <div class="seg">
+      {% for st in statuses %}
+        <button class="seg-item {% if st == slice.status %}seg-item--on{% endif %}"
+                hx-post="{% url 'web:slice_status' slice.id %}" hx-vals='{"status": "{{ st }}"}'
+                hx-target="closest .panel-inner" hx-swap="outerHTML">
+          {% if st == slice.status %}<span class="status-dot status-dot--{{ st }}"></span>{% endif %}{{ st }}
+        </button>
+      {% endfor %}
+    </div>
+    {% if slice.status == 'dropped' %}
+      <span class="dropped-tag muted">dropped</span>
+      <button class="ghost" hx-post="{% url 'web:slice_status' slice.id %}" hx-vals='{"status": "idea"}'
+              hx-target="closest .panel-inner" hx-swap="outerHTML">되살리기</button>
+    {% else %}
+      <button class="ghost seg-drop" hx-post="{% url 'web:slice_status' slice.id %}" hx-vals='{"status": "dropped"}'
+              hx-target="closest .panel-inner" hx-swap="outerHTML">드롭</button>
+    {% endif %}
+  </div>
+  {% include "web/partials/_slice_tags.html" %}
+  <div class="spec" x-show="!editSpec" x-on:click="editSpec=true">{{ spec_html|safe }}</div>
+  <form x-show="editSpec" x-cloak hx-post="{% url 'web:slice_edit' slice.id %}"
+        hx-target="closest .panel-inner" hx-swap="outerHTML">
+    <textarea name="spec" class="spec-edit" rows="6">{{ slice.spec }}</textarea>
+    <button class="ghost" type="submit">저장</button>
+  </form>
+  <div class="group-label">bites · {% bite_progress slice %}</div>
+  <div id="bites-{{ slice.id }}">
+    {% for bite in bites %}{% include "web/partials/_bite_row.html" %}{% endfor %}
+  </div>
+  <form hx-post="{% url 'web:bite_create' slice.id %}" hx-target="closest .panel-inner" hx-swap="outerHTML">
+    <input name="title" placeholder="Bite 추가 후 Enter…" class="bite-add">
+  </form>
+  <div class="panel-meta muted">
+    <span class="badge">{% if slice.source == 'agent' %}에이전트{% else %}사람{% endif %} 생성</span>
+    <span>생성 {{ slice.created_at|timesince }} 전 · 수정 {{ slice.updated_at|timesince }} 전</span>
+  </div>
+</div>

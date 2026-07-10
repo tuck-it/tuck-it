@@ -1,0 +1,20 @@
+<div class="token-row" id="token-{{ token.id }}">
+  <div class="token-main">
+    <span class="token-name">{{ token.name }}</span>
+    {% if raw %}
+      <code class="token-value">{{ raw }}</code>
+    {% else %}
+      <code class="token-value muted">{{ token.token_hash|slice:":8" }}…</code>
+    {% endif %}
+  </div>
+  {% if raw %}
+    <div class="token-raw-note">이 값은 지금 한 번만 표시됩니다. 지금 복사해 두세요 — 다시 보여드릴 수 없습니다.</div>
+  {% endif %}
+  <div class="token-meta muted">
+    {% if token.last_used_at %}마지막 사용 {{ token.last_used_at|date:"Y-m-d H:i" }}{% else %}아직 사용되지 않음{% endif %}
+  </div>
+  <button class="ghost" type="button"
+          hx-post="{% url 'web:token_revoke' token.id %}"
+          hx-target="closest .token-row" hx-swap="outerHTML"
+          hx-confirm="이 토큰을 폐기할까요? 이 토큰을 사용하는 에이전트는 더 이상 연결할 수 없습니다.">폐기</button>
+</div>

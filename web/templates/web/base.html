@@ -1,0 +1,41 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}tuck-it{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'web/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'web/app.css' %}">
+  <script>
+    /* Apply any saved theme before first paint so there's no flash of the
+       wrong theme. Absent a saved choice, tokens.css falls back to
+       prefers-color-scheme. */
+    (function () {
+      var saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") {
+        document.documentElement.dataset.theme = saved;
+      }
+    })();
+  </script>
+  <script defer src="{% static 'web/vendor/alpine.min.js' %}"></script>
+  <script src="{% static 'web/vendor/htmx.min.js' %}"></script>
+  <script src="{% static 'web/vendor/sortable.min.js' %}"></script>
+  <script>
+    /* htmx 2.x skips swapping on 204 by default; this app relies on 204 +
+       hx-swap to remove/empty elements (e.g. inbox row triage), so opt back in.
+       Elements that want no swap still say hx-swap="none" explicitly. */
+    htmx.config.responseHandling.unshift({code: "204", swap: true});
+  </script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      x-data="{cap: false}"
+      x-on:keydown.window="if (!cap && $event.key === 'c' && !['INPUT','TEXTAREA'].includes($event.target.tagName)) { cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus()) }">
+  <div class="app">
+    {% include "web/partials/_sidebar.html" %}
+    <main class="main">{% block main %}{% endblock %}</main>
+  </div>
+  <div id="panel"></div>
+  {% include "web/partials/_capture_modal.html" %}
+</body>
+</html>

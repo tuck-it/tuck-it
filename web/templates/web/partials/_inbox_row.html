@@ -1,0 +1,16 @@
+<form class="inbox-row" hx-post="{% url 'web:triage' slice.id %}"
+      hx-trigger="change" hx-target="closest .inbox-row" hx-swap="outerHTML">
+  {% include "web/partials/_status_dot.html" with status=slice.status %}
+  <span class="row-title">{{ slice.title }}</span>
+  <label class="triage-field">Area
+    <select name="area_id" class="triage-select">
+      <option value="" selected disabled>— Area 지정 —</option>
+      {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="triage-field">상태
+    <select name="status" class="triage-select">
+      {% for st in statuses %}<option value="{{ st }}" {% if st == slice.status %}selected{% endif %}>{{ st }}</option>{% endfor %}
+    </select>
+  </label>
+</form>

@@ -1,0 +1,18 @@
+{% load static %}
+<div class="board">
+  {% for status, slices in groups %}
+    {% if status != "dropped" %}
+      <div class="board-col" data-status="{{ status }}">
+        <div class="board-col-head">
+          <span class="status-dot status-dot--{{ status }}"></span>
+          <span class="board-col-label">{{ status }}</span>
+          <span class="board-col-count">{{ slices|length }}</span>
+        </div>
+        <div class="board-col-cards">
+          {% for slice in slices %}{% include "web/partials/_slice_card.html" %}{% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+<script src="{% static 'web/board.js' %}"></script>

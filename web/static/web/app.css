@@ -1,0 +1,776 @@
+/* Base layout + component styles.
+   Rule: colors ONLY via var(--token) from tokens.css. No hard-coded hex,
+   no gradients, no drop shadows, no color bands/banners, no filled pill chips. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  flex: 0 0 220px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.main {
+  flex: 1 1 auto;
+  padding: 24px;
+}
+
+.brand {
+  font-weight: 600;
+  color: var(--text);
+  padding: 4px 8px 16px;
+}
+
+.section {
+  font-size: 11px;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 12px 8px 4px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.nav-label { flex: 1 1 auto; }
+
+.nav-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke: var(--muted);
+}
+
+.nav--active .icon { stroke: var(--accent); }
+
+.nav:hover {
+  background: var(--surface);
+}
+
+.nav.muted {
+  color: var(--muted);
+}
+
+/* Status dot — small round indicator, never a banner/band. */
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-idea);
+}
+
+.status-dot--idea {
+  background: var(--dot-idea);
+}
+
+.status-dot--planned {
+  background: var(--dot-planned);
+}
+
+.status-dot--building {
+  background: var(--dot-building);
+}
+
+.status-dot--shipped {
+  background: var(--dot-shipped);
+}
+
+.status-dot--someday {
+  background: var(--dot-someday);
+}
+
+/* Slice row — link reset (no UA blue/underline); framed by the section .panel. */
+.slice-row {
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1.5;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slice-row:hover { background: var(--bg); }
+.slice-row:hover .row-title { color: var(--text); font-weight: 500; }
+
+/* Section label — small-caps muted text, not a colored badge. */
+.group-label {
+  font-size: 12px;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 8px 0;
+}
+
+/* Tag — muted text, never a filled chip; hash dimmed one step further. */
+.tag {
+  color: var(--muted);
+  background: none;
+  font-size: 12px;
+}
+
+.tag-hash { opacity: 0.55; }
+
+.row-title {
+  flex: 1 1 auto;
+}
+
+.row-meta,
+.empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* "Needs attention" label — text emphasis only, no color band/banner. */
+.group-label.attention {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* View toggle (List | Board) — plain text links, no pill/tab background. */
+.view-toggle {
+  display: flex;
+  gap: 12px;
+}
+
+.view-toggle-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.view-toggle-link--active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Board — columns laid out side by side, each a flat bordered container. */
+.board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.board-col {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.board-col-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 24px;
+}
+
+/* Slice card — flat bordered surface, no shadow/gradient/color band. */
+.slice-card {
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: grab;
+}
+
+.card-title {
+  line-height: 1.5;
+}
+
+/* Capture trigger — styled like any other nav row, no button chrome. */
+.capture-trigger {
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* Inline "+ Area" add form in the sidebar. */
+.area-add {
+  padding: 4px 8px;
+}
+
+.area-add-input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  padding: 2px 0;
+}
+
+.area-add-input:focus {
+  color: var(--text);
+  outline: none;
+}
+
+/* Inbox row — same flat surface treatment as a slice-row, plus inline triage selects. */
+.inbox-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.triage-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.triage-select {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 2px 4px;
+}
+
+/* Capture modal — plain centered overlay, no gradient/shadow. */
+.capture-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20vh;
+}
+
+.capture-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  width: 420px;
+  max-width: 90vw;
+}
+
+.capture-input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* Settings — inline-edit workspace name, token list, MCP snippet.
+   Flat surfaces + plain text only: no shadow/gradient/band/filled chip. */
+.settings-name-display {
+  cursor: text;
+}
+
+.title-edit {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: inherit;
+  padding: 2px 0;
+  width: 320px;
+  max-width: 100%;
+}
+
+.title-edit:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+.token-row {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.panel .token-row:last-child { border-bottom: 0; }
+
+.token-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.token-name {
+  font-weight: 600;
+}
+
+.token-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.token-value.muted {
+  color: var(--muted);
+}
+
+.token-raw-note {
+  flex: 1 1 100%;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.token-meta {
+  font-size: 12px;
+}
+
+.ghost {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.ghost:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.token-add { display: flex; gap: 8px; margin-top: 12px; }
+.token-add input {
+  flex: 1 1 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 7px 10px;
+}
+.token-add input:focus { outline: none; border-color: var(--accent); }
+
+.mcp-snippet {
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* Generic muted-text helper — same treatment used ad hoc across rows/labels. */
+.muted {
+  color: var(--muted);
+}
+
+/* Active nav item — same flat surface used on hover, just persistent + bold.
+   Two classes to out-specificity `.nav.muted` so "설정" still reads active. */
+.nav.nav--active {
+  background: var(--active);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Theme toggle — plain nav-style button, pinned to the bottom of the sidebar. */
+.theme-toggle {
+  margin-top: auto;
+  color: var(--muted);
+}
+
+/* Page heading + header row. */
+.area-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Group of rows (attention / status group / inbox list / settings section) —
+   consistent vertical rhythm, no card/band chrome around the section itself. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 24px;
+}
+
+/* Segmented status control — bordered group; active segment neutral-filled
+   (var(--active)) + a status dot. Not a filled color chip. */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 2px 0;
+}
+
+.seg-item {
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seg-item:last-child { border-right: 0; }
+.seg-item:hover { color: var(--text); }
+.seg-item--on { background: var(--active); color: var(--text); font-weight: 500; }
+
+/* Slice slide-over — fixed right-side panel, flat surface, hairline border.
+   #panel is an empty <div> until htmx swaps a .panel-inner into it, so it
+   collapses to nothing (no stray fixed box) until there is content. */
+#panel:empty {
+  display: none;
+}
+
+#panel:not(:empty) {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 5;
+}
+
+/* Same partial also renders as ordinary page content on the full slice page
+   (web/slice_detail.html), so panel-inner itself carries no positioning. */
+.panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title {
+  flex: 1 1 auto;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: text;
+}
+
+.meta {
+  font-size: 12px;
+}
+
+.spec {
+  line-height: 1.6;
+  cursor: text;
+}
+
+.spec :is(p, ul, ol) {
+  margin: 0 0 8px;
+}
+
+.spec pre {
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+}
+
+.spec code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.spec-edit {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.spec-edit:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Bite row + checkbox — flat list item, filled square only on the done state
+   (a form control affordance, not a status "chip"). */
+.bite { padding: 4px 0; line-height: 1.5; }
+
+.bite-line { display: flex; align-items: center; gap: 8px; }
+
+.checkbox {
+  flex: 0 0 auto;
+  width: 16px; height: 16px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox--on { border-color: var(--dot-shipped); }
+.icon-check { width: 12px; height: 12px; stroke: var(--dot-shipped); }
+
+.bite-title { flex: 1 1 auto; cursor: pointer; }
+.bite-note { width: 14px; height: 14px; }
+
+.bite-chev {
+  background: none; border: none; padding: 0; cursor: pointer;
+  display: inline-flex;
+}
+.bite-chev .icon-chev { transition: transform 0.15s; }
+.bite-chev--open .icon-chev { transform: rotate(90deg); }
+
+.bite-body {
+  margin: 4px 0 8px 24px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.bite-body-src { font-size: 11px; margin-bottom: 8px; }
+.bite-body-md :is(p, ul, ol) { margin: 0 0 6px; }
+
+.bite--done .bite-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.bite-status {
+  font-size: 11px;
+}
+
+
+/* Unified list panel — one surface frame; rows split by hairline dividers. */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.panel .slice-row,
+.panel .inbox-row {
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.panel .slice-row:last-child,
+.panel .inbox-row:last-child { border-bottom: 0; }
+
+/* Attention reason — low-saturation amber TEXT only (never a band). */
+.row-reason {
+  color: var(--warn);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Collapsible Home tail (someday / ideas / shipped). */
+.tail-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.icon-chev { width: 14px; height: 14px; transition: transform 0.15s; }
+.tail-open .icon-chev { transform: rotate(90deg); }
+.tail-body { margin-top: 10px; }
+
+/* Always-ready add input (Bite, Capture) — visible field, accent focus ring. */
+.bite-add {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 7px 10px;
+  margin-top: 8px;
+}
+.bite-add::placeholder { color: var(--muted); }
+.bite-add:focus { outline: none; border-color: var(--accent); }
+
+/* Ghost add (＋Area) — quiet until focus. */
+.area-add-input:focus { border: none; }
+
+.board-col-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 8px;
+}
+.board-col-label {
+  font-size: 11px;
+  font-variant: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.board-col-count { color: var(--muted); font-size: 12px; }
+
+.slice-card:hover { border-color: var(--muted); }
+.card-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+.card-bites { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.slice-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.tag-x {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  padding: 0 0 0 3px;
+}
+.tag-x:hover { color: var(--text); }
+.addtag {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 1px 7px;
+  cursor: pointer;
+}
+.addtag:hover { color: var(--text); border-color: var(--accent); }
+.tag-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+.tag-input:focus { outline: none; border-color: var(--accent); }
+
+/* Status row — segmented control + a quiet drop/restore overflow control. */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 2px 0;
+}
+.dropped-tag { font-size: 12px; }
+
+/* Slice panel meta footer — creator + created/updated, muted, hairline top. */
+.panel-meta {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Home "all clear" — a confident, low-key done signal (not flashy). */
+.all-clear {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  padding: 4px 2px;
+}
+.icon-clear { width: 15px; height: 15px; stroke: var(--dot-shipped); }

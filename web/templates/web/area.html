@@ -1,0 +1,25 @@
+{% extends "web/base.html" %}
+{% block main %}
+  <div class="topbar">
+    <h1 class="area-title">{{ area.name }}</h1>
+    <div class="view-toggle">
+      <a class="view-toggle-link{% if view == 'list' %} view-toggle-link--active{% endif %}"
+         href="?view=list">List</a>
+      <a class="view-toggle-link{% if view == 'board' %} view-toggle-link--active{% endif %}"
+         href="?view=board">Board</a>
+    </div>
+  </div>
+  {% if view == "board" %}
+    {% include "web/partials/_board.html" %}
+    {% if not has_any_slice %}
+      <div class="empty muted">아직 Slice가 없어요</div>
+    {% endif %}
+  {% else %}
+    {% for status, slices in groups %}
+      {% if slices %}{% include "web/partials/_status_group.html" with label=status slices=slices %}{% endif %}
+    {% endfor %}
+    {% if not has_any_slice %}
+      <div class="empty muted">아직 Slice가 없어요</div>
+    {% endif %}
+  {% endif %}
+{% endblock %}
