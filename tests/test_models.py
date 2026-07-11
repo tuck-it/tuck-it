@@ -6,7 +6,8 @@ from core.models import ApiToken, Org, OrgMember, User, Workspace
 
 @pytest.mark.django_db
 def test_workspace_defaults():
-    ws = Workspace.objects.create(name="MyProduct", slug="myproduct")
+    org = Org.objects.create(name="Acme", slug="acme")
+    ws = Workspace.objects.create(org=org, name="MyProduct", slug="myproduct")
     assert ws.description == ""
     assert ws.created_at is not None
 
@@ -32,7 +33,8 @@ def test_membership_is_unique_per_user_org():
 
 @pytest.mark.django_db
 def test_api_token_hash_unique():
-    ws = Workspace.objects.create(name="A", slug="a")
+    org = Org.objects.create(name="Acme", slug="acme")
+    ws = Workspace.objects.create(org=org, name="A", slug="a")
     ApiToken.objects.create(workspace=ws, name="t1", token_hash="abc")
     with pytest.raises(IntegrityError):
         ApiToken.objects.create(workspace=ws, name="t2", token_hash="abc")
