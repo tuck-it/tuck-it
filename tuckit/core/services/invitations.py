@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from tuckit.core.entitlements import assert_can_add_seat
 from tuckit.core.models import Invitation, OrgMember, User
 from tuckit.core.services.exceptions import InvalidValue, NotFound
 
@@ -12,6 +13,7 @@ from tuckit.core.services.exceptions import InvalidValue, NotFound
 def create_invitation(*, org, email, role, invited_by) -> Invitation:
     if OrgMember.objects.filter(org=org, user__email__iexact=email).exists():
         raise InvalidValue("이미 이 조직의 멤버입니다")
+    assert_can_add_seat(org)
     return Invitation.objects.create(
         org=org, email=email, role=role, token=secrets.token_urlsafe(32), invited_by=invited_by
     )

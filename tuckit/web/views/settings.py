@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from tuckit.core.models import Invitation
-from tuckit.core.services.exceptions import InvalidValue
+from tuckit.core.services.exceptions import InvalidValue, LimitReached
 from tuckit.core.services.invitations import cancel_invitation, create_invitation, send_invitation_email
 from tuckit.core.services.orgs import is_org_admin
 from tuckit.core.services.tokens import list_tokens, generate_token, revoke_token
@@ -52,6 +52,8 @@ def invite_create(request):
             role=request.POST.get("role", "member"),
             invited_by=request.user,
         )
+    except LimitReached as exc:
+        return HttpResponse(str(exc), status=402)
     except InvalidValue as exc:
         return HttpResponse(str(exc), status=400)
     link = request.build_absolute_uri(reverse("web:invite_accept", args=[inv.token]))

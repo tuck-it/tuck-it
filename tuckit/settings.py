@@ -88,6 +88,9 @@ REGISTRATION_OPEN = env_bool("TUCKIT_REGISTRATION_OPEN", default=False)
 # Dotted path to a callable run right after signup, as hook(user=, org=).
 # Core ships None (no-op); cloud sets it to attach billing. Never in core.
 TUCKIT_SIGNUP_HOOK = env("TUCKIT_SIGNUP_HOOK", default=None) or None
+# Dotted path to get_entitlements(org) -> Entitlements. Core ships None (all limits
+# unlimited — self-host is unconstrained); cloud injects plan-based limits.
+TUCKIT_ENTITLEMENTS_HOOK = env("TUCKIT_ENTITLEMENTS_HOOK", default=None) or None
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
