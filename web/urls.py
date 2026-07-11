@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
 from django.urls import path
 
-from web.views import pages, slices, mutations, board, capture, health
+from web.views import pages, slices, mutations, board, capture, health, workspaces
 from web.views import settings as settings_views
 
 app_name = "web"
@@ -30,4 +30,6 @@ urlpatterns = [
     path("settings/tokens", settings_views.token_create, name="token_create"),
     path("settings/tokens/<int:token_id>/revoke", settings_views.token_revoke, name="token_revoke"),
     path("settings/rename", settings_views.workspace_rename, name="workspace_rename"),
+    path("switch-workspace", workspaces.switch_workspace, name="switch_workspace"),
+    path("workspaces/new", workspaces.workspace_create, name="workspace_create"),
 ]

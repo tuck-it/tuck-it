@@ -62,6 +62,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "web.context_processors.sidebar_areas",
                 "web.context_processors.inbox_count",
+                "web.context_processors.switchable_workspaces",
             ],
         },
     },
