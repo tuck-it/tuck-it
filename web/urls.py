@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
 from django.urls import path
 
-from web.views import pages, slices, mutations, board, capture, health, workspaces
+from web.views import pages, slices, mutations, board, capture, health, workspaces, accounts
 from web.views import settings as settings_views
 
 app_name = "web"
@@ -11,6 +11,7 @@ urlpatterns = [
     # reaches the container, so use "/healthcheck".
     path("healthcheck", health.healthz, name="healthcheck"),
     path("login/", login_not_required(auth_views.LoginView.as_view()), name="login"),
+    path("register/", login_not_required(accounts.register_view), name="register"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("", pages.home, name="home"),
     path("capture", capture.capture, name="capture"),
