@@ -1,7 +1,7 @@
 import pytest
 from django.db import IntegrityError
 
-from core.models import ApiToken, Membership, User, Workspace
+from core.models import ApiToken, Membership, Org, User, Workspace
 
 
 @pytest.mark.django_db
@@ -12,10 +12,13 @@ def test_workspace_defaults():
 
 
 @pytest.mark.django_db
-def test_workspace_slug_unique():
-    Workspace.objects.create(name="A", slug="dup")
+def test_workspace_slug_unique_within_org():
+    # Workspace slug uniqueness is now scoped to org (unique_together(org, slug)),
+    # not global. See tests/test_models_org.py for the cross-org case.
+    org = Org.objects.create(name="Acme", slug="acme")
+    Workspace.objects.create(org=org, name="A", slug="dup")
     with pytest.raises(IntegrityError):
-        Workspace.objects.create(name="B", slug="dup")
+        Workspace.objects.create(org=org, name="B", slug="dup")
 
 
 @pytest.mark.django_db

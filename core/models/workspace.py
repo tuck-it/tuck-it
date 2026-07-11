@@ -1,18 +1,25 @@
 from django.conf import settings
 from django.db import models
 
+from core.models.org import Org
+
 
 class Workspace(models.Model):
+    org = models.ForeignKey(Org, on_delete=models.CASCADE, related_name="workspaces", null=True)
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("org", "slug")]
 
     def __str__(self):
         return self.name
 
 
+# NOTE: Membership stays for now; removed in migration 0004 after backfill.
 class Membership(models.Model):
     ROLE_CHOICES = [("owner", "Owner"), ("admin", "Admin"), ("member", "Member")]
 
