@@ -13,8 +13,8 @@ def sidebar_areas(request):
     return {"areas": [a for a in list_areas(ws) if not a.is_triage]}
 
 
-def inbox_count(request):
-    """Expose the workspace's active (non-dropped) inbox Slice count to every
+def triage_count(request):
+    """Expose the workspace's active (non-dropped) triage Slice count to every
     template so the sidebar can show a muted count badge next to 인박스."""
     from tuckit.core.models import Area, Slice
 
@@ -23,7 +23,7 @@ def inbox_count(request):
         return {}
     triage = Area.objects.filter(workspace=ws, is_triage=True).first()
     n = Slice.objects.filter(area=triage).exclude(status="dropped").count() if triage else 0
-    return {"inbox_count": n}
+    return {"triage_count": n}
 
 
 def switchable_workspaces(request):

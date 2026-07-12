@@ -61,7 +61,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "tuckit.web.context_processors.sidebar_areas",
-                "tuckit.web.context_processors.inbox_count",
+                "tuckit.web.context_processors.triage_count",
                 "tuckit.web.context_processors.switchable_workspaces",
             ],
         },

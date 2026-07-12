@@ -6,21 +6,21 @@ from tuckit.core.models.org import Org
 from tuckit.core.models.workspace import Workspace
 
 @pytest.mark.django_db
-def test_capture_lands_in_inbox_as_idea(client_local, workspace):
+def test_capture_lands_in_triage_as_idea(client_local, workspace):
     client_local.post("/capture", {"title": "재시도 큐"}, HTTP_HX_REQUEST="true")
     inbox = get_or_create_triage(workspace)
     s = Slice.objects.get(area=inbox)
     assert s.title == "재시도 큐" and s.status == "idea" and s.source == "human"
 
 @pytest.mark.django_db
-def test_inbox_lists_captures(client_local, workspace):
+def test_triage_lists_captures(client_local, workspace):
     inbox = get_or_create_triage(workspace)
     create_slice(inbox, "정리 대상")
-    body = client_local.get("/inbox/").content.decode()
+    body = client_local.get("/triage/").content.decode()
     assert "정리 대상" in body
 
 @pytest.mark.django_db
-def test_triage_moves_out_of_inbox(client_local, workspace):
+def test_triage_moves_out(client_local, workspace):
     inbox = get_or_create_triage(workspace)
     backend = create_area(workspace, "Backend")
     s = create_slice(inbox, "옮길 것")
@@ -34,13 +34,13 @@ def test_area_create_makes_area(client_local, workspace):
     assert workspace.areas.filter(is_triage=False, name="Backend").exists()
 
 @pytest.mark.django_db
-def test_capture_returns_oob_inbox_count(client_local, workspace):
+def test_capture_returns_oob_triage_count(client_local, workspace):
     # No full-page reload: capture returns an OOB swap of the sidebar count.
     get_or_create_triage(workspace)
     resp = client_local.post("/capture", {"title": "빠른 기록"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     body = resp.content.decode()
-    assert 'id="inbox-count"' in body
+    assert 'id="triage-count"' in body
     assert 'hx-swap-oob="true"' in body
     assert ">1<" in body   # count reflects the just-captured slice
 
@@ -66,11 +66,11 @@ def test_triage_invalid_status_returns_400(client_local, workspace):
     assert s.area_id == inbox.id and s.status == "idea"
 
 @pytest.mark.django_db
-def test_inbox_row_has_no_manual_caret_and_area_placeholder(client_local, workspace):
+def test_triage_row_has_no_manual_caret_and_area_placeholder(client_local, workspace):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
     create_slice(get_or_create_triage(workspace), "미분류 항목")
-    body = client_local.get("/inbox/").content.decode()
+    body = client_local.get("/triage/").content.decode()
     assert "</select>▾" not in body          # manual caret removed
     assert "— Area 지정 —" in body           # placeholder present
 

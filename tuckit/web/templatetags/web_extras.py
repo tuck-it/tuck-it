@@ -30,8 +30,8 @@ _ICON_PATHS = {
 @register.simple_tag
 def attention_label(item):
     days = item.get("days", 0)
-    if item.get("reason") == "inbox_stale":
-        return f"인박스 {days}일째"
+    if item.get("reason") == "triage_stale":
+        return f"Triage {days}일째"
     return f"{days}일째 진척 없음"
 
 

@@ -254,8 +254,8 @@ body {
   outline: none;
 }
 
-/* Inbox row — same flat surface treatment as a slice-row, plus inline triage selects. */
-.inbox-row {
+/* Triage row — same flat surface treatment as a slice-row, plus inline triage selects. */
+.triage-row {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -632,13 +632,13 @@ body {
 }
 
 .panel .slice-row,
-.panel .inbox-row {
+.panel .triage-row {
   border-bottom: 1px solid var(--border);
   border-radius: 0;
 }
 
 .panel .slice-row:last-child,
-.panel .inbox-row:last-child { border-bottom: 0; }
+.panel .triage-row:last-child { border-bottom: 0; }
 
 /* Attention reason — low-saturation amber TEXT only (never a band). */
 .row-reason {

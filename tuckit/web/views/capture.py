@@ -15,13 +15,13 @@ def capture(request):
     # Return an out-of-band swap of the sidebar inbox count instead of a 204 +
     # full-page reload, so rapid capture (Enter, Enter, …) stays snappy and the
     # count updates live. The context processor recomputes inbox_count fresh.
-    return render(request, "web/partials/_inbox_count.html", {"oob": True})
+    return render(request, "web/partials/_triage_count.html", {"oob": True})
 
 
-def inbox(request):
+def triage_list(request):
     ws = get_current_workspace(request)
     triage_area = get_or_create_triage(ws)
-    return render(request, "web/inbox.html", {
+    return render(request, "web/triage.html", {
         "slices": list(list_slices(triage_area).prefetch_related("tags")),
         "areas": [a for a in list_areas(ws) if not a.is_triage],
         "statuses": ["idea", "planned", "building", "shipped"],

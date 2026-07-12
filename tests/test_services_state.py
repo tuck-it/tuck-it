@@ -107,7 +107,7 @@ def test_attention_flags_stale_inbox_and_stalled_building():
     Slice.objects.filter(pk__in=[stale_in.pk, stalled.pk]).update(updated_at=old)
     items = attention_items(ws)
     got = {(it["slice"].id, it["reason"]) for it in items}
-    assert (stale_in.id, "inbox_stale") in got
+    assert (stale_in.id, "triage_stale") in got
     assert (stalled.id, "building_stalled") in got
     assert fresh_in.id not in {it["slice"].id for it in items}
 
@@ -141,7 +141,7 @@ def test_attention_items_include_reason_and_days():
     items = attention_items(ws)
     hit = [it for it in items if it["slice"].id == s.id]
     assert hit, "stale inbox slice should surface"
-    assert hit[0]["reason"] == "inbox_stale"
+    assert hit[0]["reason"] == "triage_stale"
     assert hit[0]["days"] == 11
 
 

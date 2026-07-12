@@ -14,13 +14,13 @@ def test_home_lists_building_and_attention(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_home_sidebar_excludes_inbox_area(client_local, workspace):
+def test_home_sidebar_excludes_triage_area(client_local, workspace):
     from tuckit.core.services.areas import create_area
     create_area(workspace, "Backend")
     resp = client_local.get("/")
     body = resp.content.decode()
     assert "/areas/backend/" in body
-    assert "/areas/inbox/" not in body
+    assert "/areas/triage/" not in body
 
 
 @pytest.mark.django_db

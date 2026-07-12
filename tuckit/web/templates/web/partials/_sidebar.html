@@ -4,9 +4,9 @@
   {% include "web/partials/_workspace_switcher.html" %}
   <a class="nav{% if request.resolver_match.url_name == 'home' %} nav--active{% endif %}"
      href="{% url 'web:home' %}">{% icon "home" %}<span class="nav-label">홈</span></a>
-  <a class="nav{% if request.resolver_match.url_name == 'inbox' %} nav--active{% endif %}"
-     href="{% url 'web:inbox' %}">{% icon "inbox" %}<span class="nav-label">인박스</span>
-     {% include "web/partials/_inbox_count.html" %}</a>
+  <a class="nav{% if request.resolver_match.url_name == 'triage' %} nav--active{% endif %}"
+     href="{% url 'web:triage' %}">{% icon "inbox" %}<span class="nav-label">Triage</span>
+     {% include "web/partials/_triage_count.html" %}</a>
   <button class="nav capture-trigger" type="button"
           x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
     {% icon "plus" %}<span class="nav-label">캡처</span></button>
