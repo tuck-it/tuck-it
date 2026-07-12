@@ -934,3 +934,29 @@ body {
   color: var(--text);
 }
 .sortable-ghost { opacity: 0.4; }
+
+/* --- Roadmap distribution strip / board (nav redesign, Phase 2) --- */
+.roadmap-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  text-decoration: none;
+}
+.roadmap-dist {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.rm-seg {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.roadmap-strip:hover .rm-seg { border-color: var(--accent); }
+.rm-building { color: var(--text); }
+.rm-shipped { color: var(--muted); }

@@ -64,3 +64,15 @@ def test_home_tail_contains_shipped_items(client_local, workspace):
     body = client_local.get("/").content.decode()
     assert "tail-body" in body
     assert "배포된 기능" in body   # tail content present in DOM (x-show only toggles visibility)
+
+
+@pytest.mark.django_db
+def test_home_shows_roadmap_strip(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    a = create_area(workspace, "Backend")
+    create_slice(a, "빌딩", status="building")
+    body = client_local.get("/").content.decode()
+    assert 'class="roadmap-strip"' in body
+    assert 'href="/roadmap/"' in body
+    assert "Building 1" in body

@@ -1,6 +1,12 @@
 {% extends "web/base.html" %}
 {% load web_extras %}
 {% block main %}
+  <a class="roadmap-strip" href="{% url 'web:roadmap' %}">
+    <span class="rm-seg">Idea {{ roadmap.idea|length }}</span>
+    <span class="rm-seg">Planned {{ roadmap.planned|length }}</span>
+    <span class="rm-seg rm-building">Building {{ roadmap.building|length }}</span>
+    <span class="rm-seg rm-shipped">Shipped {{ roadmap.shipped|length }}</span>
+  </a>
   {% if state.attention %}
   <section class="group">
     <div class="group-label attention">주의 필요</div>
