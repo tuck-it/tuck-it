@@ -10,7 +10,7 @@ def record_activity(workspace, *, actor, verb, target, from_value="", to_value="
     try:
         target_type = _TARGET_TYPES[type(target).__name__]
     except KeyError:
-        raise ValueError(f"unsupported activity target: {type(target).__name__}")
+        raise ValueError(f"unsupported activity target: {type(target).__name__}") from None
     ActivityEvent.objects.create(
         workspace=workspace,
         actor=actor,
