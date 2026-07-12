@@ -922,7 +922,7 @@ body {
   line-height: 1;
 }
 .area-act:hover { background: var(--surface); color: var(--text); }
-.area-act--danger:hover { color: #b4453a; }
+.area-act--danger:hover { color: var(--warn); }
 .area-rename { flex: 1 1 auto; padding: 2px 0; }
 .area-rename-input {
   width: 100%;
