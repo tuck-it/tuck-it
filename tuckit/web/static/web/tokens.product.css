@@ -1,0 +1,46 @@
+/* Product-only tokens. NOT shared with landing, NOT drift-checked.
+   1) Status dots — low-saturation, re-tuned to the paper/ink/blue palette.
+      Never render as filled chips or bands.
+   2) --overlay / --active — product-only semantics.
+   3) Alias bridge (TRANSITIONAL): legacy token names mapped onto brand tokens
+      so existing app.css renders unchanged. Remove each alias as the screens
+      that use it migrate to canonical names; delete this block when none remain. */
+
+:root {
+  --dot-idea: #8f948f;
+  --dot-planned: #5f86a0;
+  --dot-building: #a0683b;
+  --dot-shipped: #52745f;
+  --dot-someday: #8a7f97;
+  --overlay: rgba(35, 40, 42, 0.38);
+
+  /* alias bridge */
+  --bg: var(--paper);
+  --surface: var(--paper-raised);
+  --sidebar: var(--paper-deep);
+  --text: var(--ink);
+  --muted: var(--ink-faint);
+  --border: var(--line);
+  --accent: var(--blue);
+  --active: var(--paper-deep);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --dot-idea: #8e918e;
+    --dot-planned: #7db2ce;
+    --dot-building: #d39a68;
+    --dot-shipped: #85aa8f;
+    --dot-someday: #a596b0;
+    --overlay: rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme="dark"] {
+  --dot-idea: #8e918e;
+  --dot-planned: #7db2ce;
+  --dot-building: #d39a68;
+  --dot-shipped: #85aa8f;
+  --dot-someday: #a596b0;
+  --overlay: rgba(0, 0, 0, 0.55);
+}
