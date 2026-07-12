@@ -1,10 +1,17 @@
-from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render
+from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
 from tuckit.core.models import OrgMember
 from tuckit.core.services.exceptions import InvalidValue
-from tuckit.core.services.orgs import is_org_admin, is_org_owner, list_org_members, rename_org
+from tuckit.core.services.orgs import (
+    change_member_role,
+    is_org_admin,
+    is_org_owner,
+    list_org_members,
+    remove_member,
+    rename_org,
+)
 from tuckit.web.auth import get_current_workspace
 
 
@@ -42,14 +49,39 @@ def org_rename(request):
     return HttpResponse(org.name)
 
 
+def _member_in_current_org(request, member_id):
+    """Fetch an OrgMember, 404 unless it belongs to the caller's current org."""
+    ws = get_current_workspace(request)
+    if ws is None:
+        raise Http404
+    return ws, get_object_or_404(OrgMember, id=member_id, org=ws.org)
+
+
 @require_POST
 def member_role(request, member_id):
-    return HttpResponse(status=501)
+    ws, member = _member_in_current_org(request, member_id)
+    if not is_org_owner(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
+    try:
+        change_member_role(ws.org, member=member, role=request.POST.get("role", ""))
+    except InvalidValue as exc:
+        return HttpResponse(str(exc), status=400)
+    return render(request, "web/partials/_member_row.html", {
+        "m": member, "role_choices": OrgMember.ROLE_CHOICES,
+        "can_owner": True, "can_admin": True,
+    })
 
 
 @require_POST
 def member_remove(request, member_id):
-    return HttpResponse(status=501)
+    ws, member = _member_in_current_org(request, member_id)
+    if not is_org_admin(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
+    try:
+        remove_member(ws.org, member=member)
+    except InvalidValue as exc:
+        return HttpResponse(str(exc), status=400)
+    return HttpResponse(status=204)
 
 
 @require_POST

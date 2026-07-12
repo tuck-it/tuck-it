@@ -58,3 +58,47 @@ def test_member_cannot_rename_org(org_ctx):
     assert resp.status_code == 403
     org.refresh_from_db()
     assert org.name == "Acme"
+
+
+@pytest.mark.django_db
+def test_owner_changes_member_role(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    _login(client, owner, ws)
+    om = OrgMember.objects.get(org=org, user=member)
+    resp = client.post(f"/settings/org/members/{om.id}/role", {"role": "admin"})
+    assert resp.status_code == 200
+    om.refresh_from_db()
+    assert om.role == "admin"
+
+
+@pytest.mark.django_db
+def test_admin_cannot_change_role(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    # promote member to admin first (as owner), then act as that admin
+    OrgMember.objects.filter(org=org, user=member).update(role="admin")
+    _login(client, member, ws)
+    om_owner = OrgMember.objects.get(org=org, user=owner)
+    resp = client.post(f"/settings/org/members/{om_owner.id}/role", {"role": "member"})
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_admin_removes_member(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    _login(client, owner, ws)
+    om = OrgMember.objects.get(org=org, user=member)
+    resp = client.post(f"/settings/org/members/{om.id}/remove")
+    assert resp.status_code == 204
+    assert not OrgMember.objects.filter(id=om.id).exists()
+
+
+@pytest.mark.django_db
+def test_cannot_remove_member_of_other_org(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    other = Org.objects.create(name="Other", slug="other")
+    stranger = User.objects.create(username="s@s.com", email="s@s.com")
+    om_other = OrgMember.objects.create(user=stranger, org=other, role="member")
+    _login(client, owner, ws)
+    resp = client.post(f"/settings/org/members/{om_other.id}/remove")
+    assert resp.status_code == 404
+    assert OrgMember.objects.filter(id=om_other.id).exists()
