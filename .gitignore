@@ -10,10 +10,6 @@ __pycache__/
 /build/
 *.egg-info/
 
-# Commercial infra (terraform) + deployment/monetization spec now live in the
-# private tuck-it-cloud repo, not here.
-crash.log
-
 # Local tooling & scratch — NOT published
 .claude/
 .superpowers/
