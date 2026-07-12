@@ -160,7 +160,9 @@ def in_progress_state(workspace: Workspace) -> dict:
         .order_by("area__name", "rank")
     )
     bites = list(
-        Bite.objects.filter(slice__area__workspace=workspace, status="doing")
+        Bite.objects.filter(
+            slice__area__workspace=workspace, slice__area__is_triage=False, status="doing"
+        )
         .select_related("slice", "slice__area")
         .order_by("slice__area__name", "rank")
     )
