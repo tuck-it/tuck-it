@@ -1,5 +1,5 @@
 /* Base layout + component styles.
-   Rule: colors ONLY via var(--token) from tokens.css. No hard-coded hex,
+   Rule: colors ONLY via var(--token) from tokens.brand.css / tokens.product.css. No hard-coded hex,
    no gradients, no drop shadows, no color bands/banners, no filled pill chips. */
 
 * {
