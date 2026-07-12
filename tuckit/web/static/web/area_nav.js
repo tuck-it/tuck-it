@@ -52,8 +52,13 @@
   }
 
   // The sidebar Areas list is OOB-swapped on area create; re-bind Sortable to
-  // the fresh #area-nav node whenever an htmx swap touches it.
-  document.body.addEventListener("htmx:afterSwap", function () {
-    if (document.getElementById("area-nav")) initAreaNav();
+  // the fresh #area-nav node when THAT swap lands. Listen for the out-of-band
+  // swap event specifically and confirm the swapped element is #area-nav — other
+  // OOB swaps (capture's toast/count/triage list) must not trigger a re-init,
+  // and a page-wide htmx:afterSwap listener would waste work and could tear down
+  // a drag already in progress.
+  document.body.addEventListener("htmx:oobAfterSwap", function (evt) {
+    var t = (evt.detail && evt.detail.target) || evt.target;
+    if (t && t.id === "area-nav") initAreaNav();
   });
 })();
