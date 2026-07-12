@@ -21,8 +21,8 @@ def test_create_workspace_sets_up_inbox_and_default(org_with_owner):
     org, _ = org_with_owner
     ws = create_workspace(org, "Board")
     assert ws.org == org
-    assert Area.objects.filter(workspace=ws, is_inbox=True).count() == 1
-    assert Area.objects.filter(workspace=ws, is_inbox=False, slug="default").exists()
+    assert Area.objects.filter(workspace=ws, is_triage=True).count() == 1
+    assert Area.objects.filter(workspace=ws, is_triage=False, slug="default").exists()
 
 
 @pytest.mark.django_db

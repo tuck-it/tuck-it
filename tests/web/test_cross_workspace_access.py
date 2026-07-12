@@ -13,7 +13,7 @@ def test_cannot_open_slice_from_another_org(client):
 
     org_b = Org.objects.create(name="B", slug="b")
     ws_b = create_workspace(org_b, "B-Board")
-    area_b = ws_b.areas.get(is_inbox=True)
+    area_b = ws_b.areas.get(is_triage=True)
     foreign = Slice.objects.create(area=area_b, title="secret", rank="m")
 
     client.force_login(user_a)

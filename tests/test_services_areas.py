@@ -1,7 +1,7 @@
 import pytest
 
 from tuckit.core.models import Area, Org, Workspace
-from tuckit.core.services.areas import create_area, get_or_create_inbox, list_areas
+from tuckit.core.services.areas import create_area, get_or_create_triage, list_areas
 
 
 @pytest.fixture
@@ -43,22 +43,22 @@ def test_duplicate_name_gets_unique_slug(workspace):
 
 
 @pytest.mark.django_db
-def test_get_or_create_inbox_is_idempotent_and_single():
+def test_get_or_create_triage_is_idempotent_and_single():
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="W", slug="w")
-    a = get_or_create_inbox(ws)
-    b = get_or_create_inbox(ws)
+    a = get_or_create_triage(ws)
+    b = get_or_create_triage(ws)
     assert a.id == b.id
-    assert a.is_inbox is True
-    assert Area.objects.filter(workspace=ws, is_inbox=True).count() == 1
+    assert a.is_triage is True
+    assert Area.objects.filter(workspace=ws, is_triage=True).count() == 1
 
 
 @pytest.mark.django_db
-def test_inbox_sorts_before_existing_areas():
+def test_triage_sorts_before_existing_areas():
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="W", slug="w")
     backend = create_area(ws, "Backend")
-    inbox = get_or_create_inbox(ws)
+    inbox = get_or_create_triage(ws)
     ordered = list(list_areas(ws))
     assert ordered[0].id == inbox.id
     assert ordered[1].id == backend.id

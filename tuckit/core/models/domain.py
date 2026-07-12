@@ -20,7 +20,7 @@ class Area(models.Model):
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, default="")
     archived = models.BooleanField(default=False)
-    is_inbox = models.BooleanField(default=False)
+    is_triage = models.BooleanField(default=False)
     rank = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

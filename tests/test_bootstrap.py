@@ -11,7 +11,7 @@ def test_bootstrap_creates_full_local_setup():
     assert User.objects.filter(username="local").exists()
     assert OrgMember.objects.filter(org=workspace.org, role="owner").exists()
     assert Area.objects.filter(workspace=workspace, slug="default").exists()
-    assert Area.objects.filter(workspace=workspace, is_inbox=True).count() == 1
+    assert Area.objects.filter(workspace=workspace, is_triage=True).count() == 1
     assert raw is not None  # token minted on first run
 
 
@@ -27,6 +27,6 @@ def test_bootstrap_is_idempotent():
 
 @pytest.mark.django_db
 def test_bootstrap_creates_inbox_area():
-    from tuckit.core.services.areas import get_or_create_inbox
+    from tuckit.core.services.areas import get_or_create_triage
     ws, _ = ensure_bootstrap()
-    assert ws.areas.filter(is_inbox=True).count() == 1
+    assert ws.areas.filter(is_triage=True).count() == 1

@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.django_db
 def test_home_lists_building_and_attention(client_local, workspace):
-    from tuckit.core.services.areas import create_area, get_or_create_inbox
+    from tuckit.core.services.areas import create_area, get_or_create_triage
     from tuckit.core.services.slices import create_slice
     backend = create_area(workspace, "Backend")
     create_slice(backend, "결제 도입", status="building")

@@ -1,5 +1,5 @@
 from tuckit.core.models import Org, OrgMember, Workspace
-from tuckit.core.services.areas import create_area, get_or_create_inbox
+from tuckit.core.services.areas import create_area, get_or_create_triage
 from tuckit.core.services.exceptions import InvalidValue
 
 
@@ -40,7 +40,7 @@ def _unique_ws_slug(org: Org, name: str) -> str:
 def create_workspace(org: Org, name: str, slug: str | None = None) -> Workspace:
     slug = slug or _unique_ws_slug(org, name)
     ws = Workspace.objects.create(org=org, name=name, slug=slug)
-    get_or_create_inbox(ws)
+    get_or_create_triage(ws)
     create_area(ws, "Default")
     return ws
 

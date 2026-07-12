@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from tuckit.core.models import Org, Slice, Workspace
-from tuckit.core.services.areas import create_area, get_or_create_inbox
+from tuckit.core.services.areas import create_area, get_or_create_triage
 from tuckit.core.services.bites import create_bite
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.state import (
@@ -98,7 +98,7 @@ def test_counts_and_dropped_bite_excluded(workspace):
 def test_attention_flags_stale_inbox_and_stalled_building():
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="W", slug="w")
-    inbox = get_or_create_inbox(ws)
+    inbox = get_or_create_triage(ws)
     backend = create_area(ws, "Backend")
     stale_in = create_slice(inbox, "old capture")
     fresh_in = create_slice(inbox, "new capture")
@@ -133,7 +133,7 @@ def test_attention_items_include_reason_and_days():
     from tuckit.core.management.commands.bootstrap import ensure_bootstrap
 
     ws, _ = ensure_bootstrap()
-    inbox = get_or_create_inbox(ws)
+    inbox = get_or_create_triage(ws)
     s = create_slice(inbox, "오래된 캡처", status="idea")
     old = timezone.now() - timedelta(days=11)
     Slice.objects.filter(pk=s.pk).update(updated_at=old)

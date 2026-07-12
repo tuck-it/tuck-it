@@ -2,7 +2,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
-from tuckit.core.services.areas import get_or_create_inbox, create_area, list_areas
+from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas
 from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices
 from tuckit.core.services.resolve import get_area, get_slice
 from tuckit.web.auth import get_current_workspace
@@ -10,8 +10,8 @@ from tuckit.web.auth import get_current_workspace
 
 def capture(request):
     ws = get_current_workspace(request)
-    inbox = get_or_create_inbox(ws)
-    create_slice(inbox, request.POST["title"], status="idea", source="human")
+    triage = get_or_create_triage(ws)
+    create_slice(triage, request.POST["title"], status="idea", source="human")
     # Return an out-of-band swap of the sidebar inbox count instead of a 204 +
     # full-page reload, so rapid capture (Enter, Enter, …) stays snappy and the
     # count updates live. The context processor recomputes inbox_count fresh.
@@ -20,10 +20,10 @@ def capture(request):
 
 def inbox(request):
     ws = get_current_workspace(request)
-    inbox_area = get_or_create_inbox(ws)
+    triage_area = get_or_create_triage(ws)
     return render(request, "web/inbox.html", {
-        "slices": list(list_slices(inbox_area).prefetch_related("tags")),
-        "areas": [a for a in list_areas(ws) if not a.is_inbox],
+        "slices": list(list_slices(triage_area).prefetch_related("tags")),
+        "areas": [a for a in list_areas(ws) if not a.is_triage],
         "statuses": ["idea", "planned", "building", "shipped"],
     })
 

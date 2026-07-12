@@ -20,9 +20,9 @@ def test_current_workspace_resolves(client_local, workspace):
 
 @pytest.mark.django_db
 def test_sidebar_shows_icons_and_inbox_count(client_local, workspace):
-    from tuckit.core.services.areas import get_or_create_inbox
+    from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    create_slice(get_or_create_inbox(workspace), "미분류 1")
+    create_slice(get_or_create_triage(workspace), "미분류 1")
     body = client_local.get("/").content.decode()
     assert "<svg" in body                 # line icons present
     assert 'class="nav-count"' in body    # inbox count element rendered

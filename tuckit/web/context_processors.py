@@ -10,7 +10,7 @@ def sidebar_areas(request):
     ws = get_current_workspace(request)
     if not ws:
         return {}
-    return {"areas": [a for a in list_areas(ws) if not a.is_inbox]}
+    return {"areas": [a for a in list_areas(ws) if not a.is_triage]}
 
 
 def inbox_count(request):
@@ -21,8 +21,8 @@ def inbox_count(request):
     ws = get_current_workspace(request)
     if not ws:
         return {}
-    inbox = Area.objects.filter(workspace=ws, is_inbox=True).first()
-    n = Slice.objects.filter(area=inbox).exclude(status="dropped").count() if inbox else 0
+    triage = Area.objects.filter(workspace=ws, is_triage=True).first()
+    n = Slice.objects.filter(area=triage).exclude(status="dropped").count() if triage else 0
     return {"inbox_count": n}
 
 

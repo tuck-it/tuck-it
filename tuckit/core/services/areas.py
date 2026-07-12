@@ -4,7 +4,7 @@ from django.utils.text import slugify
 from tuckit.core.models import Area, Workspace
 from tuckit.core.services.ranking_helpers import rank_for
 
-INBOX_NAME = "Inbox"
+TRIAGE_NAME = "Triage"
 
 
 def list_areas(workspace: Workspace, include_archived: bool = False) -> QuerySet:
@@ -32,16 +32,16 @@ def create_area(workspace: Workspace, name: str, description: str = "", slug: st
     )
 
 
-def get_or_create_inbox(workspace: Workspace) -> Area:
-    inbox = Area.objects.filter(workspace=workspace, is_inbox=True).first()
-    if inbox is not None:
-        return inbox
+def get_or_create_triage(workspace: Workspace) -> Area:
+    triage = Area.objects.filter(workspace=workspace, is_triage=True).first()
+    if triage is not None:
+        return triage
     first = Area.objects.filter(workspace=workspace).order_by("rank").first()
     rank = rank_for(Area, {"workspace": workspace}, before=first)
     return Area.objects.create(
         workspace=workspace,
-        name=INBOX_NAME,
-        slug=_unique_slug(workspace, INBOX_NAME),
-        is_inbox=True,
+        name=TRIAGE_NAME,
+        slug=_unique_slug(workspace, TRIAGE_NAME),
+        is_triage=True,
         rank=rank,
     )
