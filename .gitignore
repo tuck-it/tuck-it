@@ -1,20 +1,18 @@
+# Python
 __pycache__/
 *.pyc
-*.sqlite3
+*.egg-info/
+/build/
+/dist/
+
+# Local env & data
 .env
+*.sqlite3
 .venv/
 .pytest_cache/
-
-# Python build artifacts
-/dist/
-/build/
-*.egg-info/
-
-# Local tooling & scratch — NOT published
-.claude/
-.superpowers/
-.serena/
 .DS_Store
 
-# Internal dev-process plans & specs — NOT published
-docs/superpowers/
+# Local dev tooling — NOT published
+.claude/
+.serena/
+.superpowers/
