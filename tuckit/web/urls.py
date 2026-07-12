@@ -29,6 +29,7 @@ urlpatterns = [
     path("bites/<int:bite_id>/toggle", mutations.bite_toggle, name="bite_toggle"),
     path("bites/<int:bite_id>/body", mutations.bite_body, name="bite_body"),
     path("settings/", settings_views.settings, name="settings"),
+    path("settings/workspace", settings_views.workspace_settings, name="settings_workspace"),
     path("settings/tokens", settings_views.token_create, name="token_create"),
     path("settings/tokens/<int:token_id>/revoke", settings_views.token_revoke, name="token_revoke"),
     path("settings/rename", settings_views.workspace_rename, name="workspace_rename"),

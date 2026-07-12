@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -12,12 +12,17 @@ from tuckit.web.auth import get_current_workspace
 
 
 def settings(request):
+    return redirect("web:settings_workspace")
+
+
+def workspace_settings(request):
     ws = get_current_workspace(request)
-    return render(request, "web/settings.html", {
+    return render(request, "web/settings_workspace.html", {
         "workspace": ws,
-        "tokens": list(list_tokens(ws)),
+        "org": ws.org if ws else None,
+        "tokens": list(list_tokens(ws)) if ws else [],
         "mcp_url": request.build_absolute_uri("/mcp"),
-        "invitations": list(Invitation.objects.filter(org=ws.org, accepted_at__isnull=True)) if ws else [],
+        "can_admin": bool(ws and is_org_admin(request.user, ws.org)),
     })
 
 

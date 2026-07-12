@@ -16,8 +16,8 @@
         hx-on::after-request="this.reset()">
     <input name="name" class="area-add-input" placeholder="＋ Area">
   </form>
-  <a class="nav muted{% if request.resolver_match.url_name == 'settings' %} nav--active{% endif %}"
-     href="{% url 'web:settings' %}">{% icon "settings" %}<span class="nav-label">설정</span></a>
+  <a class="nav muted{% if request.resolver_match.url_name == 'settings_workspace' or request.resolver_match.url_name == 'settings_org' %} nav--active{% endif %}"
+     href="{% url 'web:settings_workspace' %}">{% icon "settings" %}<span class="nav-label">설정</span></a>
   <button class="nav theme-toggle" type="button"
           x-data="{theme: document.documentElement.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}"
           x-on:click="theme = theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; localStorage.setItem('theme', theme)">

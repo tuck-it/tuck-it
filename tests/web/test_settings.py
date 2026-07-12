@@ -31,7 +31,7 @@ def test_token_create_stores_only_hash_not_raw(client_local, workspace):
 @pytest.mark.django_db
 def test_settings_page_lists_masked_tokens(client_local, workspace):
     token, raw = generate_token(workspace, "Existing")
-    resp = client_local.get("/settings/")
+    resp = client_local.get("/settings/workspace")
     body = resp.content.decode()
     assert resp.status_code == 200
     assert "Existing" in body
@@ -69,5 +69,5 @@ def test_token_list_is_a_panel(client_local, workspace):
     from tuckit.core.services.tokens import generate_token
 
     generate_token(workspace, "CI")
-    body = client_local.get("/settings/").content.decode()
+    body = client_local.get("/settings/workspace").content.decode()
     assert 'class="panel"' in body

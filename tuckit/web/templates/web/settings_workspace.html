@@ -1,11 +1,10 @@
 {% extends "web/base.html" %}
 {% block main %}
-  <div class="topbar">
-    <h1 class="area-title">설정</h1>
-  </div>
+  {% include "web/partials/_settings_scopenav.html" with active='workspace' %}
+  <div class="topbar"><h1 class="area-title">워크스페이스 설정</h1></div>
 
   <section class="group">
-    <div class="group-label">워크스페이스</div>
+    <div class="group-label">워크스페이스 이름</div>
     <div class="settings-name" x-data="{editing: false, name: '{{ workspace.name|escapejs }}'}">
       <span class="settings-name-display" x-show="!editing" x-on:click="editing = true" x-text="name"></span>
       <input name="name" class="title-edit" x-show="editing" x-cloak x-model="name"
@@ -32,24 +31,8 @@
   </section>
 
   <section class="group">
-    <div class="group-label">멤버 초대</div>
-    <div class="empty muted">이메일과 역할을 지정해 조직에 멤버를 초대하세요.</div>
-    <div id="invite-list" class="panel">
-      {% for inv in invitations %}
-        {% include "web/partials/_invite_row.html" with inv=inv %}
-      {% empty %}
-        <div class="empty muted">대기 중인 초대가 없습니다</div>
-      {% endfor %}
-    </div>
-    <form class="token-add" hx-post="{% url 'web:invite_create' %}" hx-target="#invite-list" hx-swap="afterbegin"
-          hx-on::after-request="this.reset()">
-      <input type="email" name="email" placeholder="이메일" required>
-      <select name="role">
-        <option value="member">멤버</option>
-        <option value="admin">관리자</option>
-      </select>
-      <button type="submit">초대</button>
-    </form>
+    <div class="group-label">멤버</div>
+    <div class="empty muted">멤버와 초대는 조직 단위로 관리됩니다. <a href="{% url 'web:settings_org' %}">조직 설정에서 관리 →</a></div>
   </section>
 
   <section class="group">
