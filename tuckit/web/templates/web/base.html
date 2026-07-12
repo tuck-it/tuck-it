@@ -77,8 +77,11 @@
     });
     document.body.addEventListener("htmx:afterSwap", function (e) {
       if (e.target && e.target.id === "panel" && e.target.innerHTML.trim()) {
-        var first = e.target.querySelector('button,a[href],input,select,textarea');
-        if (first) first.focus();
+        var focusables = Array.prototype.slice.call(
+          e.target.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select,textarea')
+        ).filter(function (x) { return x.offsetParent !== null; });
+        var target = e.target.querySelector('[aria-label="Close panel"]') || focusables[0];
+        if (target) target.focus();
       }
     });
   </script>
