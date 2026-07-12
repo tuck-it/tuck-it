@@ -218,13 +218,13 @@ body { padding: 0; }
   width: 100%;
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--ink-faint);
   font: inherit;
   padding: 2px 0;
 }
 
 .area-add-input:focus {
-  color: var(--text);
+  color: var(--ink);
   outline: none;
 }
 
@@ -892,24 +892,24 @@ body { padding: 0; }
 .area-act {
   border: none;
   background: none;
-  color: var(--muted);
+  color: var(--ink-faint);
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 5px;
   font-size: 13px;
   line-height: 1;
 }
-.area-act:hover { background: var(--surface); color: var(--text); }
+.area-act:hover { background: var(--paper-raised); color: var(--ink); }
 .area-act--danger:hover { color: var(--warn); }
 .area-rename { flex: 1 1 auto; padding: 2px 0; }
 .area-rename-input {
   width: 100%;
   font: inherit;
   padding: 5px 8px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--blue);
   border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
 }
 .sortable-ghost { opacity: 0.4; }
 

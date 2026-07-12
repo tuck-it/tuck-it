@@ -31,19 +31,21 @@
   </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      x-data="{cap: false, menu: false}"
+      x-data="{cap: false, menu: false, trapFocus(e){ if(!this.menu) return; const f=[...this.$refs.sidebarWrap.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select,textarea')].filter(el=>el.offsetParent!==null); if(!f.length) return; const first=f[0], last=f[f.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } }}"
       x-on:keydown.window="if (!cap && $event.key === 'c' && !['INPUT','TEXTAREA'].includes($event.target.tagName)) { cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus()) }">
   <header class="topbar-mobile">
     <button class="topbar-btn" type="button" aria-label="Open navigation menu" :aria-expanded="menu" aria-controls="app-sidebar"
-            x-on:click="menu = true">{% icon "menu" %}</button>
+            x-ref="menuToggle"
+            x-on:click="menu = true; $nextTick(() => $refs.sidebarWrap.querySelector('a[href],button')?.focus())">{% icon "menu" %}</button>
     <span class="topbar-brand">tuckit</span>
     <button class="topbar-btn" type="button" aria-label="Quick capture"
             x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">{% icon "plus" %}</button>
   </header>
   <div class="app">
-    <div class="menu-scrim" x-show="menu" x-cloak x-on:click="menu = false"></div>
-    <div class="sidebar-wrap" id="app-sidebar" :class="{'menu-open': menu}"
-         x-on:keydown.escape.window="menu = false">
+    <div class="menu-scrim" x-show="menu" x-cloak x-on:click="menu = false; $refs.menuToggle.focus()"></div>
+    <div class="sidebar-wrap" id="app-sidebar" x-ref="sidebarWrap" :class="{'menu-open': menu}"
+         x-on:keydown.escape.window="if (menu) { menu = false; $refs.menuToggle.focus() }"
+         x-on:keydown.tab="trapFocus($event)">
       {% include "web/partials/_sidebar.html" %}
     </div>
     <main class="main">{% block main %}{% endblock %}</main>

@@ -22,4 +22,6 @@ def test_mobile_topbar_and_menu_present(client_local, workspace):
     # menu toggle has an accessible name
     assert 'aria-label="Open navigation menu"' in body
     # capture reachable from the mobile top bar without opening the menu
-    assert body.count("cap = true") >= 3
+    assert 'aria-label="Quick capture"' in body      # capture reachable from top bar
+    assert 'x-ref="menuToggle"' in body              # focus-restore target wired
+    assert "trapFocus" in body                       # focus trap wired
