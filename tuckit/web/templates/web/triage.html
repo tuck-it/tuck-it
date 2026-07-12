@@ -1,8 +1,15 @@
 {% extends "web/base.html" %}
+{% load web_extras %}
 {% block main %}
-  <div class="topbar">
-    <h1 class="area-title">Triage</h1>
-  </div>
+  <header class="page-head">
+    <div class="page-head-l">
+      <h1 class="page-title">Triage</h1>
+      <span class="page-count">{{ slices|length }}</span>
+    </div>
+    <button class="button button-small" type="button"
+            x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
+      {% icon "plus" %}<span>Capture</span></button>
+  </header>
   <section class="group">
     {% include "web/partials/_triage_list.html" %}
   </section>

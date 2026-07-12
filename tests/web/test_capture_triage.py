@@ -84,7 +84,7 @@ def test_triage_row_has_no_manual_caret_and_area_placeholder(client_local, works
     create_slice(get_or_create_triage(workspace), "미분류 항목")
     body = client_local.get("/triage/").content.decode()
     assert "</select>▾" not in body          # manual caret removed
-    assert "— Area 지정 —" in body           # placeholder present
+    assert "Assign area" in body           # placeholder present
 
 @pytest.mark.django_db
 def test_triage_status_only_keeps_area(client_local, workspace):

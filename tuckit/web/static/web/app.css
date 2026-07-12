@@ -230,32 +230,38 @@ body { padding: 0; }
 
 /* Triage row — same flat surface treatment as a slice-row, plus inline triage selects. */
 .triage-row {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
   line-height: 1.5;
-  padding: 8px 12px;
+  padding: 9px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
 }
-
+.triage-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.4;
+  transition: opacity 0.15s var(--ease);
+}
+.triage-row:hover .triage-controls,
+.triage-row:focus-within .triage-controls { opacity: 1; }
 .triage-field {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  color: var(--muted);
+  gap: 4px;
+  color: var(--ink-faint);
   font-size: 12px;
 }
-
 .triage-select {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--ink);
   font: inherit;
-  padding: 2px 4px;
+  font-size: 12px;
+  padding: 3px 6px;
 }
+.triage-select:focus { outline: none; border-color: var(--blue); }
 
 /* Capture modal — plain centered overlay, no gradient/shadow. */
 .capture-overlay {
@@ -414,6 +420,8 @@ body { padding: 0; }
   margin: 0 0 22px;
 }
 .page-title { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.03em; }
+.page-head-l { display: flex; align-items: baseline; gap: 10px; }
+.page-count { color: var(--ink-faint); font-family: "IBM Plex Mono", monospace; font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* Page heading + header row. */
 .area-title {
