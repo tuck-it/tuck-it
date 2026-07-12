@@ -83,3 +83,9 @@ def remove_member(org: Org, *, member: OrgMember) -> None:
     if member.role == "owner":
         raise InvalidValue("소유자는 제거할 수 없습니다 — 먼저 역할을 변경하세요")
     member.delete()
+
+
+def delete_workspace(workspace: Workspace) -> None:
+    if Workspace.objects.filter(org=workspace.org).count() <= 1:
+        raise InvalidValue("조직의 마지막 워크스페이스는 삭제할 수 없습니다")
+    workspace.delete()

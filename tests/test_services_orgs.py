@@ -3,7 +3,7 @@ import pytest
 from tuckit.core.models import Area, Org, OrgMember, User, Workspace
 from tuckit.core.services.orgs import (
     accessible_workspaces, user_can_access_workspace, is_org_admin, seat_count, create_workspace,
-    is_org_owner, rename_org, list_org_members, change_member_role, remove_member,
+    is_org_owner, rename_org, list_org_members, change_member_role, remove_member, delete_workspace,
 )
 from tuckit.core.services.exceptions import InvalidValue
 
@@ -123,3 +123,25 @@ def test_cannot_remove_owner(org_owner_admin_member):
     org, om_owner, _, _ = org_owner_admin_member
     with pytest.raises(InvalidValue):
         remove_member(org, member=om_owner)
+
+
+@pytest.mark.django_db
+def test_delete_workspace_removes_it_and_cascades(org_with_owner):
+    org, _ = org_with_owner
+    keep = create_workspace(org, "Keep")
+    doomed = create_workspace(org, "Doomed")
+    area_ids = list(Area.objects.filter(workspace=doomed).values_list("id", flat=True))
+    assert area_ids  # create_workspace seeds inbox + Default
+    delete_workspace(doomed)
+    assert not Workspace.objects.filter(id=doomed.id).exists()
+    assert not Area.objects.filter(id__in=area_ids).exists()  # cascaded
+    assert Workspace.objects.filter(id=keep.id).exists()
+
+
+@pytest.mark.django_db
+def test_cannot_delete_last_workspace_in_org(org_with_owner):
+    org, _ = org_with_owner
+    only = create_workspace(org, "Only")
+    with pytest.raises(InvalidValue):
+        delete_workspace(only)
+    assert Workspace.objects.filter(id=only.id).exists()
