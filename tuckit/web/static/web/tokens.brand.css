@@ -1,0 +1,69 @@
+/* tuckit brand tokens — canonical, SHARED.
+   Byte-identical copy lives at tuckit/tuckit/web/static/web/tokens.brand.css.
+   Edit either copy, then run tuckit-landing/scripts/sync-tokens.mjs to propagate.
+   A drift test in tuckit fails if the copies differ. */
+
+:root {
+  color-scheme: light;
+  --paper: #f3f1eb;
+  --paper-solid: #f7f5ef;
+  --paper-raised: #fbfaf6;
+  --paper-deep: #e9e6de;
+  --ink: #23282a;
+  --ink-soft: #555b5d;
+  --ink-faint: #777d7e;
+  --blue: #245a78;
+  --blue-strong: #174864;
+  --blue-soft: #dce8eb;
+  --line: #d8d5cd;
+  --line-strong: #b9b8b2;
+  --good: #52745f;
+  --warn: #a0683b;
+  --shadow: rgba(50, 56, 57, 0.12);
+  --texture-opacity: 0.48;
+  --radius: 14px;
+  --radius-small: 9px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1c1f20;
+    --paper-solid: #202425;
+    --paper-raised: #272b2c;
+    --paper-deep: #17191a;
+    --ink: #ece9df;
+    --ink-soft: #b8b6af;
+    --ink-faint: #8e918e;
+    --blue: #7db2ce;
+    --blue-strong: #a5cce0;
+    --blue-soft: #263c47;
+    --line: #383d3e;
+    --line-strong: #525859;
+    --good: #85aa8f;
+    --warn: #d39a68;
+    --shadow: rgba(0, 0, 0, 0.28);
+    --texture-opacity: 0.07;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1c1f20;
+  --paper-solid: #202425;
+  --paper-raised: #272b2c;
+  --paper-deep: #17191a;
+  --ink: #ece9df;
+  --ink-soft: #b8b6af;
+  --ink-faint: #8e918e;
+  --blue: #7db2ce;
+  --blue-strong: #a5cce0;
+  --blue-soft: #263c47;
+  --line: #383d3e;
+  --line-strong: #525859;
+  --good: #85aa8f;
+  --warn: #d39a68;
+  --shadow: rgba(0, 0, 0, 0.28);
+  --texture-opacity: 0.07;
+}
