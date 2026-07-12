@@ -9,6 +9,8 @@ from tuckit.core.services.slices import create_slice
 from tuckit.core.services.state import (
     attention_items,
     home_state,
+    in_progress_state,
+    roadmap_state,
     STALE_DAYS,
     get_project_state,
     render_slice_markdown,
@@ -143,6 +145,39 @@ def test_attention_items_include_reason_and_days():
     assert hit, "stale inbox slice should surface"
     assert hit[0]["reason"] == "triage_stale"
     assert hit[0]["days"] == 11
+
+
+@pytest.mark.django_db
+def test_roadmap_state_buckets_non_triage_slices():
+    org = Org.objects.create(name="Acme", slug="acme")
+    ws = Workspace.objects.create(org=org, name="W", slug="w")
+    a = create_area(ws, "Backend")
+    create_slice(a, "idea one", status="idea")
+    create_slice(a, "planned one", status="planned")
+    create_slice(a, "building one", status="building")
+    create_slice(a, "shipped one", status="shipped")
+    create_slice(a, "dropped one", status="dropped")
+    create_slice(get_or_create_triage(ws), "captured", status="idea")  # triage excluded
+    rs = roadmap_state(ws)
+    assert [s.title for s in rs["idea"]] == ["idea one"]        # triage 'captured' excluded
+    assert [s.title for s in rs["planned"]] == ["planned one"]
+    assert [s.title for s in rs["building"]] == ["building one"]
+    assert [s.title for s in rs["shipped"]] == ["shipped one"]
+    assert "dropped" not in rs                                   # dropped never bucketed
+
+
+@pytest.mark.django_db
+def test_in_progress_state_has_building_slices_and_doing_bites():
+    org = Org.objects.create(name="Acme", slug="acme")
+    ws = Workspace.objects.create(org=org, name="W", slug="w")
+    a = create_area(ws, "Backend")
+    s = create_slice(a, "building slice", status="building")
+    create_slice(a, "idea slice", status="idea")
+    create_bite(s, "doing bite", status="doing")
+    create_bite(s, "todo bite", status="todo")
+    st = in_progress_state(ws)
+    assert [x.title for x in st["slices"]] == ["building slice"]
+    assert [x.title for x in st["bites"]] == ["doing bite"]
 
 
 @pytest.mark.django_db

@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from tuckit.core.models import Area, Slice, Workspace
+from tuckit.core.models import Area, Bite, Slice, Workspace
 from tuckit.core.services.areas import list_areas
 from tuckit.core.services.bites import list_bites
 from tuckit.core.services.slices import list_slices
@@ -123,3 +123,45 @@ def attention_items(workspace: Workspace) -> list[dict]:
         items.append({"slice": s, "reason": "building_stalled", "days": (now - s.updated_at).days})
     items.sort(key=lambda it: it["slice"].updated_at)
     return items
+
+
+def roadmap_state(workspace: Workspace) -> dict:
+    """Non-triage, non-dropped slices grouped by roadmap status — powers the
+    Roadmap board and its distribution counts."""
+    slices = list(
+        Slice.objects.filter(area__workspace=workspace, area__is_triage=False)
+        .exclude(status="dropped")
+        .select_related("area")
+        .prefetch_related("tags")
+    )
+
+    def bucket(status: str) -> list:
+        return sorted(
+            [s for s in slices if s.status == status],
+            key=lambda s: (s.area.name, s.rank),
+        )
+
+    return {
+        "idea": bucket("idea"),
+        "planned": bucket("planned"),
+        "building": bucket("building"),
+        "shipped": bucket("shipped"),
+    }
+
+
+def in_progress_state(workspace: Workspace) -> dict:
+    """What's actively being worked right now: building slices + doing bites."""
+    slices = list(
+        Slice.objects.filter(
+            area__workspace=workspace, area__is_triage=False, status="building"
+        )
+        .select_related("area")
+        .prefetch_related("tags")
+        .order_by("area__name", "rank")
+    )
+    bites = list(
+        Bite.objects.filter(slice__area__workspace=workspace, status="doing")
+        .select_related("slice", "slice__area")
+        .order_by("slice__area__name", "rank")
+    )
+    return {"slices": slices, "bites": bites}
