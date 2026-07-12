@@ -113,28 +113,36 @@ body { padding: 0; }
   background: var(--dot-someday);
 }
 
-/* Slice row — link reset (no UA blue/underline); framed by the section .panel. */
+/* Slice row: link reset, shared surface, quiet arrow, subtle hover. */
 .slice-row {
-  color: var(--text);
+  color: var(--ink);
   text-decoration: none;
   line-height: 1.5;
-  padding: 10px 12px;
+  min-height: 52px;
+  padding: 9px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
+  transition: background .15s var(--ease);
 }
+.slice-row:hover { background: var(--paper-deep); }
+.slice-row:hover .row-title { color: var(--ink); }
 
-.slice-row:hover { background: var(--bg); }
-.slice-row:hover .row-title { color: var(--text); font-weight: 500; }
-
-/* Section label — small-caps muted text, not a colored badge. */
+/* Section heading: label + optional count, mono uppercase, quiet. */
 .group-label {
-  font-size: 12px;
-  font-variant: small-caps;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin: 8px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  color: var(--ink-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
+.group-label.attention { color: var(--ink); }
+.group-count { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
 /* Tag — muted text, never a filled chip; hash dimmed one step further. */
 .tag {
@@ -145,21 +153,11 @@ body { padding: 0; }
 
 .tag-hash { opacity: 0.55; }
 
-.row-title {
-  flex: 1 1 auto;
-}
-
-.row-meta,
-.empty {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* "Needs attention" label — text emphasis only, no color band/banner. */
-.group-label.attention {
-  color: var(--text);
-  font-weight: 600;
-}
+.row-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-meta, .empty { color: var(--ink-faint); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+.row-meta { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row-arrow { display: inline-flex; color: var(--line-strong); }
+.row-arrow .icon { width: 15px; height: 15px; }
 
 .topbar {
   display: flex;
@@ -438,14 +436,8 @@ body { padding: 0; }
   line-height: 1.4;
 }
 
-/* Group of rows (attention / status group / triage list / settings section) —
-   consistent vertical rhythm, no card/band chrome around the section itself. */
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0 0 24px;
-}
+/* Section wrapper rhythm. */
+.group { display: flex; flex-direction: column; gap: 8px; margin: 0 0 26px; }
 
 /* Segmented status control — bordered group; active segment neutral-filled
    (var(--active)) + a status dot. Not a filled color chip. */
@@ -612,36 +604,35 @@ body { padding: 0; }
 }
 
 
-/* Unified list panel — one surface frame; rows split by hairline dividers. */
+/* Unified list panel: one surface, hairline dividers, 14px radius. */
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   overflow: hidden;
 }
-
 .panel .slice-row,
 .panel .triage-row {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   border-radius: 0;
 }
-
 .panel .slice-row:last-child,
 .panel .triage-row:last-child { border-bottom: 0; }
 
-/* Attention reason — low-saturation amber TEXT only (never a band). */
+/* Attention reason: plain warm text, never a badge. */
 .row-reason {
   color: var(--warn);
-  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* Collapsible Home tail (someday / ideas / shipped). */
+/* Collapsed secondary toggle. */
 .tail-toggle {
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--ink-faint);
   font: inherit;
   cursor: pointer;
   display: inline-flex;
@@ -754,15 +745,15 @@ body { padding: 0; }
   flex-wrap: wrap;
 }
 
-/* Home "all clear" — a confident, low-key done signal (not flashy). */
+/* All-clear: calm, quiet, no celebration. */
 .all-clear {
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: var(--muted);
-  padding: 4px 2px;
+  gap: 8px;
+  padding: 14px 2px;
+  color: var(--ink-faint);
 }
-.icon-clear { width: 15px; height: 15px; stroke: var(--dot-shipped); }
+.icon-clear { width: 16px; height: 16px; stroke: var(--good); }
 
 /* Org settings — scope tabs, member rows, role pill, generic action button.
    Same flat-surface/no-band language as the rest of settings. */

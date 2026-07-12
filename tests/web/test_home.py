@@ -87,3 +87,13 @@ def test_home_has_heading_and_capture(client_local, workspace):
     assert "Needs you" in body and "Now" in body and "Next" in body
     # a capture action is present in the page header (reuses the capture modal)
     assert body.count("cap = true") >= 2   # sidebar Capture + page-head Capture
+
+
+@pytest.mark.django_db
+def test_slice_row_has_status_dot_and_arrow(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    create_slice(create_area(workspace, "Backend"), "row look", status="building")
+    body = client_local.get("/").content.decode()
+    assert 'class="status-dot' in body     # status indicator kept
+    assert 'class="row-arrow"' in body     # quiet trailing affordance
