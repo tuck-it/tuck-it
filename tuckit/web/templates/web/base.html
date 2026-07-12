@@ -50,8 +50,37 @@
     </div>
     <main class="main">{% block main %}{% endblock %}</main>
   </div>
-  <div id="panel"></div>
+  <div id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title"
+       x-on:keydown.escape="$el.innerHTML.trim() && closePanel($el)"
+       x-on:keydown.tab="trapPanel($event, $el)"></div>
   <div id="toast" class="toast" x-cloak></div>
   {% include "web/partials/_capture_modal.html" %}
+  <script>
+    /* Slide-over focus management. #panel persists; htmx swaps its innerHTML.
+       Capture the opener before the swap, move focus in after it, restore on close. */
+    function closePanel(el) {
+      el.innerHTML = "";
+      if (window.__panelOpener) { window.__panelOpener.focus(); window.__panelOpener = null; }
+    }
+    function trapPanel(e, el) {
+      if (!el.innerHTML.trim()) return;
+      var f = Array.prototype.slice.call(
+        el.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select,textarea')
+      ).filter(function (x) { return x.offsetParent !== null; });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.body.addEventListener("htmx:beforeRequest", function (e) {
+      if (e.detail.target && e.detail.target.id === "panel") { window.__panelOpener = e.detail.elt; }
+    });
+    document.body.addEventListener("htmx:afterSwap", function (e) {
+      if (e.target && e.target.id === "panel" && e.target.innerHTML.trim()) {
+        var first = e.target.querySelector('button,a[href],input,select,textarea');
+        if (first) first.focus();
+      }
+    });
+  </script>
 </body>
 </html>

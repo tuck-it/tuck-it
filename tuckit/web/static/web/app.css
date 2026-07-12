@@ -420,10 +420,11 @@ body { padding: 0; }
   bottom: 0;
   width: 420px;
   max-width: 90vw;
-  background: var(--surface);
-  border-left: 1px solid var(--border);
+  background: var(--paper-raised);
+  border-left: 1px solid var(--line);
+  box-shadow: -18px 0 48px var(--shadow);
   overflow-y: auto;
-  z-index: 5;
+  z-index: 30;
 }
 
 /* Same partial also renders as ordinary page content on the full slice page

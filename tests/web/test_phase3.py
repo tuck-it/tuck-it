@@ -47,3 +47,16 @@ def test_slice_panel_renders_segmented_status(client_local, workspace):
     s = create_slice(create_area(workspace, "Backend"), "seg", status="building")
     body = client_local.get(f"/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="seg"' in body and 'seg-item--on' in body
+
+
+@pytest.mark.django_db
+def test_slide_over_container_is_labelled_dialog(client_local, workspace):
+    body = client_local.get("/").content.decode()
+    assert 'id="panel"' in body
+    assert 'role="dialog"' in body
+    assert 'aria-modal="true"' in body
+    assert 'aria-labelledby="panel-title"' in body
+    # focus-management wiring present
+    assert "closePanel" in body
+    assert "trapPanel" in body
+    assert "__panelOpener" in body
