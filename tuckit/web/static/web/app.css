@@ -774,3 +774,85 @@ body {
   padding: 4px 2px;
 }
 .icon-clear { width: 15px; height: 15px; stroke: var(--dot-shipped); }
+
+/* Org settings — scope tabs, member rows, role pill, generic action button.
+   Same flat-surface/no-band language as the rest of settings. */
+.scopenav {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.scope {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.scope.on {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Generic bordered row inside a .panel (member row, workspace row, ...). */
+.field {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel .field:last-child { border-bottom: 0; }
+
+.row-l {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--active);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.nm { line-height: 1.4; }
+.sub { color: var(--muted); font-size: 12px; }
+
+.rolepill {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.btn.danger {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.group-label.danger {
+  color: var(--warn);
+  font-weight: 600;
+}
