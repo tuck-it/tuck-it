@@ -1,0 +1,14 @@
+{# Toast — always shown, auto-dismisses. Replaces the persistent #toast region. #}
+<div id="toast" hx-swap-oob="true" class="toast" x-data="{show:true}"
+     x-init="setTimeout(() => show=false, 1800)" x-show="show" x-transition x-cloak>Captured ✓</div>
+
+{# Count badge — always refreshed (context processor supplies triage_count). #}
+{% include "web/partials/_triage_count.html" with oob=True %}
+
+{# New row — prepended only if the Triage list is on-screen; ignored elsewhere. #}
+<template hx-swap-oob="afterbegin:#triage-list">
+  {% include "web/partials/_triage_row.html" %}
+</template>
+
+{# Remove the "Triage clean" placeholder if it's on the page. #}
+<div id="triage-empty" hx-swap-oob="delete"></div>

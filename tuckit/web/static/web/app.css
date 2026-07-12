@@ -889,3 +889,19 @@ body {
   padding: 0 5px;
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Capture confirmation toast (nav redesign, Phase 1) --- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+.toast:empty { display: none; }

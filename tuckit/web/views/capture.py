@@ -11,11 +11,15 @@ from tuckit.web.auth import get_current_workspace
 def capture(request):
     ws = get_current_workspace(request)
     triage = get_or_create_triage(ws)
-    create_slice(triage, request.POST["title"], status="idea", source="human")
-    # Return an out-of-band swap of the sidebar inbox count instead of a 204 +
-    # full-page reload, so rapid capture (Enter, Enter, …) stays snappy and the
-    # count updates live. The context processor recomputes inbox_count fresh.
-    return render(request, "web/partials/_triage_count.html", {"oob": True})
+    slice_ = create_slice(triage, request.POST["title"], status="idea", source="human")
+    # Bundle out-of-band swaps: a confirmation toast + live count + (if the Triage
+    # page is open) the new row prepended into #triage-list. htmx ignores OOB
+    # targets that aren't on the current page, so one response fits every page.
+    return render(request, "web/partials/_capture_result.html", {
+        "slice": slice_,
+        "areas": [a for a in list_areas(ws) if not a.is_triage],
+        "statuses": ["idea", "planned", "building", "shipped"],
+    })
 
 
 def triage_list(request):

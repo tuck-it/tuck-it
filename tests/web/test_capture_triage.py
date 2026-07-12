@@ -34,15 +34,24 @@ def test_area_create_makes_area(client_local, workspace):
     assert workspace.areas.filter(is_triage=False, name="Backend").exists()
 
 @pytest.mark.django_db
-def test_capture_returns_oob_triage_count(client_local, workspace):
-    # No full-page reload: capture returns an OOB swap of the sidebar count.
+def test_capture_returns_toast_count_and_row(client_local, workspace):
+    # No full-page reload: capture returns OOB swaps for toast, count, and the new row.
     get_or_create_triage(workspace)
     resp = client_local.post("/capture", {"title": "빠른 기록"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     body = resp.content.decode()
+    # count badge
     assert 'id="triage-count"' in body
-    assert 'hx-swap-oob="true"' in body
-    assert ">1<" in body   # count reflects the just-captured slice
+    assert ">1<" in body
+    # toast
+    assert 'id="toast"' in body
+    assert "Captured" in body
+    # live row prepended into the triage list (lands only if that page is open)
+    assert "afterbegin:#triage-list" in body
+    assert "빠른 기록" in body
+    # empty-state placeholder gets removed
+    assert 'id="triage-empty"' in body
+    assert 'hx-swap-oob="delete"' in body
 
 @pytest.mark.django_db
 def test_area_create_returns_oob_area_nav(client_local, workspace):
