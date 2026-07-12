@@ -3,6 +3,7 @@ from django.utils.text import slugify
 
 from tuckit.core.models import Area, Workspace
 from tuckit.core.services.ranking_helpers import rank_for
+from tuckit.core.services.exceptions import InvalidValue
 
 TRIAGE_NAME = "Triage"
 
@@ -45,3 +46,24 @@ def get_or_create_triage(workspace: Workspace) -> Area:
         is_triage=True,
         rank=rank,
     )
+
+
+def rename_area(area: Area, name: str) -> Area:
+    name = (name or "").strip()
+    if not name:
+        raise InvalidValue("이름을 입력해주세요")
+    area.name = name
+    area.save(update_fields=["name", "updated_at"])
+    return area
+
+
+def delete_area(area: Area) -> None:
+    if area.is_triage:
+        raise InvalidValue("Triage는 삭제할 수 없습니다")
+    area.delete()  # cascades to slices/bites via FK on_delete=CASCADE
+
+
+def reorder_area(area: Area, *, before: Area | None = None, after: Area | None = None) -> Area:
+    area.rank = rank_for(Area, {"workspace": area.workspace}, before=before, after=after)
+    area.save(update_fields=["rank", "updated_at"])
+    return area
