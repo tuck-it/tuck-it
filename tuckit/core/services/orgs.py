@@ -1,5 +1,6 @@
 from tuckit.core.models import Org, OrgMember, Workspace
 from tuckit.core.services.areas import create_area, get_or_create_inbox
+from tuckit.core.services.exceptions import InvalidValue
 
 
 def accessible_workspaces(user):
@@ -42,3 +43,43 @@ def create_workspace(org: Org, name: str, slug: str | None = None) -> Workspace:
     get_or_create_inbox(ws)
     create_area(ws, "Default")
     return ws
+
+
+_VALID_ROLES = {"owner", "admin", "member"}
+
+
+def is_org_owner(user, org) -> bool:
+    return OrgMember.objects.filter(user=user, org=org, role="owner").exists()
+
+
+def rename_org(org: Org, name: str) -> Org:
+    name = (name or "").strip()
+    if not name:
+        raise InvalidValue("조직 이름을 입력하세요")
+    org.name = name
+    org.save(update_fields=["name"])
+    return org
+
+
+def list_org_members(org: Org):
+    return OrgMember.objects.filter(org=org).select_related("user").order_by("created_at")
+
+
+def _owner_count(org: Org) -> int:
+    return OrgMember.objects.filter(org=org, role="owner").count()
+
+
+def change_member_role(org: Org, *, member: OrgMember, role: str) -> OrgMember:
+    if role not in _VALID_ROLES:
+        raise InvalidValue(f"알 수 없는 역할: {role}")
+    if member.role == "owner" and role != "owner" and _owner_count(org) <= 1:
+        raise InvalidValue("마지막 소유자의 역할은 바꿀 수 없습니다")
+    member.role = role
+    member.save(update_fields=["role"])
+    return member
+
+
+def remove_member(org: Org, *, member: OrgMember) -> None:
+    if member.role == "owner":
+        raise InvalidValue("소유자는 제거할 수 없습니다 — 먼저 역할을 변경하세요")
+    member.delete()
