@@ -4,6 +4,7 @@ from tuckit.core.models import Area, Org, OrgMember, User, Workspace
 from tuckit.core.services.orgs import (
     accessible_workspaces, user_can_access_workspace, is_org_admin, seat_count, create_workspace,
     is_org_owner, rename_org, list_org_members, change_member_role, remove_member, delete_workspace,
+    create_org,
 )
 from tuckit.core.services.exceptions import InvalidValue
 
@@ -145,3 +146,55 @@ def test_cannot_delete_last_workspace_in_org(org_with_owner):
     with pytest.raises(InvalidValue):
         delete_workspace(only)
     assert Workspace.objects.filter(id=only.id).exists()
+
+
+@pytest.mark.django_db
+def test_create_org_makes_org_owner_and_first_workspace():
+    user = User.objects.create(username="u@u.com", email="u@u.com")
+    org, ws = create_org(user, name="Acme Labs")
+    assert org.slug == "acme-labs"                       # auto slug from name
+    assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
+    assert ws.org == org
+    assert Area.objects.filter(workspace=ws, is_triage=True).count() == 1
+    assert Area.objects.filter(workspace=ws, is_triage=False, slug="default").exists()
+
+
+@pytest.mark.django_db
+def test_create_org_auto_slug_is_unique():
+    user = User.objects.create(username="u@u.com", email="u@u.com")
+    a, _ = create_org(user, name="Dup")
+    b, _ = create_org(user, name="Dup")
+    assert a.slug != b.slug                               # second gets -2 suffix
+
+
+@pytest.mark.django_db
+def test_create_org_rejects_blank_name():
+    user = User.objects.create(username="u@u.com", email="u@u.com")
+    with pytest.raises(InvalidValue):
+        create_org(user, name="   ")
+
+
+@pytest.mark.django_db
+def test_create_org_rejects_taken_explicit_slug():
+    user = User.objects.create(username="u@u.com", email="u@u.com")
+    create_org(user, name="First", slug="taken")
+    with pytest.raises(InvalidValue):
+        create_org(user, name="Second", slug="taken")
+
+
+@pytest.mark.django_db
+def test_create_org_runs_signup_hook():
+    from django.test import override_settings
+
+    seen = {}
+
+    def _hook(*, user, org):
+        seen["ok"] = (user.email, org.slug)
+
+    import tests.test_services_orgs as mod
+    mod._hook = _hook
+    with override_settings(TUCKIT_SIGNUP_HOOK="tests.test_services_orgs._hook"):
+        user = User.objects.create(username="hook@u.com", email="hook@u.com")
+        org, ws = create_org(user, name="Hooked")
+    assert seen["ok"] == ("hook@u.com", org.slug)
+    assert org.pk is not None

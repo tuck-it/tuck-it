@@ -45,6 +45,35 @@ def create_workspace(org: Org, name: str, slug: str | None = None) -> Workspace:
     return ws
 
 
+def _unique_org_slug(name: str) -> str:
+    from django.utils.text import slugify
+
+    base = slugify(name)[:100] or "org"
+    candidate = base
+    i = 2
+    while Org.objects.filter(slug=candidate).exists():
+        suffix = f"-{i}"
+        candidate = base[: 100 - len(suffix)] + suffix
+        i += 1
+    return candidate
+
+
+def create_org(user, *, name: str, slug: str | None = None) -> tuple[Org, Workspace]:
+    from tuckit.core.services.hooks import run_signup_hook  # local: avoid import cycle
+
+    name = (name or "").strip()
+    if not name:
+        raise InvalidValue("조직 이름을 입력하세요")
+    slug = slug or _unique_org_slug(name)
+    if Org.objects.filter(slug=slug).exists():
+        raise InvalidValue(f"Org slug already taken: {slug}")
+    org = Org.objects.create(name=name, slug=slug)
+    OrgMember.objects.create(user=user, org=org, role="owner")
+    workspace = create_workspace(org, name)
+    run_signup_hook(user=user, org=org)
+    return org, workspace
+
+
 _VALID_ROLES = {"owner", "admin", "member"}
 
 

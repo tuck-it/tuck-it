@@ -2,10 +2,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from tuckit.core.models import Org, OrgMember, User, Workspace
+from tuckit.core.models import Org, User, Workspace
 from tuckit.core.services.exceptions import InvalidValue
-from tuckit.core.services.hooks import run_signup_hook
-from tuckit.core.services.orgs import create_workspace
+from tuckit.core.services.orgs import create_org
 
 
 @transaction.atomic
@@ -26,9 +25,5 @@ def register(*, email, org_name, slug, password, username=None) -> tuple[User, O
     user.set_password(password)
     user.save()
 
-    org = Org.objects.create(name=org_name, slug=slug)
-    OrgMember.objects.create(user=user, org=org, role="owner")
-    workspace = create_workspace(org, org_name)
-
-    run_signup_hook(user=user, org=org)
+    org, workspace = create_org(user, name=org_name, slug=slug)
     return user, org, workspace
