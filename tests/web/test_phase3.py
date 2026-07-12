@@ -38,3 +38,12 @@ def test_slice_panel_order_and_close_aria(client_local, workspace):
     assert "Backend" in body                         # Area context near title
     # blueprint order: bites appear before tags; tags before the destructive drop
     assert body.index('id="bites-') < body.index("billing") < body.index("Drop")
+
+
+@pytest.mark.django_db
+def test_slice_panel_renders_segmented_status(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    s = create_slice(create_area(workspace, "Backend"), "seg", status="building")
+    body = client_local.get(f"/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="seg"' in body and 'seg-item--on' in body

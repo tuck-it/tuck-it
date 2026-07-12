@@ -303,22 +303,8 @@ body { padding: 0; }
   cursor: text;
 }
 
-.title-edit {
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  font: inherit;
-  font-size: inherit;
-  padding: 2px 0;
-  width: 320px;
-  max-width: 100%;
-}
-
-.title-edit:focus {
-  outline: none;
-  border-bottom-color: var(--accent);
-}
+.title-edit { background: none; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 18px; padding: 2px 0; width: 320px; max-width: 100%; }
+.title-edit:focus { outline: none; border-bottom-color: var(--blue); }
 
 .token-row {
   padding: 8px 12px;
@@ -363,21 +349,8 @@ body { padding: 0; }
   font-size: 12px;
 }
 
-.ghost {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--muted);
-  font: inherit;
-  font-size: 12px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.ghost:hover {
-  color: var(--text);
-  border-color: var(--accent);
-}
+.ghost { background: none; border: 1px solid var(--line); border-radius: var(--radius-small); color: var(--ink-faint); font: inherit; font-size: 12px; padding: 4px 8px; cursor: pointer; }
+.ghost:hover { color: var(--ink); border-color: var(--blue); }
 
 .token-add { display: flex; gap: 8px; margin-top: 12px; }
 .token-add input {
@@ -391,16 +364,7 @@ body { padding: 0; }
 }
 .token-add input:focus { outline: none; border-color: var(--accent); }
 
-.mcp-snippet {
-  background: var(--sidebar);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
-  overflow-x: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  color: var(--text);
-}
+.mcp-snippet { background: var(--paper-deep); border: 1px solid var(--line); border-radius: var(--radius-small); padding: 10px 12px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--ink); }
 
 /* Generic muted-text helper — same treatment used ad hoc across rows/labels. */
 .muted {
@@ -435,32 +399,12 @@ body { padding: 0; }
 .group { display: flex; flex-direction: column; gap: 8px; margin: 0 0 26px; }
 
 /* Segmented status control — bordered group; active segment neutral-filled
-   (var(--active)) + a status dot. Not a filled color chip. */
-.seg {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 2px 0;
-}
-
-.seg-item {
-  background: none;
-  border: none;
-  border-right: 1px solid var(--border);
-  color: var(--muted);
-  font: inherit;
-  font-size: 12px;
-  padding: 5px 13px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
+   (var(--paper-deep)) + a status dot. Not a filled color chip. */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-small); overflow: hidden; }
+.seg-item { background: none; border: none; border-right: 1px solid var(--line); color: var(--ink-faint); font: inherit; font-size: 12px; padding: 5px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .seg-item:last-child { border-right: 0; }
-.seg-item:hover { color: var(--text); }
-.seg-item--on { background: var(--active); color: var(--text); font-weight: 500; }
+.seg-item:hover { color: var(--ink); }
+.seg-item--on { background: var(--paper-deep); color: var(--ink); font-weight: 500; }
 
 /* Slice slide-over — fixed right-side panel, flat surface, hairline border.
    #panel is an empty <div> until htmx swaps a .panel-inner into it, so it
@@ -484,68 +428,20 @@ body { padding: 0; }
 
 /* Same partial also renders as ordinary page content on the full slice page
    (web/slice_detail.html), so panel-inner itself carries no positioning. */
-.panel-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-}
+.panel-inner { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+.panel-head { display: flex; align-items: flex-start; gap: 10px; }
+.panel-head-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.panel-title { font-size: 18px; font-weight: 600; line-height: 1.4; letter-spacing: -0.02em; cursor: text; }
+.panel-area { color: var(--ink-faint); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
 
-.panel-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.meta { font-size: 12px; color: var(--ink-faint); }
 
-.panel-title {
-  flex: 1 1 auto;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.4;
-  cursor: text;
-}
-
-.meta {
-  font-size: 12px;
-}
-
-.spec {
-  line-height: 1.6;
-  cursor: text;
-}
-
-.spec :is(p, ul, ol) {
-  margin: 0 0 8px;
-}
-
-.spec pre {
-  background: var(--sidebar);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  overflow-x: auto;
-}
-
-.spec code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-}
-
-.spec-edit {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font: inherit;
-  padding: 8px 10px;
-  resize: vertical;
-}
-
-.spec-edit:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+.spec { line-height: 1.6; cursor: text; }
+.spec :is(p, ul, ol) { margin: 0 0 8px; }
+.spec pre { background: var(--paper-deep); border: 1px solid var(--line); border-radius: var(--radius-small); padding: 8px 10px; overflow-x: auto; }
+.spec code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.spec-edit { width: 100%; background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius-small); color: var(--ink); font: inherit; padding: 8px 10px; resize: vertical; }
+.spec-edit:focus { outline: none; border-color: var(--blue); }
 
 /* Bite row + checkbox — flat list item, filled square only on the done state
    (a form control affordance, not a status "chip"). */
@@ -579,24 +475,11 @@ body { padding: 0; }
 .bite-chev .icon-chev { transition: transform 0.15s; }
 .bite-chev--open .icon-chev { transform: rotate(90deg); }
 
-.bite-body {
-  margin: 4px 0 8px 24px;
-  padding: 10px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
+.bite-body { margin: 4px 0 8px 24px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-small); }
 .bite-body-src { font-size: 11px; margin-bottom: 8px; }
 .bite-body-md :is(p, ul, ol) { margin: 0 0 6px; }
-
-.bite--done .bite-title {
-  color: var(--muted);
-  text-decoration: line-through;
-}
-
-.bite-status {
-  font-size: 11px;
-}
+.bite--done .bite-title { color: var(--ink-faint); text-decoration: line-through; }
+.bite-status { font-size: 11px; color: var(--ink-faint); }
 
 
 /* Unified list panel: one surface, hairline dividers, 14px radius. */
@@ -640,19 +523,10 @@ body { padding: 0; }
 .tail-open .icon-chev { transform: rotate(90deg); }
 .tail-body { margin-top: 10px; }
 
-/* Always-ready add input (Bite, Capture) — visible field, accent focus ring. */
-.bite-add {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font: inherit;
-  padding: 7px 10px;
-  margin-top: 8px;
-}
-.bite-add::placeholder { color: var(--muted); }
-.bite-add:focus { outline: none; border-color: var(--accent); }
+/* Always-ready add input (Bite, Capture) — visible field, blue focus ring. */
+.bite-add { width: 100%; background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius-small); color: var(--ink); font: inherit; padding: 7px 10px; margin-top: 8px; }
+.bite-add::placeholder { color: var(--ink-faint); }
+.bite-add:focus { outline: none; border-color: var(--blue); }
 
 /* Ghost add (＋Area) — quiet until focus. */
 .area-add-input:focus { border: none; }
@@ -720,25 +594,12 @@ body { padding: 0; }
 .tag-input:focus { outline: none; border-color: var(--accent); }
 
 /* Status row — segmented control + a quiet drop/restore overflow control. */
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 2px 0;
-}
-.dropped-tag { font-size: 12px; }
+.status-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0; }
+.status-destructive { margin-top: 2px; }
+.dropped-tag { color: var(--ink-faint); font-size: 12px; }
 
-/* Slice panel meta footer — creator + created/updated, muted, hairline top. */
-.panel-meta {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+/* Panel meta footer. */
+.panel-meta { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-faint); display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* All-clear: calm, quiet, no celebration. */
 .all-clear {
