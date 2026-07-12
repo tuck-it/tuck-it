@@ -1,9 +1,10 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from tuckit.core.models import OrgMember
-from tuckit.core.services.orgs import is_org_admin, is_org_owner, list_org_members
+from tuckit.core.services.exceptions import InvalidValue
+from tuckit.core.services.orgs import is_org_admin, is_org_owner, list_org_members, rename_org
 from tuckit.web.auth import get_current_workspace
 
 
@@ -24,14 +25,21 @@ def org_settings(request):
 
 
 # The org page (above) links/posts to these four endpoints, but their real
-# behavior is scoped to later tasks (org rename, member role/remove, org
-# delete) in the management-surfaces plan. Routing them to a stub here keeps
-# `{% url %}` resolvable in settings_org.html / _member_row.html so this
-# task's GET page renders; the bodies are placeholders for those tasks to
-# replace, not final behavior.
+# behavior is scoped to later tasks (member role/remove, org delete) in the
+# management-surfaces plan. Routing them to a stub here keeps `{% url %}`
+# resolvable in settings_org.html / _member_row.html so this task's GET page
+# renders; the bodies are placeholders for those tasks to replace, not final
+# behavior.
 @require_POST
 def org_rename(request):
-    return HttpResponse(status=501)
+    ws = get_current_workspace(request)
+    if ws is None or not is_org_admin(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
+    try:
+        org = rename_org(ws.org, request.POST.get("name", ""))
+    except InvalidValue as exc:
+        return HttpResponse(str(exc), status=400)
+    return HttpResponse(org.name)
 
 
 @require_POST

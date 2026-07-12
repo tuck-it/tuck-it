@@ -38,3 +38,23 @@ def test_org_page_lists_members_and_workspaces(org_ctx):
 def test_org_page_requires_login(client, db):
     resp = client.get("/settings/org")
     assert resp.status_code in (302, 403)
+
+
+@pytest.mark.django_db
+def test_owner_renames_org(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    _login(client, owner, ws)
+    resp = client.post("/settings/org/rename", {"name": "Beta"})
+    assert resp.status_code == 200
+    org.refresh_from_db()
+    assert org.name == "Beta"
+
+
+@pytest.mark.django_db
+def test_member_cannot_rename_org(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    _login(client, member, ws)
+    resp = client.post("/settings/org/rename", {"name": "Beta"})
+    assert resp.status_code == 403
+    org.refresh_from_db()
+    assert org.name == "Acme"
