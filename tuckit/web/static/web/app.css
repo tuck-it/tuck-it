@@ -228,7 +228,8 @@ body { padding: 0; }
   outline: none;
 }
 
-/* Triage row — same flat surface treatment as a slice-row, plus inline triage selects. */
+/* Triage row — bare flex row inside .panel (which supplies surface + dividers);
+   the Area/Status selects are quiet until the row is hovered/focused. */
 .triage-row {
   line-height: 1.5;
   padding: 9px 14px;
