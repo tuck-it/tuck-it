@@ -26,6 +26,34 @@ def triage_count(request):
     return {"triage_count": n}
 
 
+def attention_count(request):
+    """Count of items needing attention (stale triage + stalled building), for
+    the sidebar Attention badge."""
+    from tuckit.core.services.state import attention_items
+
+    ws = get_current_workspace(request)
+    if not ws:
+        return {}
+    return {"attention_count": len(attention_items(ws))}
+
+
+def in_progress_count(request):
+    """Count of actively-worked items (building slices + doing bites), for the
+    sidebar In Progress badge."""
+    from tuckit.core.models import Bite, Slice
+
+    ws = get_current_workspace(request)
+    if not ws:
+        return {}
+    n = (
+        Slice.objects.filter(
+            area__workspace=ws, area__is_triage=False, status="building"
+        ).count()
+        + Bite.objects.filter(slice__area__workspace=ws, status="doing").count()
+    )
+    return {"in_progress_count": n}
+
+
 def switchable_workspaces(request):
     """Expose the user's accessible workspaces (across all their orgs) to every
     template so the sidebar switcher can list them, regardless of whether the

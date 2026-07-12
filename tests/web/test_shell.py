@@ -40,3 +40,20 @@ def test_sidebar_grouped_with_english_labels_and_capture(client_local, workspace
     assert ">In Progress<" not in body
     assert ">Roadmap<" not in body
     assert 'class="nav-sep"' in body        # visual group separator present
+
+
+@pytest.mark.django_db
+def test_lens_count_context_processors(client_local, workspace):
+    from datetime import timedelta
+    from django.utils import timezone
+    from tuckit.core.models import Slice
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.bites import create_bite
+    a = create_area(workspace, "Backend")
+    s = create_slice(a, "정체", status="building")           # building -> in_progress
+    create_bite(s, "doing bite", status="doing")             # doing bite -> in_progress
+    Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))  # -> attention
+    resp = client_local.get("/")
+    assert resp.context["attention_count"] == 1              # the stalled building slice
+    assert resp.context["in_progress_count"] == 2             # building slice + doing bite
