@@ -45,4 +45,14 @@
       {% endif %}
     </div>
   </section>
+  <section class="group">
+    <div class="group-label">Recent activity</div>
+    {% if recent_activity %}
+      <div class="panel">
+        {% for event in recent_activity %}{% include "web/partials/_activity_row.html" %}{% endfor %}
+      </div>
+    {% else %}
+      <div class="empty muted">아직 활동이 없어요</div>
+    {% endif %}
+  </section>
 {% endblock %}

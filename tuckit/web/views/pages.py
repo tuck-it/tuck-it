@@ -5,6 +5,7 @@ from tuckit.core.services.state import (
     attention_items,
     roadmap_state,
     in_progress_state,
+    recent_activity,
 )
 from tuckit.web.auth import get_current_workspace
 
@@ -15,6 +16,7 @@ def home(request):
         "workspace": ws,
         "state": home_state(ws) if ws else {},
         "roadmap": roadmap_state(ws) if ws else {},
+        "recent_activity": recent_activity(ws) if ws else [],
     })
 
 

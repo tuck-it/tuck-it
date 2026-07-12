@@ -76,3 +76,16 @@ def test_home_shows_roadmap_strip(client_local, workspace):
     assert 'class="roadmap-strip"' in body
     assert 'href="/roadmap/"' in body
     assert "Building 1" in body
+
+
+@pytest.mark.django_db
+def test_home_shows_recent_activity(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice, set_slice_status
+    a = create_area(workspace, "Backend")
+    s = create_slice(a, "웹훅 재시도", status="planned")
+    set_slice_status(s, "building")
+    body = client_local.get("/").content.decode()
+    assert "Recent activity" in body
+    assert "웹훅 재시도" in body
+    assert "planned" in body and "building" in body   # the transition

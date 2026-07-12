@@ -1027,3 +1027,22 @@ body {
   outline: none;
 }
 .rm-shipped { color: var(--muted); }
+
+/* --- Activity feed (nav redesign, Phase 3) --- */
+.activity-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  line-height: 1.5;
+}
+.activity-actor {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 40px;
+}
+.activity-actor.is-agent { color: var(--accent); }
+.activity-body { flex: 1 1 auto; min-width: 0; }
+.activity-target { color: var(--text); }
+.activity-time { flex: 0 0 auto; font-size: 12px; }

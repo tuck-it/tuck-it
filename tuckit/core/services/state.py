@@ -149,6 +149,11 @@ def roadmap_state(workspace: Workspace) -> dict:
     }
 
 
+def recent_activity(workspace: Workspace, limit: int = 8) -> list:
+    """The workspace's most recent activity events (newest first, capped)."""
+    return list(workspace.activity.all()[:limit])
+
+
 def in_progress_state(workspace: Workspace) -> dict:
     """What's actively being worked right now: building slices + doing bites."""
     slices = list(
