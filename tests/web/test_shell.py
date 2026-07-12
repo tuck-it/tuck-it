@@ -6,7 +6,7 @@ def test_home_returns_200_and_shell(client_local):
     resp = client_local.get("/")
     assert resp.status_code == 200
     body = resp.content.decode()
-    assert "tuck-it" in body            # brand in sidebar
+    assert "tuckit" in body            # brand in sidebar
     assert "tokens.brand.css" in body and "tokens.product.css" in body
 
 
