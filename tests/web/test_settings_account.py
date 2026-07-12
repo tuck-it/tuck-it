@@ -1,6 +1,6 @@
 import pytest
 
-from tuckit.core.models import OrgMember, Org, User, Workspace
+from tuckit.core.models import OrgMember, User, Workspace
 from tuckit.core.services.orgs import create_org
 
 
@@ -102,3 +102,14 @@ def test_switch_org_sets_active_workspace(acct_ctx):
     resp = client.post(f"/settings/account/orgs/{org_b.id}/open")
     assert resp.status_code in (204, 302)
     assert client.session.get("active_workspace_id") == ws_b.id
+
+
+@pytest.mark.django_db
+def test_switch_org_not_a_member_404s(acct_ctx):
+    client, user, org_a, ws_a, org_b, ws_b = acct_ctx
+    stranger_owner = User.objects.create(username="s@s.com", email="s@s.com")
+    foreign, foreign_ws = create_org(stranger_owner, name="Foreign")
+    _login(client, user, ws_a)
+    resp = client.post(f"/settings/account/orgs/{foreign.id}/open")
+    assert resp.status_code == 404
+    assert client.session.get("active_workspace_id") == ws_a.id  # unchanged

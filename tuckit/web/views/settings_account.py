@@ -1,4 +1,4 @@
-from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
@@ -6,7 +6,6 @@ from tuckit.core.models import OrgMember, Workspace
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.orgs import (
     create_org,
-    is_org_owner,
     leave_org,
     list_user_orgs,
     _owner_count,
