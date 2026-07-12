@@ -4,9 +4,6 @@
     <h1 class="area-title">Triage</h1>
   </div>
   <section class="group">
-    <div class="panel" id="triage-list">
-      {% for slice in slices %}{% include "web/partials/_triage_row.html" %}{% endfor %}
-      {% if not slices %}<div class="empty muted" id="triage-empty">Triage clean</div>{% endif %}
-    </div>
+    {% include "web/partials/_triage_list.html" %}
   </section>
 {% endblock %}

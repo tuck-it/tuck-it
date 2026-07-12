@@ -5,10 +5,8 @@
 {# Count badge — always refreshed (context processor supplies triage_count). #}
 {% include "web/partials/_triage_count.html" with oob=True %}
 
-{# New row — prepended only if the Triage list is on-screen; ignored elsewhere. #}
-<template hx-swap-oob="afterbegin:#triage-list">
-  {% include "web/partials/_triage_row.html" %}
-</template>
-
-{# Remove the "Triage clean" placeholder if it's on the page. #}
-<div id="triage-empty" hx-swap-oob="delete"></div>
+{# Triage list — OOB re-render of the whole list (matches what a page reload
+   shows). Lands only if #triage-list is on-screen; htmx skips it
+   (oobErrorNoTarget) on every other page. Re-rendering by id with
+   hx-swap-oob="true" is reliable, unlike positional (afterbegin) OOB. #}
+{% include "web/partials/_triage_list.html" with oob=True %}

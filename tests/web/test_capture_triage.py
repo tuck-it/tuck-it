@@ -46,16 +46,15 @@ def test_capture_returns_toast_count_and_row(client_local, workspace):
     # toast
     assert 'id="toast"' in body
     assert "Captured" in body
-    # Both the toast and the count must be OOB-swapped (form is hx-swap="none",
-    # so anything without hx-swap-oob is silently dropped). Exactly two elements
-    # carry hx-swap-oob="true": #toast and #triage-count.
-    assert body.count('hx-swap-oob="true"') >= 2
-    # live row prepended into the triage list (lands only if that page is open)
-    assert "afterbegin:#triage-list" in body
+    # The Triage list is OOB re-rendered (id-matched, reliable) with the new row;
+    # it lands only if that page is open. Three elements carry hx-swap-oob="true":
+    # #toast, #triage-count, and #triage-list. The form is hx-swap="none", so
+    # anything without hx-swap-oob would be silently dropped in the browser.
+    assert 'id="triage-list"' in body
+    assert body.count('hx-swap-oob="true"') >= 3
     assert "빠른 기록" in body
-    # empty-state placeholder gets removed
-    assert 'id="triage-empty"' in body
-    assert 'hx-swap-oob="delete"' in body
+    # list is non-empty now, so the "Triage clean" placeholder must be gone
+    assert 'id="triage-empty"' not in body
 
 @pytest.mark.django_db
 def test_area_create_returns_oob_area_nav(client_local, workspace):
