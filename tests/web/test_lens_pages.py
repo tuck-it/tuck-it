@@ -58,14 +58,16 @@ def test_activity_page_lists_events(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/activity/").content.decode()
     assert "로그인 리다이렉트" in body
-    assert f'href="{p}/activity/"' in body   # sidebar link present on the page shell
+    assert '/activity/?panel=1' in body   # Activity reachable via the utility bell
 
 
 @pytest.mark.django_db
-def test_sidebar_has_activity_lens(client_local, workspace):
+def test_sidebar_activity_is_bell_not_nav(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/").content.decode()
-    assert ">Activity<" in body and f'href="{p}/activity/"' in body
+    assert 'aria-label="Activity"' in body and '/activity/?panel=1' in body
+    nav_group = body.split('class="nav-group"')[1].split("</nav>")[0]
+    assert ">Activity<" not in nav_group
 
 
 @pytest.mark.django_db

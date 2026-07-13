@@ -76,8 +76,8 @@ def test_home_omits_roadmap_strip_and_recent_activity(client_local, workspace):
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
     assert 'class="roadmap-strip"' not in body        # moved off Home
     assert "Recent activity" not in body              # moved off Home
-    assert f'href="/{workspace.org.slug}/{workspace.slug}/roadmap/"' in body                 # still reachable via sidebar
-    assert f'href="/{workspace.org.slug}/{workspace.slug}/activity/"' in body
+    assert f'href="/{workspace.org.slug}/{workspace.slug}/roadmap/"' in body                 # Board still reachable via sidebar
+    assert '/activity/?panel=1' in body               # Activity via the utility bell
 
 
 @pytest.mark.django_db
