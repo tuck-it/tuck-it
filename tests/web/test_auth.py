@@ -33,3 +33,21 @@ def test_login_grants_access(client, workspace):
 def test_healthcheck_public_when_login_required(client):
     resp = client.get("/healthcheck")
     assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_login_form_authenticates_by_email(client):
+    # Regression: the login form field is named "username" (Django's
+    # AuthenticationForm) but authenticates by USERNAME_FIELD=email — posting
+    # the email logs you in through the real HTTP form path.
+    from tuckit.core.services.accounts import register
+
+    register(email="e2e@x.com", org_name="E2E", slug="e2e", password="pw12345678")
+
+    ok = client.post("/login/", {"username": "e2e@x.com", "password": "pw12345678"})
+    assert ok.status_code == 302
+    assert client.get("/").status_code == 200
+
+    client.logout()
+    bad = client.post("/login/", {"username": "e2e@x.com", "password": "nope"})
+    assert bad.status_code == 200  # form re-renders, not authenticated
