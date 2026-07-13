@@ -1,4 +1,3 @@
-{% load static %}
 <!doctype html>
 <html lang="en">
 {% include "registration/_auth_head.html" with page_title="Invitation" %}
@@ -18,7 +17,7 @@
             <p class="auth-note">Signing up as <strong>{{ invitation.email }}</strong></p>
             <div class="auth-field">
               <label for="inv-password">Password</label>
-              <input id="inv-password" type="password" name="password" required>
+              <input id="inv-password" type="password" name="password" autocomplete="new-password" required>
             </div>
           {% endif %}
           <button type="submit" class="button button-primary">Join</button>

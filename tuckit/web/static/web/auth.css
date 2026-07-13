@@ -84,11 +84,3 @@
   margin: 0 0 4px;
 }
 .auth-note strong { color: var(--ink); font-weight: 560; }
-
-.auth-alt {
-  margin-top: 20px;
-  font-size: 14px;
-  color: var(--ink-soft);
-  text-align: center;
-}
-.auth-alt a { color: var(--blue); }

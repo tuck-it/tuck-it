@@ -38,7 +38,6 @@ def test_register_screen_uses_design_system(client):
 @pytest.mark.django_db
 @override_settings(REGISTRATION_OPEN=True)
 def test_register_duplicate_slug_shows_styled_error(client):
-    from tuckit.core.models import Org
     Org.objects.create(name="Taken", slug="taken")
     resp = client.post("/register/", {
         "email": "new@x.com", "org_name": "X", "slug": "taken", "password": "pw123456",
