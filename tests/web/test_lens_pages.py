@@ -91,3 +91,10 @@ def test_activity_full_page_still_works(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/activity/").content.decode()
     assert 'class="page-title"' in body            # full page, not panel
+
+
+@pytest.mark.django_db
+def test_board_page_heading(client_local, workspace):
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    body = client_local.get(f"{p}/roadmap/").content.decode()
+    assert '<h1 class="page-title">Board</h1>' in body
