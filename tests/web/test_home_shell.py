@@ -1,4 +1,8 @@
+from pathlib import Path
+
 import pytest
+
+APP_CSS = Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css"
 
 
 @pytest.mark.django_db
@@ -71,3 +75,16 @@ def test_bottom_utility_row_replaces_bordered_theme_button(client_local, workspa
     assert ">Light mode<" not in body                 # text label gone
     assert ">Dark mode<" not in body
     assert "Switch to light mode" in body             # icon toggle keeps an accessible name
+
+
+@pytest.mark.django_db
+def test_capture_button_still_rendered(client_local, workspace):
+    body = client_local.get("/").content.decode()
+    assert 'class="capture-btn"' in body
+
+
+def test_capture_button_is_solid_teal_primary():
+    css = APP_CSS.read_text(encoding="utf-8")
+    block = css.split(".capture-btn {", 1)[1].split("}", 1)[0]
+    assert "background: var(--blue)" in block   # solid teal, not paper-raised
+    assert "border: none" in block              # mismatched border removed

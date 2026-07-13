@@ -832,20 +832,22 @@ body { padding: 0; }
   align-items: center;
   gap: 9px;
   min-height: 40px;
-  color: var(--ink);
   line-height: 1.5;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
+  background: var(--blue);
+  border: none;
   border-radius: var(--radius-small);
   text-align: left;
   font: inherit;
+  font-weight: 600;
+  color: var(--paper);
   cursor: pointer;
   width: 100%;
-  padding: 6px 10px;
+  padding: 6px 12px;
   margin-top: 6px;
 }
-.capture-btn:hover { border-color: var(--blue); }
-.capture-btn .icon { stroke: var(--blue); }
+.capture-btn:hover { background: var(--blue-strong); }
+.capture-btn .icon { stroke: var(--paper); }
+.capture-btn .nav-kbd { color: var(--paper); border-color: var(--paper); opacity: 0.65; }
 
 .nav-kbd {
   font-size: 11px;
