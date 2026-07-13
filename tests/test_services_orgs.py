@@ -4,7 +4,7 @@ from tuckit.core.models import Area, Org, OrgMember, User, Workspace
 from tuckit.core.services.orgs import (
     accessible_workspaces, user_can_access_workspace, is_org_admin, seat_count, create_workspace,
     is_org_owner, rename_org, list_org_members, change_member_role, remove_member, delete_workspace,
-    create_org, list_user_orgs, leave_org,
+    create_org, list_user_orgs, leave_org, _unique_org_slug,
 )
 from tuckit.core.services.exceptions import InvalidValue
 
@@ -29,8 +29,10 @@ def test_create_workspace_sets_up_inbox_and_default(org_with_owner):
 @pytest.mark.django_db
 def test_create_workspace_unique_slug_within_org(org_with_owner):
     org, _ = org_with_owner
-    a = create_workspace(org, "Board")
-    b = create_workspace(org, "Board")
+    # different names that slugify to the same base ("board") -> slug must dedupe
+    a = create_workspace(org, "Board!")
+    b = create_workspace(org, "Board?")
+    assert a.name != b.name
     assert a.slug != b.slug
 
 
@@ -255,3 +257,44 @@ def test_leave_org_rejects_last_org():
     with pytest.raises(InvalidValue):
         leave_org(member, org=org)
     assert OrgMember.objects.filter(user=member, org=org).exists()
+
+
+@pytest.mark.django_db
+def test_create_org_rejects_bad_slug():
+    from tuckit.core.models import User
+    u = User.objects.create(email="x@y.com")
+    with pytest.raises(InvalidValue):
+        create_org(u, name="Acme", slug="Bad Slug!")
+
+
+@pytest.mark.django_db
+def test_create_org_rejects_reserved_slug():
+    from tuckit.core.models import User
+    u = User.objects.create(email="x2@y.com")
+    with pytest.raises(InvalidValue):
+        create_org(u, name="Settings Co", slug="settings")
+
+
+@pytest.mark.django_db
+def test_auto_org_slug_avoids_reserved():
+    # name "Admin" slugifies to reserved "admin" -> must be escaped
+    assert _unique_org_slug("Admin") != "admin"
+
+
+@pytest.mark.django_db
+def test_org_name_not_globally_unique():
+    from tuckit.core.models import User
+    u1 = User.objects.create(email="a@y.com")
+    u2 = User.objects.create(email="b@y.com")
+    create_org(u1, name="Acme", slug="acme-one")
+    # same name, different slug -> allowed
+    create_org(u2, name="Acme", slug="acme-two")
+    assert Org.objects.filter(name="Acme").count() == 2
+
+
+@pytest.mark.django_db
+def test_workspace_name_unique_per_org():
+    org = Org.objects.create(name="Org", slug="org-x")
+    create_workspace(org, "Design")
+    with pytest.raises(InvalidValue):
+        create_workspace(org, "design")  # case-insensitive duplicate
