@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings
 
 
 @pytest.mark.django_db
@@ -18,3 +19,26 @@ def test_login_screen_uses_design_system(client, workspace):
     # login form fields preserved (names unchanged)
     assert 'name="username"' in body
     assert 'name="password"' in body
+
+
+@pytest.mark.django_db
+@override_settings(REGISTRATION_OPEN=True)
+def test_register_screen_uses_design_system(client):
+    body = client.get("/register/").content.decode()
+    assert 'class="auth-card"' in body
+    assert "web/auth.css" in body
+    assert "web/app.css" not in body
+    for name in ("email", "org_name", "slug", "password"):
+        assert f'name="{name}"' in body
+
+
+@pytest.mark.django_db
+@override_settings(REGISTRATION_OPEN=True)
+def test_register_duplicate_slug_shows_styled_error(client):
+    from tuckit.core.models import Org
+    Org.objects.create(name="Taken", slug="taken")
+    resp = client.post("/register/", {
+        "email": "new@x.com", "org_name": "X", "slug": "taken", "password": "pw123456",
+    })
+    assert resp.status_code == 200
+    assert 'class="auth-error"' in resp.content.decode()
