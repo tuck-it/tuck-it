@@ -69,3 +69,28 @@ def test_workspace_missing_org(user_ctx):
                       {"kind": "workspace", "slug": "fresh"})
     body = resp.json()
     assert body["available"] is False and body["error"]
+
+
+@pytest.mark.django_db
+def test_workspace_kind_blocked_for_anonymous(client, db):
+    org = Org.objects.create(name="Acme", slug="acme")
+    create_workspace(org, "Design")
+    resp = client.get("/settings/check-slug",
+                      {"kind": "workspace", "slug": "design", "org": "acme"})
+    assert resp.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}
+
+
+@pytest.mark.django_db
+def test_workspace_kind_blocked_for_nonmember(client, db):
+    org = Org.objects.create(name="Acme", slug="acme")
+    create_workspace(org, "Design")
+    outsider = User.objects.create(email="outsider@a.com")
+    client.force_login(outsider)
+
+    resp_taken = client.get("/settings/check-slug",
+                            {"kind": "workspace", "slug": "design", "org": "acme"})
+    assert resp_taken.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}
+
+    resp_free = client.get("/settings/check-slug",
+                           {"kind": "workspace", "slug": "fresh", "org": "acme"})
+    assert resp_free.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}

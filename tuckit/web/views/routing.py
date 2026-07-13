@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org, OrgMember, Workspace
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.slugs import normalize_slug, validate_slug
 
@@ -17,7 +17,11 @@ def check_slug(request):
         taken = Org.objects.filter(slug=slug).exists()
     else:
         org = Org.objects.filter(slug=normalize_slug(request.GET.get("org", ""))).first()
-        if not org:
+        if (
+            org is None
+            or not request.user.is_authenticated
+            or not OrgMember.objects.filter(user=request.user, org=org).exists()
+        ):
             return JsonResponse({"available": False, "error": "조직을 찾을 수 없습니다"})
         taken = Workspace.objects.filter(org=org, slug=slug).exists()
     if taken:
@@ -28,7 +32,6 @@ def check_slug(request):
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 
-from tuckit.core.models import OrgMember
 from tuckit.core.services.orgs import accessible_workspaces
 
 
