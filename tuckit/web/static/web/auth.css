@@ -1,0 +1,94 @@
+/* Auth screens (login, register, invite acceptance).
+   Standalone pages that do NOT extend web/base.html — no app shell/sidebar.
+   Loaded after tokens.brand + tokens.product + base.css; NOT with app.css.
+   Values use var(--token) only — no literal hex, no hardcoded radius. */
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px var(--shadow);
+  padding: 32px 28px;
+}
+
+.auth-brand {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.auth-title { margin-bottom: 6px; }
+
+.auth-sub {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--ink-soft);
+}
+
+.auth-field input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 12px;
+  background: var(--paper-solid);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+}
+/* focus border comes from the base.css input:focus-visible primitive */
+
+.auth-form .button { width: 100%; margin-top: 4px; }
+
+.auth-error {
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-small);
+  color: var(--warn);
+  font-size: 14px;
+}
+
+.auth-note {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+.auth-note strong { color: var(--ink); font-weight: 560; }
+
+.auth-alt {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.auth-alt a { color: var(--blue); }

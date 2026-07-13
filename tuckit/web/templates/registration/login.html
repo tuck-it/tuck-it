@@ -1,12 +1,29 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Log in — tuck-it</title></head>
+{% include "registration/_auth_head.html" with page_title="Log in" %}
 <body>
-  <h1>Log in</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Log in</button>
-  </form>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-brand">tuckit</div>
+      <h1 class="auth-title">Log in</h1>
+      {% if form.non_field_errors %}
+        <div class="auth-error">{{ form.non_field_errors|join:" " }}</div>
+      {% endif %}
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        <div class="auth-field">
+          <label for="{{ form.username.id_for_label }}">Email</label>
+          {{ form.username }}
+        </div>
+        <div class="auth-field">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+        </div>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <button type="submit" class="button button-primary">Log in</button>
+      </form>
+    </div>
+  </main>
 </body>
 </html>
