@@ -229,6 +229,24 @@ body { padding: 0; }
 }
 .card-bites { color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
 
+/* Non-drag status control — quiet until the card is hovered/focused. */
+.card-move {
+  margin-top: 6px;
+  width: 100%;
+  opacity: 0;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 6px;
+  transition: opacity var(--ease);
+}
+.slice-card:hover .card-move,
+.slice-card:focus-within .card-move { opacity: 1; }
+.card-move:focus { opacity: 1; border-color: var(--blue); outline: none; }
+
 /* Mobile: horizontal scroll-snap so four columns are not squeezed. */
 @media (max-width: 767px) {
   .board {

@@ -72,3 +72,33 @@ def test_move_foreign_neighbor_404s_without_change(client_local, workspace):
     )
     assert resp.status_code == 404
     assert Slice.objects.get(pk=s.id).status == "planned"
+
+
+@pytest.mark.django_db
+def test_card_has_status_move_control(client_local, workspace):
+    a = create_area(workspace, "B")
+    create_slice(a, "card one", status="building")
+    body = client_local.get(f"/areas/{a.slug}/?view=board").content.decode()
+    assert 'aria-label="Move to status"' in body
+    assert 'class="card-move"' in body
+
+
+@pytest.mark.django_db
+def test_move_via_hx_returns_board_html(client_local, workspace):
+    a = create_area(workspace, "B")
+    s = create_slice(a, "movable", status="planned")
+    resp = client_local.post(f"/slices/{s.id}/move", {"status": "building"},
+                             HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    body = resp.content.decode()
+    assert 'id="board"' in body                    # re-rendered board
+    assert Slice.objects.get(pk=s.id).status == "building"
+
+
+@pytest.mark.django_db
+def test_move_without_hx_returns_204(client_local, workspace):
+    a = create_area(workspace, "B")
+    s = create_slice(a, "movable", status="planned")
+    resp = client_local.post(f"/slices/{s.id}/move", {"status": "building"})
+    assert resp.status_code == 204
+    assert Slice.objects.get(pk=s.id).status == "building"

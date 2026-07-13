@@ -1,10 +1,13 @@
 from django.db import transaction
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice
-from tuckit.core.services.slices import set_slice_status, reorder_slice
+from tuckit.core.services.slices import set_slice_status, reorder_slice, list_slices
 from tuckit.web.auth import get_current_workspace
+
+_STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
 
 
 def slice_move(request, slice_id):
@@ -33,4 +36,9 @@ def slice_move(request, slice_id):
         if before is not None or after is not None:
             reorder_slice(slice_, before=before, after=after)
 
+    if request.headers.get("HX-Request"):
+        area = slice_.area
+        slices = list(list_slices(area).prefetch_related("tags"))
+        groups = [(s, [x for x in slices if x.status == s]) for s in _STATUS_ORDER]
+        return render(request, "web/partials/_board.html", {"groups": groups})
     return HttpResponse(status=204)
