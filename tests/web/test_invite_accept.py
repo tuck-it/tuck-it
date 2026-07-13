@@ -56,4 +56,4 @@ def test_used_token_shows_invalid(client, invite):
     client.post(f"/invite/{inv.token}/")  # accept once
     resp = client.get(f"/invite/{inv.token}/")
     assert resp.status_code == 200
-    assert b"invalid" in resp.content.lower() or "유효하지".encode() in resp.content
+    assert b"no longer valid" in resp.content.lower()

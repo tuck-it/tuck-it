@@ -1,6 +1,9 @@
 import pytest
 from django.test import override_settings
 
+from tuckit.core.models import Org, OrgMember, User
+from tuckit.core.services.invitations import create_invitation
+
 
 @pytest.mark.django_db
 def test_login_screen_uses_design_system(client, workspace):
@@ -42,3 +45,18 @@ def test_register_duplicate_slug_shows_styled_error(client):
     })
     assert resp.status_code == 200
     assert 'class="auth-error"' in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_invite_screen_uses_design_system(client):
+    org = Org.objects.create(name="Acme", slug="acme")
+    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    OrgMember.objects.create(user=owner, org=org, role="owner")
+    inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
+    body = client.get(f"/invite/{inv.token}/").content.decode()
+    assert 'class="auth-card"' in body
+    assert "web/auth.css" in body
+    assert "web/app.css" not in body
+    assert "Join Acme" in body          # English heading with org name
+    assert "new@x.com" in body          # locked email shown for anonymous invitee
+    assert 'name="password"' in body
