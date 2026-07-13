@@ -61,3 +61,13 @@ def test_nav_order_queues_before_states_activity_last(client_local, workspace):
     i_act = body.find(">Activity<")
     assert -1 not in (i_att, i_tri, i_prog, i_road, i_act)
     assert i_att < i_tri < i_prog < i_road < i_act
+
+
+@pytest.mark.django_db
+def test_bottom_utility_row_replaces_bordered_theme_button(client_local, workspace):
+    body = client_local.get("/").content.decode()
+    assert 'class="util-row"' in body                 # compact icon row present
+    assert "theme-toggle" not in body                 # old bordered button gone
+    assert ">Light mode<" not in body                 # text label gone
+    assert ">Dark mode<" not in body
+    assert "Switch to light mode" in body             # icon toggle keeps an accessible name

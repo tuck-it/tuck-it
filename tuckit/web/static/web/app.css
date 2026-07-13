@@ -496,8 +496,6 @@ body { padding: 0; }
 }
 
 
-/* Theme toggle — plain nav-style button, pinned to the bottom of the sidebar. */
-.theme-toggle { margin-top: auto; color: var(--ink-faint); }
 
 /* Page heading + capture action row. */
 .page-head {
@@ -811,6 +809,23 @@ body { padding: 0; }
 .nav-group { display: flex; flex-direction: column; gap: 4px; }
 .nav-sep { height: 1px; background: var(--line); margin: 10px 4px; }
 .nav-spacer { flex: 1 1 auto; }
+
+/* --- Bottom utility row: Settings + theme toggle --- */
+.util-row { display: flex; gap: 4px; margin-top: 6px; }
+.util-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 36px; padding: 6px 10px;
+  color: var(--ink-faint); text-decoration: none;
+  background: none; border: none; font: inherit; cursor: pointer;
+  border-radius: var(--radius-small);
+}
+.util-settings { flex: 1 1 auto; justify-content: flex-start; }
+.util-theme { flex: 0 0 auto; width: 36px; }
+.util-btn:hover { background: var(--paper-raised); color: var(--ink); }
+.util-btn .icon { stroke: var(--ink-faint); }
+.util-btn:hover .icon { stroke: var(--ink); }
+.util-btn--active { color: var(--ink); background: var(--blue-soft); }
+.util-btn--active .icon { stroke: var(--blue); }
 
 .capture-btn {
   display: flex;

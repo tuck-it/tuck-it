@@ -32,13 +32,18 @@
 
   <div class="nav-spacer"></div>
 
-  <a class="nav muted{% if request.resolver_match.url_name == 'settings_workspace' or request.resolver_match.url_name == 'settings_org' %} nav--active{% endif %}"
-     href="{% url 'web:settings_workspace' %}">{% icon "settings" %}<span class="nav-label">Settings</span></a>
-  <button class="nav theme-toggle" type="button"
-          x-data="{theme: document.documentElement.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}"
-          x-on:click="theme = theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; localStorage.setItem('theme', theme)">
-    <span x-text="theme === 'dark' ? 'Light mode' : 'Dark mode'">Dark mode</span>
-  </button>
+  <div class="util-row">
+    <a class="util-btn util-settings{% if request.resolver_match.url_name == 'settings_workspace' or request.resolver_match.url_name == 'settings_org' %} util-btn--active{% endif %}"
+       href="{% url 'web:settings_workspace' %}">{% icon "settings" %}<span class="util-label">Settings</span></a>
+    <button class="util-btn util-theme" type="button"
+            x-data="{theme: document.documentElement.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}"
+            x-on:click="theme = theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; localStorage.setItem('theme', theme)"
+            :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+            :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+      <span x-show="theme === 'dark'">{% icon "sun" %}</span>
+      <span x-show="theme !== 'dark'" style="display:none">{% icon "moon" %}</span>
+    </button>
+  </div>
 
   <button class="capture-btn" type="button"
           x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
