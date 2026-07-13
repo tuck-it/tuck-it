@@ -158,14 +158,6 @@ ROADMAP_BOARD_ORDER = ["idea", "planned", "building", "shipped"]
 ROADMAP_STATUS_KEYS = {"idea", "planned", "building", "shipped"}
 
 
-def roadmap_board_groups(workspace: Workspace) -> list[tuple[str, list]]:
-    """roadmap_state reshaped as ordered (status, slices) tuples for the
-    workspace-wide kanban board (idea → planned → building → shipped). Each
-    slice keeps its prefetched .area so cards can show which area they belong to."""
-    state = roadmap_state(workspace)
-    return [(status, state[status]) for status in ROADMAP_BOARD_ORDER]
-
-
 def cap_shipped(workspace: Workspace, shipped: list) -> tuple[list, int]:
     """Trim a recency-sorted shipped list to the workspace's board window.
     Returns (visible, total). Pure — operates on an already-fetched list."""

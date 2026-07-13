@@ -224,3 +224,21 @@ def test_app_css_declares_droppable_state():
     css = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css").read_text()
     assert ".board-col--droppable" in css
     assert ".slice-card--ghost" in css
+
+
+@pytest.mark.django_db
+def test_workspace_move_rerender_keeps_shipped_footer(client_local, workspace):
+    workspace.shipped_board_mode = "count"
+    workspace.shipped_board_limit = 1
+    workspace.save(update_fields=["shipped_board_mode", "shipped_board_limit"])
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    a = create_area(workspace, "Design")
+    create_slice(a, "shipped one", status="shipped")
+    create_slice(a, "shipped two", status="shipped")
+    mover = create_slice(a, "mover", status="planned")
+    resp = client_local.post(
+        f"{p}/slices/{mover.id}/move?scope=workspace",
+        {"status": "building"}, HTTP_HX_REQUEST="true",
+    )
+    body = resp.content.decode()
+    assert "View all shipped (2)" in body
