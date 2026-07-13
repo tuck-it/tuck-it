@@ -102,3 +102,18 @@ def test_move_without_hx_returns_204(client_local, workspace):
     resp = client_local.post(f"/slices/{s.id}/move", {"status": "building"})
     assert resp.status_code == 204
     assert Slice.objects.get(pk=s.id).status == "building"
+
+
+def test_board_js_declares_drag_states():
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "board.js").read_text()
+    assert "ghostClass" in js
+    assert "board-col--droppable" in js
+    assert 'filter: ".card-move"' in js
+
+
+def test_app_css_declares_droppable_state():
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css").read_text()
+    assert ".board-col--droppable" in css
+    assert ".slice-card--ghost" in css

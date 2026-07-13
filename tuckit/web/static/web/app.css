@@ -247,6 +247,15 @@ body { padding: 0; }
 .slice-card:focus-within .card-move { opacity: 1; }
 .card-move:focus { opacity: 1; border-color: var(--blue); outline: none; }
 
+/* Drag states — visible drop target + quiet ghost, tinted lift on the card. */
+.board-col--droppable .board-col-cards {
+  outline: 2px dashed var(--blue-soft);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}
+.slice-card--ghost { opacity: 0.4; }
+.slice-card--chosen { box-shadow: var(--shadow); cursor: grabbing; }
+
 /* Mobile: horizontal scroll-snap so four columns are not squeezed. */
 @media (max-width: 767px) {
   .board {

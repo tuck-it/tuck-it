@@ -20,7 +20,19 @@
       Sortable.create(list, {
         group: "board",
         animation: 150,
+        ghostClass: "slice-card--ghost",
+        chosenClass: "slice-card--chosen",
+        filter: ".card-move",
+        preventOnFilter: false,
+        onStart: function () {
+          document.querySelectorAll(".board-col").forEach(function (col) {
+            col.classList.add("board-col--droppable");
+          });
+        },
         onEnd: function (evt) {
+          document.querySelectorAll(".board-col").forEach(function (col) {
+            col.classList.remove("board-col--droppable");
+          });
           const item = evt.item;
           const sliceId = item.getAttribute("data-slice-id");
           const targetCol = evt.to.closest(".board-col");
