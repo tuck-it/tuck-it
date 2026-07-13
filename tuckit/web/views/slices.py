@@ -3,11 +3,9 @@ from django.shortcuts import render
 
 from tuckit.core.services.exceptions import NotFound
 from tuckit.core.services.resolve import get_area_by_slug, get_slice
-from tuckit.core.services.slices import list_slices
+from tuckit.core.services.slices import grouped_slices
 from tuckit.web.auth import get_current_workspace
 from tuckit.web.panel import slice_panel_context
-
-_STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
 
 
 def area_view(request, slug):
@@ -16,12 +14,12 @@ def area_view(request, slug):
         area = get_area_by_slug(ws, slug)
     except NotFound:
         raise Http404
-    slices = list(list_slices(area).prefetch_related("tags"))
-    groups = [(s, [x for x in slices if x.status == s]) for s in _STATUS_ORDER]
+    groups = grouped_slices(area)
+    has_any_slice = any(items for _, items in groups)
     return render(request, "web/area.html", {
         "area": area,
         "groups": groups,
-        "has_any_slice": bool(slices),
+        "has_any_slice": has_any_slice,
         "view": request.GET.get("view", "list"),
     })
 

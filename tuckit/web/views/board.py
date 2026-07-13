@@ -4,10 +4,8 @@ from django.shortcuts import render
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice
-from tuckit.core.services.slices import set_slice_status, reorder_slice, list_slices
+from tuckit.core.services.slices import set_slice_status, reorder_slice, grouped_slices
 from tuckit.web.auth import get_current_workspace
-
-_STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
 
 
 def slice_move(request, slice_id):
@@ -37,8 +35,6 @@ def slice_move(request, slice_id):
             reorder_slice(slice_, before=before, after=after)
 
     if request.headers.get("HX-Request"):
-        area = slice_.area
-        slices = list(list_slices(area).prefetch_related("tags"))
-        groups = [(s, [x for x in slices if x.status == s]) for s in _STATUS_ORDER]
+        groups = grouped_slices(slice_.area)
         return render(request, "web/partials/_board.html", {"groups": groups})
     return HttpResponse(status=204)

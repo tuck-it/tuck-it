@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, rename_area, delete_area, reorder_area
-from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices
+from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices, grouped_slices
 from tuckit.core.services.resolve import get_area, get_slice, get_area_by_slug
 from tuckit.web.auth import get_current_workspace
 
@@ -104,9 +104,6 @@ def area_reorder(request, area_id):
     return HttpResponse(status=204)
 
 
-_STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
-
-
 def area_slice_create(request, slug):
     ws = get_current_workspace(request)
     try:
@@ -116,10 +113,10 @@ def area_slice_create(request, slug):
     title = request.POST.get("title", "").strip()
     if title:
         create_slice(area, title, status="idea", source="human")
-    slices = list(list_slices(area).prefetch_related("tags"))
-    groups = [(s, [x for x in slices if x.status == s]) for s in _STATUS_ORDER]
+    groups = grouped_slices(area)
+    has_any_slice = any(items for _, items in groups)
     return render(request, "web/partials/_area_list.html", {
         "area": area,
         "groups": groups,
-        "has_any_slice": bool(slices),
+        "has_any_slice": has_any_slice,
     })

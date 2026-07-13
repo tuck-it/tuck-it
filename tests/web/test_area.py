@@ -55,13 +55,12 @@ def test_area_list_collapses_shipped_and_dropped(client_local, workspace):
     # shipped + dropped are inside <details>; building is not
     shipped_pos = body.index("shipped one")
     dropped_pos = body.index("dropped one")
-    building_pos = body.index("building one")
     details_open = [m for m in range(len(body)) if body.startswith("<details", m)]
     # both shipped and dropped titles follow a <details> that opens before them
     assert any(d < shipped_pos for d in details_open)
     assert any(d < dropped_pos for d in details_open)
-    # the building group is a plain <section class="group">, not wrapped in <details>
-    assert '<section class="group">' in body
+    # building renders unwrapped (before the first <details>, which is shipped)
+    assert body.index("building one") < body.index("<details")
 
 
 @pytest.mark.django_db

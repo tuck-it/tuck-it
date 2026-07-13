@@ -18,6 +18,16 @@ def list_slices(area: Area, status: str | None = None, tag: str | None = None) -
     return qs
 
 
+STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
+
+
+def grouped_slices(area: Area) -> list[tuple[str, list[Slice]]]:
+    """Slices of an area grouped by status in canonical order:
+    list of (status, [slices]) tuples. Tags are prefetched."""
+    slices = list(list_slices(area).prefetch_related("tags"))
+    return [(s, [x for x in slices if x.status == s]) for s in STATUS_ORDER]
+
+
 def create_slice(
     area: Area,
     title: str,

@@ -484,7 +484,6 @@ body { padding: 0; }
 .group { display: flex; flex-direction: column; gap: 8px; margin: 0 0 26px; }
 
 /* Collapsed state groups (shipped / dropped) use a native <details>. */
-.group-fold { margin: 0 0 26px; }
 .group-fold-summary { cursor: pointer; list-style: none; margin-bottom: 0; }
 .group-fold-summary::-webkit-details-marker { display: none; }
 .group-fold[open] .group-fold-summary { margin-bottom: 8px; }
@@ -1010,4 +1009,5 @@ body { padding: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar { transition: none; }
+  .card-move { transition: none; }
 }
