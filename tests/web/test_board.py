@@ -114,6 +114,54 @@ def test_move_without_hx_returns_204(client_local, workspace):
     assert Slice.objects.get(pk=s.id).status == "building"
 
 
+@pytest.mark.django_db
+def test_roadmap_tab_defaults_to_cross_area_board(client_local, workspace):
+    """The Board tab (web:roadmap) now defaults to a workspace-wide kanban that
+    labels each card with its parent area."""
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    design = create_area(workspace, "Design")
+    core = create_area(workspace, "Core")
+    create_slice(design, "polish empty states", status="building")
+    create_slice(core, "slice move api", status="planned")
+    body = client_local.get(f"{p}/roadmap/").content.decode()
+    assert 'id="board"' in body                     # kanban, not the flat list
+    assert 'data-status="building"' in body
+    assert 'data-status="planned"' in body
+    assert 'class="card-area"' in body              # parent area surfaced
+    assert "Design" in body and "Core" in body      # both areas' cards mixed in
+
+
+@pytest.mark.django_db
+def test_roadmap_tab_list_view_still_available(client_local, workspace):
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    a = create_area(workspace, "Design")
+    create_slice(a, "list-view slice", status="building")
+    body = client_local.get(f"{p}/roadmap/?view=list").content.decode()
+    assert "roadmap-dist" in body                   # the distribution strip
+    assert 'id="board"' not in body                 # not the kanban
+    assert "list-view slice" in body
+
+
+@pytest.mark.django_db
+def test_workspace_scope_move_rerenders_all_areas(client_local, workspace):
+    """A move from the Board tab (?scope=workspace) re-renders every area's
+    cards, not just the moved slice's area."""
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    design = create_area(workspace, "Design")
+    core = create_area(workspace, "Core")
+    moved = create_slice(design, "moved slice", status="planned")
+    create_slice(core, "other-area slice", status="idea")
+    resp = client_local.post(
+        f"{p}/slices/{moved.id}/move?scope=workspace",
+        {"status": "building"}, HTTP_HX_REQUEST="true",
+    )
+    body = resp.content.decode()
+    assert resp.status_code == 200
+    assert Slice.objects.get(pk=moved.id).status == "building"
+    assert "other-area slice" in body               # foreign area still present
+    assert 'class="card-area"' in body
+
+
 def test_board_js_declares_drag_states():
     from pathlib import Path
     js = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "board.js").read_text()

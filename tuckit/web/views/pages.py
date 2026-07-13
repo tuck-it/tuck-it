@@ -5,6 +5,7 @@ from tuckit.core.services.state import (
     home_state,
     attention_items,
     roadmap_state,
+    roadmap_board_groups,
     in_progress_state,
     recent_activity,
 )
@@ -43,8 +44,16 @@ def in_progress(request):
 
 def roadmap(request):
     ws = get_current_workspace(request)
+    view = "list" if request.GET.get("view") == "list" else "board"
+    state = roadmap_state(ws) if ws else {}
     return render(request, "web/roadmap.html", {
-        "state": roadmap_state(ws) if ws else {},
+        "state": state,
+        "groups": roadmap_board_groups(ws) if ws else [],
+        "view": view,
+        "has_any_slice": any(state.values()) if state else False,
+        # Board tab spans every area, so surface each slice's area on its card/row.
+        "show_area": True,
+        "board_scope": "workspace",
     })
 
 

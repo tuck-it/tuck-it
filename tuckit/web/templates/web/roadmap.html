@@ -1,15 +1,30 @@
 {% extends "web/base.html" %}
 {% load web_extras %}
 {% block main %}
-  <header class="page-head"><div class="page-head-l"><h1 class="page-title">Board</h1></div></header>
-  <div class="roadmap-dist">
-    <span class="rm-seg">Idea {{ state.idea|length }}</span>
-    <span class="rm-seg">Planned {{ state.planned|length }}</span>
-    <span class="rm-seg rm-building">Building {{ state.building|length }}</span>
-    <span class="rm-seg rm-shipped">Shipped {{ state.shipped|length }}</span>
-  </div>
-  {% include "web/partials/_status_group.html" with label="Building" slices=state.building empty_text="Nothing here yet" %}
-  {% include "web/partials/_status_group.html" with label="Planned" slices=state.planned empty_text="Nothing here yet" %}
-  {% include "web/partials/_status_group.html" with label="Idea" slices=state.idea empty_text="Nothing here yet" %}
-  {% include "web/partials/_status_group.html" with label="Shipped" slices=state.shipped empty_text="Nothing here yet" %}
+  <header class="page-head">
+    <div class="page-head-l"><h1 class="page-title">Board</h1></div>
+    <div class="view-toggle">
+      <a class="view-toggle-link{% if view == 'board' %} view-toggle-link--active{% endif %}"
+         href="?view=board">Board</a>
+      <a class="view-toggle-link{% if view == 'list' %} view-toggle-link--active{% endif %}"
+         href="?view=list">List</a>
+    </div>
+  </header>
+  {% if view == "list" %}
+    <div class="roadmap-dist">
+      <span class="rm-seg">Idea {{ state.idea|length }}</span>
+      <span class="rm-seg">Planned {{ state.planned|length }}</span>
+      <span class="rm-seg rm-building">Building {{ state.building|length }}</span>
+      <span class="rm-seg rm-shipped">Shipped {{ state.shipped|length }}</span>
+    </div>
+    {% include "web/partials/_status_group.html" with label="Building" slices=state.building empty_text="Nothing here yet" %}
+    {% include "web/partials/_status_group.html" with label="Planned" slices=state.planned empty_text="Nothing here yet" %}
+    {% include "web/partials/_status_group.html" with label="Idea" slices=state.idea empty_text="Nothing here yet" %}
+    {% include "web/partials/_status_group.html" with label="Shipped" slices=state.shipped empty_text="Nothing here yet" %}
+  {% else %}
+    {% include "web/partials/_board.html" %}
+    {% if not has_any_slice %}
+      <div class="empty muted">Nothing here yet — add a slice in any area and it shows up on the board.</div>
+    {% endif %}
+  {% endif %}
 {% endblock %}

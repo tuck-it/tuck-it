@@ -149,6 +149,17 @@ def roadmap_state(workspace: Workspace) -> dict:
     }
 
 
+ROADMAP_BOARD_ORDER = ["idea", "planned", "building", "shipped"]
+
+
+def roadmap_board_groups(workspace: Workspace) -> list[tuple[str, list]]:
+    """roadmap_state reshaped as ordered (status, slices) tuples for the
+    workspace-wide kanban board (idea → planned → building → shipped). Each
+    slice keeps its prefetched .area so cards can show which area they belong to."""
+    state = roadmap_state(workspace)
+    return [(status, state[status]) for status in ROADMAP_BOARD_ORDER]
+
+
 def recent_activity(workspace: Workspace, limit: int = 8) -> list:
     """The workspace's most recent activity events (newest first, capped)."""
     return list(workspace.activity.all()[:limit])

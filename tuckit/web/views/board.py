@@ -5,6 +5,7 @@ from django.shortcuts import render
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice
 from tuckit.core.services.slices import set_slice_status, reorder_slice, grouped_slices
+from tuckit.core.services.state import roadmap_board_groups
 from tuckit.web.auth import get_current_workspace
 
 
@@ -35,6 +36,15 @@ def slice_move(request, slice_id):
             reorder_slice(slice_, before=before, after=after)
 
     if request.headers.get("HX-Request"):
+        # The workspace-wide Board tab re-renders every area; the area page's
+        # board re-renders just that area. Drag-drop ignores this response
+        # (SortableJS updates optimistically) — only the card's <select> uses it.
+        if request.GET.get("scope") == "workspace":
+            return render(request, "web/partials/_board.html", {
+                "groups": roadmap_board_groups(ws),
+                "show_area": True,
+                "board_scope": "workspace",
+            })
         groups = grouped_slices(slice_.area)
         return render(request, "web/partials/_board.html", {"groups": groups})
     return HttpResponse(status=204)
