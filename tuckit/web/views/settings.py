@@ -27,20 +27,29 @@ def workspace_settings(request):
     })
 
 
+@require_POST
 def token_create(request):
     ws = get_current_workspace(request)
+    if ws is None or not is_org_admin(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
     token, raw = generate_token(ws, request.POST.get("name") or "token")
     return render(request, "web/partials/_token_row.html", {"token": token, "raw": raw})
 
 
+@require_POST
 def token_revoke(request, token_id):
     ws = get_current_workspace(request)
+    if ws is None or not is_org_admin(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
     revoke_token(ws, token_id)
     return HttpResponse(status=204)
 
 
+@require_POST
 def workspace_rename(request):
     ws = get_current_workspace(request)
+    if ws is None or not is_org_admin(request.user, ws.org):
+        return HttpResponseForbidden("권한이 없습니다")
     try:
         ws = rename_workspace(ws, request.POST.get("name", ""))
     except InvalidValue as exc:

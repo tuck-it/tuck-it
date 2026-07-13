@@ -104,3 +104,58 @@ def test_old_settings_redirects_to_workspace(client_local, workspace):
     resp = client_local.get(f"{sp}/")
     assert resp.status_code == 302
     assert resp.headers["Location"] == f"{sp}/workspace"
+
+
+@pytest.mark.django_db
+def test_member_cannot_rename_workspace(admin_two_ws):
+    client, org, admin, ws1, ws2 = admin_two_ws
+    member = User.objects.create(email="m-rename@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    _login(client, member, ws1)
+    resp = client.post(f"/settings/{org.slug}/{ws1.slug}/rename", {"name": "Renamed"})
+    assert resp.status_code == 403
+    ws1.refresh_from_db()
+    assert ws1.name == "One"
+
+
+@pytest.mark.django_db
+def test_member_cannot_create_token(admin_two_ws):
+    from tuckit.core.services.tokens import list_tokens
+    client, org, admin, ws1, ws2 = admin_two_ws
+    member = User.objects.create(email="m-tok@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    _login(client, member, ws1)
+    resp = client.post(f"/settings/{org.slug}/{ws1.slug}/tokens", {"name": "sneaky"})
+    assert resp.status_code == 403
+    assert list(list_tokens(ws1)) == []
+
+
+@pytest.mark.django_db
+def test_member_cannot_revoke_token(admin_two_ws):
+    from tuckit.core.services.tokens import generate_token, list_tokens
+    client, org, admin, ws1, ws2 = admin_two_ws
+    token, _raw = generate_token(ws1, "existing")
+    member = User.objects.create(email="m-rev@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    _login(client, member, ws1)
+    resp = client.post(f"/settings/{org.slug}/{ws1.slug}/tokens/{token.id}/revoke")
+    assert resp.status_code == 403
+    assert len(list(list_tokens(ws1))) == 1
+
+
+@pytest.mark.django_db
+def test_admin_can_create_token(admin_two_ws):
+    from tuckit.core.services.tokens import list_tokens
+    client, org, admin, ws1, ws2 = admin_two_ws
+    _login(client, admin, ws1)
+    resp = client.post(f"/settings/{org.slug}/{ws1.slug}/tokens", {"name": "ci"})
+    assert resp.status_code == 200
+    assert len(list(list_tokens(ws1))) == 1
+
+
+@pytest.mark.django_db
+def test_token_and_rename_endpoints_reject_get(admin_two_ws):
+    client, org, admin, ws1, ws2 = admin_two_ws
+    _login(client, admin, ws1)
+    assert client.get(f"/settings/{org.slug}/{ws1.slug}/tokens").status_code == 405
+    assert client.get(f"/settings/{org.slug}/{ws1.slug}/rename").status_code == 405
