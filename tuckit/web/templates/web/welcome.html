@@ -1,0 +1,59 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome — tuckit</title>
+  <script>
+    (function(){var s=localStorage.getItem("theme");if(s==="light"||s==="dark")document.documentElement.dataset.theme=s;})();
+  </script>
+  <link rel="stylesheet" href="{% static 'web/tokens.brand.css' %}">
+  <link rel="stylesheet" href="{% static 'web/tokens.product.css' %}">
+  <link rel="stylesheet" href="{% static 'web/base.css' %}">
+  <link rel="stylesheet" href="{% static 'web/welcome.css' %}">
+  <script defer src="{% static 'web/vendor/alpine.min.js' %}"></script>
+  <script src="{% static 'web/vendor/htmx.min.js' %}"></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div class="w-topbar">
+    <div class="w-brand">tuck<span>it</span></div>
+    <a class="w-skip" href="{% url 'web:home' %}">Skip setup</a>
+  </div>
+  <main class="w-stage" id="w-stage" x-data="{step:0}" x-cloak>
+    <div class="w-dots"><i :class="{on:step===0}"></i><i :class="{on:step===1}"></i></div>
+
+    <section x-show="step===0">
+      <p class="w-eyebrow">Welcome to tuckit</p>
+      <h1>Nothing your agent does slips past you.</h1>
+      <p class="w-lede">You and your AI agent work in <b>one shared workspace</b>. Every idea, change, and shipped feature — written by you or by your agent — lands in the same place. tuckit keeps watch, so <b>nothing quietly rots</b>.</p>
+      <div class="w-stream" aria-label="Example activity">
+        <div class="w-stream-head"><span>Activity · example</span><span class="w-live"><b></b>live</span></div>
+        <div class="w-evt"><span class="w-who agent">🤖</span><span class="w-line"><span class="actor">agent</span><span class="verb">created</span><span class="t">"Retry failed webhooks"</span></span><span class="w-when">2m</span></div>
+        <div class="w-evt"><span class="w-who you">👤</span><span class="w-line"><span class="actor">you</span><span class="verb">shipped</span><span class="t">"Login redirect fix"</span></span><span class="w-when">1h</span></div>
+        <div class="w-evt" style="background:color-mix(in srgb,var(--warn) 6%,transparent)">
+          <span class="w-who you">⚠</span><span class="w-line"><span class="t">"Payment-fail alert"</span></span><span class="w-when">9d</span>
+          <span class="w-needs"><span class="w-chip-needs">● Needs you · sat in triage 9 days</span></span>
+        </div>
+      </div>
+      <p class="w-note">That last one? Nobody touched it for 9 days. <b>tuckit surfaced it for you</b> — that's the whole point.</p>
+      <div class="w-nav"><div class="grow"></div><button type="button" class="button button-primary" @click="step=1">Connect your agent →</button></div>
+    </section>
+
+    <section x-show="step===1" x-cloak>
+      <p class="w-eyebrow">Step 1 of 2 · Connect</p>
+      <h1>Point your agent at this workspace.</h1>
+      <p class="w-lede">Your agent reads and writes tuckit over <b>MCP</b>. Add the endpoint and key below to your agent, then ask it to add something.</p>
+      <div id="w-key">{% include "web/partials/_welcome_key.html" %}</div>
+      <div class="w-listen">
+        <span class="w-radar"></span>
+        <span class="lt"><b>Listening for your agent…</b> ask it to capture or create something.</span>
+      </div>
+      <div class="w-nav"><button type="button" class="button w-ghost" @click="step=0">← Back</button><div class="grow"></div><a class="w-skip" href="{% url 'web:home' %}">Skip for now</a></div>
+    </section>
+  </main>
+  <script>
+    function wCopy(b){var i=b.previousElementSibling;i.select&&i.select();try{navigator.clipboard.writeText(i.value)}catch(e){}var o=b.textContent;b.textContent="Copied ✓";setTimeout(function(){b.textContent=o},1200)}
+  </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ def register_view(request):
         except InvalidValue as exc:
             return render(request, "registration/register.html", {"error": str(exc), "values": request.POST})
         login(request, user)
-        return redirect("web:home")
+        return redirect("web:welcome")
     return render(request, "registration/register.html", {"values": {}})
 
 

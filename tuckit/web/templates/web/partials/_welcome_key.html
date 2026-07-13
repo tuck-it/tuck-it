@@ -1,0 +1,32 @@
+<div class="w-field">
+  <label>MCP endpoint</label>
+  <div class="w-copyrow"><input class="mono" value="{{ mcp_url }}" readonly>
+    <button type="button" class="w-mini" onclick="wCopy(this)">Copy</button></div>
+</div>
+{% if raw_token %}
+  <div class="w-field">
+    <label>Workspace key — copy it now, it won't be shown again</label>
+    <div class="w-copyrow"><input value="{{ raw_token }}" readonly>
+      <button type="button" class="w-mini" onclick="wCopy(this)">Copy</button></div>
+  </div>
+  <div class="w-snip">
+    <label>Claude Code</label>
+    <div class="w-code"><pre><span class="c"># paste in your terminal</span>
+claude mcp add tuckit <span class="k">--transport</span> http {{ mcp_url }} \
+  <span class="k">--header</span> <span class="s">"Authorization: Bearer {{ raw_token }}"</span></pre></div>
+    <label>MCP JSON</label>
+    <div class="w-code"><pre>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"tuckit"</span>: {
+      <span class="k">"url"</span>: <span class="s">"{{ mcp_url }}"</span>,
+      <span class="k">"headers"</span>: { <span class="k">"Authorization"</span>: <span class="s">"Bearer {{ raw_token }}"</span> }
+    }
+  }
+}</pre></div>
+  </div>
+{% else %}
+  <button type="button" class="button button-primary" style="margin-top:8px"
+          hx-post="{% url 'web:welcome_generate_key' %}" hx-target="#w-key" hx-swap="innerHTML">
+    Generate your agent key
+  </button>
+{% endif %}

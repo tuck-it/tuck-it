@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
 from django.urls import path
 
-from tuckit.web.views import pages, slices, mutations, board, capture, health, workspaces, accounts, settings_org, settings_account
+from tuckit.web.views import pages, slices, mutations, board, capture, health, workspaces, accounts, settings_org, settings_account, welcome as welcome_views
 from tuckit.web.views import settings as settings_views
 
 app_name = "web"
@@ -14,6 +14,8 @@ urlpatterns = [
     path("register/", login_not_required(accounts.register_view), name="register"),
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("welcome/", welcome_views.welcome, name="welcome"),
+    path("welcome/key", welcome_views.welcome_generate_key, name="welcome_generate_key"),
     path("", pages.home, name="home"),
     path("capture", capture.capture, name="capture"),
     path("triage/", capture.triage_list, name="triage"),
