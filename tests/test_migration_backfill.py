@@ -17,7 +17,7 @@ def test_backfill_creates_org_and_migrates_membership():
     Workspace = old.get_model("core", "Workspace")
     Membership = old.get_model("core", "Membership")
 
-    u = User.objects.create(username="a@b.com", email="a@b.com")
+    u = User.objects.create(email="a@b.com")
     ws = Workspace.objects.create(name="Legacy", slug="legacy")
     Membership.objects.create(user=u, workspace=ws, role="owner")
 

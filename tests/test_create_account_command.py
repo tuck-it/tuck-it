@@ -14,7 +14,7 @@ def test_command_creates_account_from_password_env(monkeypatch):
         slug="space",
         password_env="SEED_PW",
     )
-    user = User.objects.get(username="a@b.com")
+    user = User.objects.get(email="a@b.com")
     assert user.check_password("tuckit-seed-pw-9x2")
     org = Org.objects.get(slug="space")
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()

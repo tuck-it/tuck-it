@@ -11,7 +11,6 @@ def test_register_creates_user_org_workspace():
         email="a@b.com", org_name="Space", slug="space", password="pw123456"
     )
     assert user.email == "a@b.com"
-    assert user.username == "a@b.com"
     assert user.check_password("pw123456")
     assert org.slug == "space"
     assert ws.org == org
@@ -21,25 +20,25 @@ def test_register_creates_user_org_workspace():
 
 
 @pytest.mark.django_db
-def test_register_explicit_username():
+def test_register_does_not_set_username():
     user, _, _ = register(
-        email="a@b.com", org_name="S", slug="s", password="pw123456", username="alice"
+        email="a@b.com", org_name="S", slug="s", password="pw123456"
     )
-    assert user.username == "alice"
+    assert user.username is None
 
 
 @pytest.mark.django_db
 def test_register_duplicate_org_slug_raises():
     register(email="a@b.com", org_name="S", slug="dup", password="pw123456")
     with pytest.raises(InvalidValue):
-        register(email="c@d.com", org_name="S2", slug="dup", password="pw123456", username="bob")
+        register(email="c@d.com", org_name="S2", slug="dup", password="pw123456")
 
 
 @pytest.mark.django_db
-def test_register_duplicate_username_raises():
-    register(email="a@b.com", org_name="S", slug="s1", password="pw123456", username="same")
+def test_register_duplicate_email_raises():
+    register(email="same@b.com", org_name="S", slug="s1", password="pw123456")
     with pytest.raises(InvalidValue):
-        register(email="c@d.com", org_name="S2", slug="s2", password="pw123456", username="same")
+        register(email="same@b.com", org_name="S2", slug="s2", password="pw123456")
 
 
 @pytest.mark.django_db

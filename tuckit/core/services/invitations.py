@@ -47,13 +47,12 @@ def accept_invitation(*, token, user) -> OrgMember:
 
 
 @transaction.atomic
-def register_invited(*, invitation, password, username=None) -> tuple[User, OrgMember]:
-    username = username or invitation.email
-    if User.objects.filter(username=username).exists():
-        raise InvalidValue(f"User already exists: {username}")
+def register_invited(*, invitation, password) -> tuple[User, OrgMember]:
+    if User.objects.filter(email=invitation.email).exists():
+        raise InvalidValue(f"User already exists: {invitation.email}")
     if not password:
         raise InvalidValue("비밀번호를 입력해 주세요")
-    user = User(username=username, email=invitation.email)
+    user = User(email=invitation.email)
     try:
         validate_password(password, user)
     except ValidationError as exc:

@@ -49,7 +49,7 @@ def test_register_duplicate_slug_shows_styled_error(client):
 @pytest.mark.django_db
 def test_invite_screen_uses_design_system(client):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
     body = client.get(f"/invite/{inv.token}/").content.decode()

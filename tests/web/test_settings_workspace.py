@@ -14,7 +14,7 @@ def _login(client, user, ws):
 @pytest.fixture
 def admin_two_ws(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
-    admin = User.objects.create(username="a@a.com", email="a@a.com")
+    admin = User.objects.create(email="a@a.com")
     OrgMember.objects.create(user=admin, org=org, role="admin")
     ws1 = create_workspace(org, "One")
     ws2 = create_workspace(org, "Two")
@@ -55,7 +55,7 @@ def test_cannot_delete_last_workspace_via_view(admin_two_ws):
 @pytest.mark.django_db
 def test_member_cannot_delete_workspace(admin_two_ws):
     client, org, admin, ws1, ws2 = admin_two_ws
-    member = User.objects.create(username="m@a.com", email="m@a.com")
+    member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
     _login(client, member, ws1)
     resp = client.post("/settings/workspace/delete")

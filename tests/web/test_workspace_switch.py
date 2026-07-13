@@ -7,7 +7,7 @@ from tuckit.core.services.orgs import create_workspace
 @pytest.fixture
 def two_workspaces(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    user = User.objects.create(username="o@a.com", email="o@a.com")
+    user = User.objects.create(email="o@a.com")
     user.set_password("pw123456")
     user.save()
     OrgMember.objects.create(user=user, org=org, role="owner")

@@ -18,7 +18,7 @@ def _limit_2(org):
 @pytest.fixture
 def org_owner(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
     return org, owner
 

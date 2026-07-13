@@ -13,7 +13,7 @@ def _login(client, user, ws):
 
 @pytest.fixture
 def acct_ctx(client, db):
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     org_a, ws_a = create_org(user, name="Alpha")
     org_b, ws_b = create_org(user, name="Beta")
     return client, user, org_a, ws_a, org_b, ws_b
@@ -48,7 +48,7 @@ def test_leave_org_from_account(acct_ctx):
     # create_org makes `user` the SOLE owner of org_b, so leaving it would hit
     # the sole-owner guard regardless of the account-page flow being tested
     # here. Add a co-owner so this test exercises a clean, allowed leave.
-    co_owner = User.objects.create(username="c@c.com", email="c@c.com")
+    co_owner = User.objects.create(email="c@c.com")
     OrgMember.objects.create(user=co_owner, org=org_b, role="owner")
     _login(client, user, ws_a)                     # currently in Alpha
     om_b = OrgMember.objects.get(user=user, org=org_b)
@@ -64,7 +64,7 @@ def test_leave_current_org_clears_active_workspace(acct_ctx):
     # co-owner is needed for the leave itself to be allowed — this test's
     # intent is to verify the *session-clearing* behavior on a successful
     # leave, not to re-verify the sole-owner guard (covered separately).
-    co_owner = User.objects.create(username="d@d.com", email="d@d.com")
+    co_owner = User.objects.create(email="d@d.com")
     OrgMember.objects.create(user=co_owner, org=org_a, role="owner")
     _login(client, user, ws_a)                     # active = Alpha's ws
     client.post(f"/settings/account/orgs/{org_a.id}/leave")
@@ -87,7 +87,7 @@ def test_leave_sole_owner_returns_400(acct_ctx):
 @pytest.mark.django_db
 def test_leave_org_not_a_member_404s(acct_ctx):
     client, user, org_a, ws_a, org_b, ws_b = acct_ctx
-    stranger_owner = User.objects.create(username="s@s.com", email="s@s.com")
+    stranger_owner = User.objects.create(email="s@s.com")
     foreign, _ = create_org(stranger_owner, name="Foreign")
     _login(client, user, ws_a)
     resp = client.post(f"/settings/account/orgs/{foreign.id}/leave")
@@ -107,7 +107,7 @@ def test_switch_org_sets_active_workspace(acct_ctx):
 @pytest.mark.django_db
 def test_switch_org_not_a_member_404s(acct_ctx):
     client, user, org_a, ws_a, org_b, ws_b = acct_ctx
-    stranger_owner = User.objects.create(username="s@s.com", email="s@s.com")
+    stranger_owner = User.objects.create(email="s@s.com")
     foreign, foreign_ws = create_org(stranger_owner, name="Foreign")
     _login(client, user, ws_a)
     resp = client.post(f"/settings/account/orgs/{foreign.id}/open")

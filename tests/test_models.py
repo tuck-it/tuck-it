@@ -24,7 +24,7 @@ def test_workspace_slug_unique_within_org():
 
 @pytest.mark.django_db
 def test_membership_is_unique_per_user_org():
-    user = User.objects.create_user(username="bob", password="x")
+    user = User.objects.create_user(email="bob@x.com", password="x")
     org = Org.objects.create(name="O", slug="o")
     OrgMember.objects.create(user=user, org=org, role="owner")
     with pytest.raises(IntegrityError):

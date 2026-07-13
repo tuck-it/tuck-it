@@ -14,9 +14,9 @@ def _login(client, user, ws):
 @pytest.fixture
 def org_ctx(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
-    member = User.objects.create(username="m@a.com", email="m@a.com")
+    member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
     ws = create_workspace(org, "Board")
     return client, org, owner, member, ws
@@ -96,7 +96,7 @@ def test_admin_removes_member(org_ctx):
 def test_cannot_remove_member_of_other_org(org_ctx):
     client, org, owner, member, ws = org_ctx
     other = Org.objects.create(name="Other", slug="other")
-    stranger = User.objects.create(username="s@s.com", email="s@s.com")
+    stranger = User.objects.create(email="s@s.com")
     om_other = OrgMember.objects.create(user=stranger, org=other, role="member")
     _login(client, owner, ws)
     resp = client.post(f"/settings/org/members/{om_other.id}/remove")

@@ -7,7 +7,7 @@ from tuckit.core.services.orgs import create_workspace
 @pytest.mark.django_db
 def test_cannot_open_slice_from_another_org(client):
     org_a = Org.objects.create(name="A", slug="a")
-    user_a = User.objects.create(username="a@a.com", email="a@a.com")
+    user_a = User.objects.create(email="a@a.com")
     OrgMember.objects.create(user=user_a, org=org_a, role="owner")
     ws_a = create_workspace(org_a, "A-Board")
 

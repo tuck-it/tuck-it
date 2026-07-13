@@ -12,7 +12,7 @@ from tuckit.core.services.exceptions import InvalidValue
 @pytest.fixture
 def org_with_owner(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    user = User.objects.create(username="o@a.com", email="o@a.com")
+    user = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=user, org=org, role="owner")
     return org, user
 
@@ -42,7 +42,7 @@ def test_access_helpers(org_with_owner):
     assert is_org_admin(user, org) is True
     assert seat_count(org) == 1
 
-    outsider = User.objects.create(username="x@x.com", email="x@x.com")
+    outsider = User.objects.create(email="x@x.com")
     assert user_can_access_workspace(outsider, ws) is False
     assert is_org_admin(outsider, org) is False
     assert list(accessible_workspaces(user)) == [ws]
@@ -52,9 +52,9 @@ def test_access_helpers(org_with_owner):
 @pytest.fixture
 def org_owner_admin_member(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="owner@a.com", email="owner@a.com")
-    admin = User.objects.create(username="admin@a.com", email="admin@a.com")
-    member = User.objects.create(username="member@a.com", email="member@a.com")
+    owner = User.objects.create(email="owner@a.com")
+    admin = User.objects.create(email="admin@a.com")
+    member = User.objects.create(email="member@a.com")
     om_owner = OrgMember.objects.create(user=owner, org=org, role="owner")
     om_admin = OrgMember.objects.create(user=admin, org=org, role="admin")
     om_member = OrgMember.objects.create(user=member, org=org, role="member")
@@ -150,7 +150,7 @@ def test_cannot_delete_last_workspace_in_org(org_with_owner):
 
 @pytest.mark.django_db
 def test_create_org_makes_org_owner_and_first_workspace():
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     org, ws = create_org(user, name="Acme Labs")
     assert org.slug == "acme-labs"                       # auto slug from name
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
@@ -161,7 +161,7 @@ def test_create_org_makes_org_owner_and_first_workspace():
 
 @pytest.mark.django_db
 def test_create_org_auto_slug_is_unique():
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     a, _ = create_org(user, name="Dup")
     b, _ = create_org(user, name="Dup")
     assert a.slug != b.slug                               # second gets -2 suffix
@@ -169,14 +169,14 @@ def test_create_org_auto_slug_is_unique():
 
 @pytest.mark.django_db
 def test_create_org_rejects_blank_name():
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     with pytest.raises(InvalidValue):
         create_org(user, name="   ")
 
 
 @pytest.mark.django_db
 def test_create_org_rejects_taken_explicit_slug():
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     create_org(user, name="First", slug="taken")
     with pytest.raises(InvalidValue):
         create_org(user, name="Second", slug="taken")
@@ -194,7 +194,7 @@ def test_create_org_runs_signup_hook():
     import tests.test_services_orgs as mod
     mod._hook = _hook
     with override_settings(TUCKIT_SIGNUP_HOOK="tests.test_services_orgs._hook"):
-        user = User.objects.create(username="hook@u.com", email="hook@u.com")
+        user = User.objects.create(email="hook@u.com")
         org, ws = create_org(user, name="Hooked")
     assert seen["ok"] == ("hook@u.com", org.slug)
     assert org.pk is not None
@@ -202,7 +202,7 @@ def test_create_org_runs_signup_hook():
 
 @pytest.mark.django_db
 def test_list_user_orgs_returns_role_and_workspace_count():
-    user = User.objects.create(username="u@u.com", email="u@u.com")
+    user = User.objects.create(email="u@u.com")
     org_a, _ = create_org(user, name="Alpha")          # owner, 1 ws
     org_b, _ = create_org(user, name="Beta")           # owner, 1 ws
     Workspace.objects.create(org=org_b, name="Extra", slug="extra")  # Beta now 2 ws
@@ -216,10 +216,10 @@ def test_list_user_orgs_returns_role_and_workspace_count():
 
 @pytest.mark.django_db
 def test_leave_org_removes_membership():
-    owner = User.objects.create(username="o@o.com", email="o@o.com")
+    owner = User.objects.create(email="o@o.com")
     org, _ = create_org(owner, name="Team")            # owner also needs a 2nd org
     create_org(owner, name="Solo")                     # so leaving Team isn't "last org"
-    member = User.objects.create(username="m@m.com", email="m@m.com")
+    member = User.objects.create(email="m@m.com")
     OrgMember.objects.create(user=member, org=org, role="member")
     create_org(member, name="Members Own")             # member has a 2nd org too
     leave_org(member, org=org)
@@ -228,8 +228,8 @@ def test_leave_org_removes_membership():
 
 @pytest.mark.django_db
 def test_leave_org_rejects_non_member():
-    stranger = User.objects.create(username="s@s.com", email="s@s.com")
-    other_owner = User.objects.create(username="o@o.com", email="o@o.com")
+    stranger = User.objects.create(email="s@s.com")
+    other_owner = User.objects.create(email="o@o.com")
     org, _ = create_org(other_owner, name="NotYours")
     create_org(stranger, name="Strangers Own")
     with pytest.raises(InvalidValue):
@@ -238,7 +238,7 @@ def test_leave_org_rejects_non_member():
 
 @pytest.mark.django_db
 def test_leave_org_rejects_sole_owner():
-    owner = User.objects.create(username="o@o.com", email="o@o.com")
+    owner = User.objects.create(email="o@o.com")
     org, _ = create_org(owner, name="OnlyOwner")
     create_org(owner, name="Second")                   # not last-org, isolate the sole-owner guard
     with pytest.raises(InvalidValue):
@@ -248,8 +248,8 @@ def test_leave_org_rejects_sole_owner():
 
 @pytest.mark.django_db
 def test_leave_org_rejects_last_org():
-    member = User.objects.create(username="m@m.com", email="m@m.com")
-    other_owner = User.objects.create(username="o@o.com", email="o@o.com")
+    member = User.objects.create(email="m@m.com")
+    other_owner = User.objects.create(email="o@o.com")
     org, _ = create_org(other_owner, name="TheOrg")
     OrgMember.objects.create(user=member, org=org, role="member")  # member's ONLY org
     with pytest.raises(InvalidValue):

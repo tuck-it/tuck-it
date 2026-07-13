@@ -8,7 +8,7 @@ from tuckit.core.services.invitations import create_invitation
 @pytest.fixture
 def invite(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
     return org, inv
@@ -27,7 +27,7 @@ def test_anon_can_register_via_invite_even_when_closed(client, invite):
 @pytest.mark.django_db
 def test_logged_in_matching_email_joins(client, invite):
     org, inv = invite
-    user = User.objects.create(username="new@x.com", email="new@x.com")
+    user = User.objects.create(email="new@x.com")
     user.set_password("pw123456")
     user.save()
     client.force_login(user)
@@ -39,7 +39,7 @@ def test_logged_in_matching_email_joins(client, invite):
 @pytest.mark.django_db
 def test_logged_in_mismatched_email_rejected(client, invite):
     org, inv = invite
-    other = User.objects.create(username="z@z.com", email="z@z.com")
+    other = User.objects.create(email="z@z.com")
     other.set_password("pw123456")
     other.save()
     client.force_login(other)
@@ -51,7 +51,7 @@ def test_logged_in_mismatched_email_rejected(client, invite):
 @pytest.mark.django_db
 def test_used_token_shows_invalid(client, invite):
     org, inv = invite
-    user = User.objects.create(username="new@x.com", email="new@x.com")
+    user = User.objects.create(email="new@x.com")
     client.force_login(user)
     client.post(f"/invite/{inv.token}/")  # accept once
     resp = client.get(f"/invite/{inv.token}/")

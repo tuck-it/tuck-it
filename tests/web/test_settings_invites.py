@@ -8,7 +8,7 @@ from tuckit.core.services.orgs import create_workspace
 @pytest.fixture
 def owner_client(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     owner.set_password("pw123456")
     owner.save()
     OrgMember.objects.create(user=owner, org=org, role="owner")
@@ -42,7 +42,7 @@ def test_cancel_invite(owner_client):
 @pytest.mark.django_db
 def test_member_cannot_invite(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
-    member = User.objects.create(username="m@a.com", email="m@a.com")
+    member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
     ws = create_workspace(org, "Board")
     client.force_login(member)
@@ -56,11 +56,11 @@ def test_member_cannot_invite(client, db):
 @pytest.mark.django_db
 def test_member_cannot_cancel_invite(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
 
-    member = User.objects.create(username="m@a.com", email="m@a.com")
+    member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
     ws = create_workspace(org, "Board")
     client.force_login(member)

@@ -10,7 +10,7 @@ from tuckit.core.services.invitations import (
 @pytest.fixture
 def org_owner(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     OrgMember.objects.create(user=owner, org=org, role="owner")
     return org, owner
 
@@ -28,7 +28,7 @@ def test_create_invitation_pending_with_token(org_owner):
 def test_accept_by_logged_in_matching_email(org_owner):
     org, owner = org_owner
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
-    user = User.objects.create(username="new@x.com", email="new@x.com")
+    user = User.objects.create(email="new@x.com")
     member = accept_invitation(token=inv.token, user=user)
     assert member.org == org and member.role == "member"
     inv.refresh_from_db()
@@ -39,7 +39,7 @@ def test_accept_by_logged_in_matching_email(org_owner):
 def test_accept_is_single_use(org_owner):
     org, owner = org_owner
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
-    user = User.objects.create(username="new@x.com", email="new@x.com")
+    user = User.objects.create(email="new@x.com")
     accept_invitation(token=inv.token, user=user)
     with pytest.raises(NotFound):
         accept_invitation(token=inv.token, user=user)
@@ -49,7 +49,7 @@ def test_accept_is_single_use(org_owner):
 def test_accept_rejects_mismatched_email(org_owner):
     org, owner = org_owner
     inv = create_invitation(org=org, email="new@x.com", role="member", invited_by=owner)
-    other = User.objects.create(username="z@z.com", email="z@z.com")
+    other = User.objects.create(email="z@z.com")
     with pytest.raises(InvalidValue):
         accept_invitation(token=inv.token, user=other)
 

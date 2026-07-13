@@ -12,6 +12,6 @@ def workspace(db):
 
 @pytest.fixture
 def client_local(client, workspace):
-    user = User.objects.get(username="local")
+    user = User.objects.get(email="local@tuckit.local")
     client.force_login(user)
     return client

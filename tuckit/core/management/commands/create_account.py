@@ -14,7 +14,6 @@ class Command(BaseCommand):
         parser.add_argument("--email", required=True)
         parser.add_argument("--workspace", required=True, help="Org name (also used as the first workspace name).")
         parser.add_argument("--slug", required=True, help="Org slug.")
-        parser.add_argument("--username", default=None)
         parser.add_argument(
             "--password-env",
             default=None,
@@ -37,11 +36,10 @@ class Command(BaseCommand):
                 org_name=options["workspace"],
                 slug=options["slug"],
                 password=password,
-                username=options["username"],
             )
         except InvalidValue as exc:
             raise CommandError(str(exc))
 
         self.stdout.write(
-            self.style.SUCCESS(f"Created user {user.username} + org {org.slug}")
+            self.style.SUCCESS(f"Created user {user.email} + org {org.slug}")
         )

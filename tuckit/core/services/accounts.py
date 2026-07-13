@@ -8,16 +8,15 @@ from tuckit.core.services.orgs import create_org
 
 
 @transaction.atomic
-def register(*, email, org_name, slug, password, username=None) -> tuple[User, Org, Workspace]:
-    username = username or email
-    if User.objects.filter(username=username).exists():
-        raise InvalidValue(f"User already exists: {username}")
+def register(*, email, org_name, slug, password) -> tuple[User, Org, Workspace]:
+    if User.objects.filter(email=email).exists():
+        raise InvalidValue(f"User already exists: {email}")
     if Org.objects.filter(slug=slug).exists():
         raise InvalidValue(f"Org slug already taken: {slug}")
 
     if not password:
         raise InvalidValue("비밀번호를 입력해 주세요")
-    user = User(username=username, email=email)
+    user = User(email=email)
     try:
         validate_password(password, user)
     except ValidationError as exc:

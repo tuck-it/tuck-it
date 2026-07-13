@@ -5,8 +5,8 @@ from tuckit.core.services.orgs import create_workspace
 from tuckit.core.services.tokens import generate_token
 
 
-def ensure_bootstrap(username: str = "local", org_slug: str = "default") -> tuple[Workspace, str | None]:
-    user, _ = User.objects.get_or_create(username=username)
+def ensure_bootstrap(email: str = "local@tuckit.local", org_slug: str = "default") -> tuple[Workspace, str | None]:
+    user, _ = User.objects.get_or_create(email=email)
     org, _ = Org.objects.get_or_create(slug=org_slug, defaults={"name": "Default"})
     OrgMember.objects.get_or_create(user=user, org=org, defaults={"role": "owner"})
     workspace = org.workspaces.first() or create_workspace(org, "Default", slug="default")

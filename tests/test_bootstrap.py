@@ -8,7 +8,7 @@ from tuckit.core.models import Area, OrgMember, User, Workspace
 def test_bootstrap_creates_full_local_setup():
     workspace, raw = ensure_bootstrap()
     assert Workspace.objects.count() == 1
-    assert User.objects.filter(username="local").exists()
+    assert User.objects.filter(email="local@tuckit.local").exists()
     assert OrgMember.objects.filter(org=workspace.org, role="owner").exists()
     assert Area.objects.filter(workspace=workspace, slug="default").exists()
     assert Area.objects.filter(workspace=workspace, is_triage=True).count() == 1

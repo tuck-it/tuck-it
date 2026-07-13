@@ -14,7 +14,7 @@ def _limit_1(org):
 @pytest.mark.django_db
 def test_invite_over_limit_returns_402(client):
     org = Org.objects.create(name="Acme", slug="acme")
-    owner = User.objects.create(username="o@a.com", email="o@a.com")
+    owner = User.objects.create(email="o@a.com")
     owner.set_password("tuckit-seed-pw-9x2")
     owner.save()
     OrgMember.objects.create(user=owner, org=org, role="owner")  # 1 member == limit 1
