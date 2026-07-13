@@ -45,7 +45,7 @@ MIDDLEWARE = [
 ]
 
 LOGIN_URL = "web:login"
-LOGIN_REDIRECT_URL = "web:home"
+LOGIN_REDIRECT_URL = "web:root"
 LOGOUT_REDIRECT_URL = "web:login"
 
 ROOT_URLCONF = "tuckit.urls"

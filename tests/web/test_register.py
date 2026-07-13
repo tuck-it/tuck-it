@@ -20,7 +20,7 @@ def test_register_open_creates_account_and_logs_in(client):
     assert User.objects.filter(email="new@x.com").exists()
     assert Org.objects.filter(slug="newco").exists()
     # logged in: home is now reachable
-    assert client.get("/").status_code == 200
+    assert client.get("/", follow=True).status_code == 200
 
 
 @pytest.mark.django_db
