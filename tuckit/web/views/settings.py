@@ -12,7 +12,8 @@ from tuckit.web.htmx import redirect_response
 
 
 def settings(request):
-    return redirect("web:settings_workspace")
+    ws = get_current_workspace(request)
+    return redirect("web:settings_workspace", org_slug=ws.org.slug, ws_slug=ws.slug)
 
 
 def workspace_settings(request):
@@ -57,7 +58,7 @@ def workspace_delete(request):
         return HttpResponse(str(exc), status=400)
     if request.session.get("active_workspace_id") == ws_id:
         request.session.pop("active_workspace_id", None)
-    return redirect_response(request, "web:home")
+    return redirect_response(request, "web:root")
 
 
 @require_POST
