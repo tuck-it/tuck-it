@@ -1,7 +1,6 @@
 /* First-run onboarding flow. Standalone page (no app shell). Loaded after
    tokens.brand + tokens.product + base.css; NOT with app.css. var(--token) only. */
-:root{ --sans:"Onest Variable","Onest",system-ui,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; }
+:root{ --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; }
 .w-topbar{width:100%;max-width:1180px;margin:0 auto;display:flex;align-items:center;
   justify-content:space-between;padding:22px 28px}
 .w-brand{font-weight:650;letter-spacing:-.02em;font-size:17px}
@@ -28,6 +27,7 @@
 .w-evt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
   padding:13px 16px;border-bottom:1px solid var(--line)}
 .w-evt:last-child{border-bottom:0}
+/* sub-9px decorative micro-radii (no smaller token exists) — intentional */
 .w-who{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px}
 .w-who.agent{background:var(--blue-soft);color:var(--blue-strong)}
 .w-who.you{background:var(--paper-deep);color:var(--ink-soft)}
@@ -51,7 +51,7 @@
   background:var(--paper-solid);padding:0 6px 0 13px}
 .w-copyrow input{flex:1;border:0;background:none;color:var(--ink);font-family:var(--mono);font-size:13px;
   padding:11px 0;min-width:0;outline:none}
-.w-mini{border:1px solid var(--line);background:var(--paper-raised);border-radius:7px;color:var(--ink-soft);
+.w-mini{border:1px solid var(--line);background:var(--paper-raised);border-radius:var(--radius-small);color:var(--ink-soft);
   font:inherit;font-family:var(--mono);font-size:12px;padding:5px 10px;cursor:pointer;white-space:nowrap}
 .w-mini:hover{border-color:var(--blue);color:var(--blue)}
 .w-snip{margin-top:16px}

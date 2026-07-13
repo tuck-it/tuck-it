@@ -15,7 +15,7 @@ from tuckit.web.auth import get_current_workspace
 def home(request):
     ws = get_current_workspace(request)
     ob = onboarding_state(ws) if ws else None
-    show_get_started = ws and not ws.onboarding_dismissed and ob and not ob.done
+    show_get_started = bool(ws and not ws.onboarding_dismissed and ob and not ob.done)
     return render(request, "web/home.html", {
         "workspace": ws,
         "state": home_state(ws) if ws else {},
@@ -57,6 +57,8 @@ def activity(request):
 @require_POST
 def dismiss_onboarding(request):
     ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:home")
     ws.onboarding_dismissed = True
     ws.save(update_fields=["onboarding_dismissed"])
     return redirect("web:home")

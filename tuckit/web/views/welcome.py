@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 
 from tuckit.core.models import ActivityEvent
@@ -9,6 +9,8 @@ from tuckit.web.auth import get_current_workspace
 
 def welcome(request):
     ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:home")
     return render(request, "web/welcome.html", {
         "mcp_url": request.build_absolute_uri("/mcp"),
         "workspace": ws,
@@ -23,6 +25,8 @@ def welcome(request):
 @require_POST
 def welcome_generate_key(request):
     ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:home")
     _token, raw = generate_token(ws, "Agent (onboarding)")
     return render(request, "web/partials/_welcome_key.html", {
         "mcp_url": request.build_absolute_uri("/mcp"),
@@ -32,6 +36,8 @@ def welcome_generate_key(request):
 
 def welcome_agent_check(request):
     ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:home")
     try:
         since = int(request.GET.get("since", "0"))
     except ValueError:

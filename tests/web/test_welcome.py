@@ -1,7 +1,7 @@
 import pytest
 from django.test import override_settings
 
-from tuckit.core.models import ApiToken, User, ActivityEvent, Slice, Area
+from tuckit.core.models import ApiToken, ActivityEvent
 
 
 @pytest.mark.django_db
