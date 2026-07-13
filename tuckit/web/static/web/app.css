@@ -975,7 +975,7 @@ body { padding: 0; }
 .gs-list li.done .gs-lbl{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
 .gs-go{font-family:var(--mono,ui-monospace);font-size:12px;color:var(--accent);text-decoration:none}
 .gs-list li.done .gs-go{visibility:hidden}
-.gs-go kbd{font-family:inherit;border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.gs-go kbd{font-family:inherit;border:1px solid var(--line);border-radius:var(--radius-small);padding:0 5px}
 
 /* --- Mobile shell (<768px): top bar + off-canvas menu --- */
 .topbar-mobile { display: none; }
