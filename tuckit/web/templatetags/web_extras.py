@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+
 from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -16,6 +18,18 @@ def wurl_tag(context, name, *args, **kwargs):
     if ws is None:
         return "#"
     return reverse(name, args=[ws.org.slug, ws.slug, *args], kwargs=kwargs)
+
+
+@register.simple_tag(name="slice_push_url", takes_context=True)
+def slice_push_url(context, slice_id):
+    """Path (no host) for the current page with `slice=<id>` merged into the query,
+    dropping any existing `slice`/`panel` params. htmx pushes this so a refresh
+    restores the same list page with the slide-over reopened."""
+    request = context["request"]
+    parts = urlsplit(request.get_full_path())
+    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in ("slice", "panel")]
+    query.append(("slice", str(slice_id)))
+    return urlunsplit(("", "", parts.path, urlencode(query), ""))
 
 
 @register.simple_tag(name="bite_progress")
