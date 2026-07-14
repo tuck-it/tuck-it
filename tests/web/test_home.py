@@ -3,14 +3,13 @@ import pytest
 
 @pytest.mark.django_db
 def test_home_lists_building_and_attention(client_local, workspace):
-    from tuckit.core.services.areas import create_area, get_or_create_triage
+    from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     backend = create_area(workspace, "Backend")
-    create_slice(backend, "결제 도입", status="building")
-    resp = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/")
-    body = resp.content.decode()
-    assert "결제 도입" in body
-    assert "<span>now</span>" in body   # building group label (snake_case assign style)
+    create_slice(backend, "Payments work", status="building")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert "Payments work" in body
+    assert "<span>focus</span>" in body   # building slices now live in the Focus column
 
 
 @pytest.mark.django_db
@@ -99,9 +98,8 @@ def test_home_omits_roadmap_strip_and_recent_activity(client_local, workspace):
 def test_home_has_heading_and_capture(client_local, workspace):
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
     assert 'class="page-head"' in body
-    assert "<span>needs_you</span>" in body and "<span>now</span>" in body and "<span>doing</span>" in body
-    assert "next = " not in body                    # no planned yet → no Next fold
-    # a capture action is present in the page header (reuses the capture modal)
+    assert "<span>needs_you</span>" in body
+    assert "<span>focus</span>" in body and "<span>doing</span>" in body and "<span>next</span>" in body
     assert 'class="button button-small"' in body   # page-head Capture button
 
 
@@ -111,15 +109,13 @@ def test_home_shows_doing_bites_and_planned_in_next(client_local, workspace):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     a = create_area(workspace, "Backend")
-    s = create_slice(a, "빌딩 슬라이스", status="building")
-    create_bite(s, "지금 하는 것", status="doing")
-    create_slice(a, "다음 계획", status="planned")
+    s = create_slice(a, "Building slice", status="building")
+    create_bite(s, "Active bite", status="doing")
+    create_slice(a, "Planned next", status="planned")
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
-    assert "지금 하는 것" in body                    # doing bite on Home
-    # Planned now surfaces on Home inside the collapsed "Next" fold, so the
-    # solopreneur can see queued work without leaving the now-surface.
-    assert "다음 계획" in body
-    assert "next = " in body
+    assert "Active bite" in body           # doing bite in the Doing column
+    assert "Planned next" in body          # planned slice in the Next column
+    assert "<span>next</span>" in body
 
 
 @pytest.mark.django_db
@@ -135,17 +131,18 @@ def test_home_now_row_shows_spec_summary(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_home_active_headers_are_lead_styled(client_local, workspace):
+def test_home_active_headers_present(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     a = create_area(workspace, "Backend")
-    s = create_slice(a, "빌딩 슬라이스", status="building")
-    create_bite(s, "지금 하는 것", status="doing")
+    s = create_slice(a, "Building slice", status="building")
+    create_bite(s, "Doing bite", status="doing")
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
-    # needs_you, now, doing headers are all promoted to the lead tier.
-    assert body.count("group-label--lead") >= 3
-    assert '<span>doing</span>' in body
+    # needs_you stays a lead-styled group; Focus/Doing/Next are board-style columns.
+    assert "group-label--lead" in body
+    assert 'class="home-cols"' in body
+    assert "<span>doing</span>" in body
 
 
 @pytest.mark.django_db

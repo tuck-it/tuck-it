@@ -20,12 +20,30 @@
 
   {% if show_get_started %}{% include "web/partials/_get_started.html" %}{% endif %}
 
-  {% include "web/partials/_status_group.html" with label="now" slices=state.building show_area=True show_desc=True primary=True empty_text="Nothing in progress. Move a slice to building and it shows up here." %}
+  <div class="home-cols">
+    {# Focus — building slices, with progress #}
+    <section class="board-col">
+      <div class="board-col-head">
+        <span class="board-col-label"><span>focus</span></span>
+        <span class="board-col-count">{{ state.building|length }}</span>
+      </div>
+      <div class="home-col-body">
+        {% for slice in state.building %}
+          {% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}
+        {% empty %}
+          <div class="home-col-empty"><span>Nothing in focus yet. Move a slice to building.</span></div>
+        {% endfor %}
+      </div>
+      {% if state.building %}<a class="home-col-more" href="{% wurl 'web:roadmap' %}?view=list&status=building">View all &rarr;</a>{% endif %}
+    </section>
 
-  <section class="group group--doing">
-    <div class="group-label group-label--lead"><span>doing</span><span class="group-count">{{ in_progress.bites|length }}</span></div>
-    {% if in_progress.bites %}
-      <div class="panel">
+    {# Doing — bites actively in progress #}
+    <section class="board-col">
+      <div class="board-col-head">
+        <span class="board-col-label"><span>doing</span></span>
+        <span class="board-col-count">{{ in_progress.bites|length }}</span>
+      </div>
+      <div class="home-col-body">
         {% for bite in in_progress.bites %}
           <a class="slice-row" href="{% wurl 'web:slice' bite.slice.id %}"
              hx-get="{% wurl 'web:slice' bite.slice.id %}?panel=1" hx-target="#panel" hx-push-url="true">
@@ -33,39 +51,50 @@
             <span class="row-title">{{ bite.title }}</span>
             <span class="row-meta">{{ bite.slice.title }}</span>
           </a>
+        {% empty %}
+          <div class="home-col-empty">
+            <span>No bites in progress.</span>
+            <button class="button button-small" type="button"
+                    x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
+              {% icon "plus" %}<span>Start something</span></button>
+          </div>
         {% endfor %}
       </div>
-    {% else %}
-      <div class="empty muted">No bites in progress yet.</div>
-    {% endif %}
-  </section>
-
-  {% if state.planned %}
-    <section class="group" x-data="{open:false}">
-      <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
-        {% icon "chevron" "icon icon-chev" %}
-        next = {{ state.planned|length }}
-      </button>
-      <div class="tail-body" x-show="open" x-cloak>
-        <div class="panel">{% for slice in state.planned %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}</div>
-      </div>
     </section>
-  {% endif %}
 
-  {% if state.ideas or state.someday %}
-    <section class="group" x-data="{open:false}">
-      <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
-        {% icon "chevron" "icon icon-chev" %}
-        later = {{ later_ct }}
-      </button>
-      <div class="tail-body" x-show="open" x-cloak>
-        <div class="panel">
-          {% for slice in state.ideas %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}
-          {% for slice in state.someday %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}
+    {# Next + Later stacked #}
+    <div class="home-col-stack">
+      <section class="board-col">
+        <div class="board-col-head">
+          <span class="board-col-label"><span>next</span></span>
+          <span class="board-col-count">{{ state.planned|length }}</span>
         </div>
-      </div>
-    </section>
-  {% endif %}
+        <div class="home-col-body">
+          {% for slice in state.planned %}
+            {% include "web/partials/_slice_row.html" with show_area=True %}
+          {% empty %}
+            <div class="home-col-empty"><span>No planned work queued.</span></div>
+          {% endfor %}
+        </div>
+        {% if state.planned %}<a class="home-col-more" href="{% wurl 'web:roadmap' %}?view=list&status=planned">View all &rarr;</a>{% endif %}
+      </section>
+
+      <section class="board-col">
+        <div class="board-col-head">
+          <span class="board-col-label"><span>later</span></span>
+          <span class="board-col-count">{{ later_ct }}</span>
+        </div>
+        <div class="home-col-body">
+          {% for slice in state.ideas %}{% include "web/partials/_slice_row.html" with show_area=True %}{% endfor %}
+          {% for slice in state.someday %}{% include "web/partials/_slice_row.html" with show_area=True %}{% endfor %}
+          {% if not state.ideas and not state.someday %}
+            <div class="home-col-empty"><span>Nothing parked for later.</span></div>
+          {% endif %}
+        </div>
+        {% if state.ideas or state.someday %}<a class="home-col-more" href="{% wurl 'web:roadmap' %}?view=list&status=idea">View all &rarr;</a>{% endif %}
+      </section>
+    </div>
+  </div>
 
   <section class="group group--archive" x-data="{open:false}">
     <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
