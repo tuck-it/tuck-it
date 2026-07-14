@@ -82,6 +82,26 @@ def test_slice_panel_shows_its_activity_thread(client_local, workspace):
 
 
 @pytest.mark.django_db
+def test_slice_panel_context_flags_and_progress(workspace):
+    from tuckit.web.panel import slice_panel_context
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.bites import create_bite
+    s = create_slice(create_area(workspace, "Design"), "T")
+    create_bite(s, "a", status="done")
+    create_bite(s, "b")  # 1 of 2 done -> 50%
+
+    panel = slice_panel_context(s, is_panel=True)
+    assert panel["is_panel"] is True
+    assert panel["panel_qs"] == "?panel=1"
+    assert (panel["bites_done"], panel["bites_total"], panel["bites_pct"]) == (1, 2, 50)
+
+    page = slice_panel_context(s)  # default is_panel=False
+    assert page["is_panel"] is False
+    assert page["panel_qs"] == ""
+
+
+@pytest.mark.django_db
 def test_slice_activity_helper_is_chronological_and_scoped(workspace):
     from tuckit.core.services.activity import slice_activity
     from tuckit.core.services.areas import create_area
