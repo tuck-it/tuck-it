@@ -138,6 +138,43 @@ def test_full_page_hides_panel_only_chrome(client_local, workspace):
 
 
 @pytest.mark.django_db
+def test_bites_progress_and_empty_state(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.bites import create_bite
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    a = create_area(workspace, "Design")
+    s = create_slice(a, "S")
+
+    # empty: card shown, no count
+    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="bites-empty"' in body
+    assert "아직 bite가 없습니다" in body
+    assert 'class="row-prog-track"' not in body   # no progress bar when there are no bites
+
+    # with bites: count + progress shown, card gone
+    create_bite(s, "a", status="done")
+    create_bite(s, "b")
+    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="bites-empty"' not in body
+    assert "1/2" in body
+    assert 'class="row-prog-track"' in body
+    assert "width: 50%" in body
+
+
+@pytest.mark.django_db
+def test_action_bar_has_copy_and_drop(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    s = create_slice(create_area(workspace, "Design"), "액션", status="building")
+    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="action-bar"' in body
+    assert "Copy link" in body
+    assert "Drop slice" in body
+
+
+@pytest.mark.django_db
 def test_slice_activity_helper_is_chronological_and_scoped(workspace):
     from tuckit.core.services.activity import slice_activity
     from tuckit.core.services.areas import create_area

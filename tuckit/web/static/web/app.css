@@ -1446,3 +1446,26 @@ body { padding: 0; }
 
 .spec-box { border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--paper-solid); padding: 11px 13px; }
 .spec-box .spec-edit { margin-bottom: 8px; }
+
+.bites-block { display: flex; flex-direction: column; gap: 4px; }
+.bites-head { display: flex; align-items: center; gap: 10px; }
+.bites-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.bites-add-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+/* Bites progress bar REUSES the existing `.row-prog-track` component
+   (app.css ~L221): 44px neutral track, `--line-strong` fill — "a quiet
+   neutral fill, never the accent." No new progress CSS is added. */
+
+.bites-empty { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-solid);
+  padding: 22px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 4px; }
+.bites-empty-title { font-size: 14px; color: var(--ink-soft); }
+.bites-empty-sub { font-size: 12px; color: var(--ink-faint); }
+.bites-empty-cta { margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; }
+
+.section-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.panel-divider { height: 1px; background: var(--line); }
+
+.action-bar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 8px;
+  margin: 6px -22px -22px; padding: 13px 22px; background: var(--paper-solid); border-top: 1px solid var(--line); }
+.action-spacer { flex: 1; }
+.action-drop { color: var(--warn); border-color: transparent; }
+.action-drop:hover { border-color: var(--warn); }
