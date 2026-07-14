@@ -68,3 +68,10 @@ def test_areas_header_add_and_row_menu(client_local, workspace):
     assert 'class="area-menu"' in body                  # per-row ⋮ popover
     assert 'class="area-menu-item"' in body             # Rename item in popover
     assert 'class="area-menu-item area-menu-item--danger"' in body  # Delete item wired to area_delete
+
+
+@pytest.mark.django_db
+def test_theme_toggle_is_labeled_row(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert "util-theme" in body
+    assert "util-theme-label" in body     # promoted to a labeled row

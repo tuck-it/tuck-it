@@ -50,6 +50,7 @@
             :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
       <span x-show="theme === 'dark'">{% icon "sun" %}</span>
       <span x-show="theme !== 'dark'" style="display:none">{% icon "moon" %}</span>
+      <span class="util-label util-theme-label" x-text="theme === 'dark' ? 'Light mode' : 'Dark mode'">Dark mode</span>
     </button>
   </div>
 

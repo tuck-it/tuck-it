@@ -1178,7 +1178,7 @@ body { padding: 0; }
 .nav-spacer { flex: 1 1 auto; }
 
 /* --- Bottom utility row: Settings + theme toggle --- */
-.util-row { display: flex; gap: 4px; margin-top: 6px; }
+.util-row { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
 .util-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 36px; padding: 6px 10px;
@@ -1186,8 +1186,8 @@ body { padding: 0; }
   background: none; border: none; font: inherit; cursor: pointer;
   border-radius: var(--radius-small);
 }
-.util-settings { flex: 1 1 auto; justify-content: flex-start; }
-.util-theme { flex: 0 0 auto; width: 36px; }
+.util-settings { justify-content: flex-start; }
+.util-theme { justify-content: flex-start; width: 100%; }
 .util-btn:hover { background: var(--paper-raised); color: var(--ink); }
 .util-btn .icon { stroke: var(--ink-faint); }
 .util-btn:hover .icon { stroke: var(--ink); }
