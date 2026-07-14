@@ -922,33 +922,7 @@ body { padding: 0; }
   white-space: nowrap;
 }
 
-/* Collapsed secondary toggle. */
-.tail-toggle {
-  background: none;
-  border: none;
-  /* Collapsed backlog folds (Next / Later / Recently shipped): same Onest sans
-     family as the NOW/DOING titles, one clear step down (14/600, soft ink) —
-     a quiet subhead, not a mono uppercase tag. Overrides .group-label's type. */
-  color: var(--ink-soft);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  /* Also carries .group-label (space-between) — override so the chevron + text
-     stay together and left-align under NOW/NEXT instead of splitting to the edges. */
-  justify-content: flex-start;
-  align-self: flex-start;
-}
-
 .icon-chev { width: 14px; height: 14px; transition: transform 0.15s; }
-.tail-open .icon-chev { transform: rotate(90deg); }
-.tail-body { margin-top: 10px; }
 
 /* Always-ready add input (Bite, Capture) — visible field, blue focus ring. */
 .bite-add { width: 100%; background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius-small); color: var(--ink); font: inherit; padding: 7px 10px; margin-top: 8px; }

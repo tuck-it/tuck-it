@@ -23,7 +23,6 @@ class Migration(migrations.Migration):
                 ('workspace', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stat_snapshots', to='core.workspace')),
             ],
             options={
-                'indexes': [models.Index(fields=['workspace', 'date'], name='core_worksp_workspa_2cccd2_idx')],
                 'constraints': [models.UniqueConstraint(fields=('workspace', 'date'), name='uniq_ws_snapshot_per_day')],
             },
         ),

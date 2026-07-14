@@ -63,7 +63,6 @@ class WorkspaceStatSnapshot(models.Model):
                 fields=["workspace", "date"], name="uniq_ws_snapshot_per_day"
             ),
         ]
-        indexes = [models.Index(fields=["workspace", "date"])]
 
     def __str__(self):
         return f"{self.workspace.slug} @ {self.date}"
