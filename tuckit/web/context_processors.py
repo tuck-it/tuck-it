@@ -1,13 +1,13 @@
 from tuckit.core.services.areas import list_areas
 from tuckit.core.services.orgs import accessible_workspaces
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import current_workspace_or_fallback
 
 
 def sidebar_areas(request):
     """Make the workspace's non-inbox areas available to every template so the
     sidebar's Areas list (and active-nav highlighting) is consistent across
     all pages, not just the ones whose view happens to pass `areas` itself."""
-    ws = get_current_workspace(request)
+    ws = current_workspace_or_fallback(request)
     if not ws:
         return {}
     return {"areas": [a for a in list_areas(ws) if not a.is_triage]}
@@ -18,7 +18,7 @@ def triage_count(request):
     template so the sidebar can show a muted count badge next to Triage."""
     from tuckit.core.models import Area, Slice
 
-    ws = get_current_workspace(request)
+    ws = current_workspace_or_fallback(request)
     if not ws:
         return {}
     triage = Area.objects.filter(workspace=ws, is_triage=True).first()
@@ -31,7 +31,7 @@ def attention_count(request):
     the sidebar Attention badge."""
     from tuckit.core.services.state import attention_items
 
-    ws = get_current_workspace(request)
+    ws = current_workspace_or_fallback(request)
     if not ws:
         return {}
     return {"attention_count": len(attention_items(ws))}
@@ -42,7 +42,7 @@ def in_progress_count(request):
     sidebar In Progress badge."""
     from tuckit.core.models import Bite, Slice
 
-    ws = get_current_workspace(request)
+    ws = current_workspace_or_fallback(request)
     if not ws:
         return {}
     n = (
@@ -74,15 +74,5 @@ def current_workspace(request):
     non-tenant pages (settings/account) falls back to the session/first workspace so the
     sidebar switcher and nav still resolve. Access control is NOT done here — it lives in
     TenantMiddleware."""
-    ws = getattr(request, "workspace", None)
-    if ws is None and request.user.is_authenticated:
-        from tuckit.core.models import OrgMember, Workspace
-        from tuckit.core.services.orgs import accessible_workspaces
-        ws_id = request.session.get("active_workspace_id")
-        if ws_id:
-            ws = Workspace.objects.filter(pk=ws_id).select_related("org").first()
-            if ws and not OrgMember.objects.filter(user=request.user, org=ws.org).exists():
-                ws = None
-        if ws is None:
-            ws = accessible_workspaces(request.user).select_related("org").first()
+    ws = current_workspace_or_fallback(request)
     return {"current_workspace": ws} if ws else {}

@@ -22,3 +22,14 @@ def resolve_fallback_workspace(request) -> Workspace | None:
         if ws and OrgMember.objects.filter(user=request.user, org=ws.org).exists():
             return ws
     return accessible_workspaces(request.user).select_related("org").first()
+
+
+def current_workspace_or_fallback(request) -> Workspace | None:
+    """Strict tenant workspace if the URL resolved one (get_current_workspace);
+    otherwise the same best-effort fallback as resolve_fallback_workspace. Sidebar
+    chrome (Areas list, badge counts, switcher) should read this, not
+    get_current_workspace alone — a non-tenant route like settings/<org_slug>/
+    (no ws_slug in the URL) leaves request.workspace None, and get_current_workspace
+    alone would make every one of those go silently blank instead of showing the
+    same workspace the switcher itself falls back to."""
+    return get_current_workspace(request) or resolve_fallback_workspace(request)
