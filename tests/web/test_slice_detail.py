@@ -111,8 +111,8 @@ def test_panel_header_title_and_status_tabs(client_local, workspace):
 
     # panel context
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
-    assert 'class="panel-crumb"' in body
-    assert f'href="/{workspace.org.slug}/{workspace.slug}/areas/{a.slug}/"' in body   # breadcrumb links to area
+    assert 'class="area-chip"' in body
+    assert f'href="/{workspace.org.slug}/{workspace.slug}/areas/{a.slug}/"' in body   # chip links to area
     assert "Design" in body
     assert 'class="panel-byline"' in body
     assert "seg--tabs" in body
@@ -134,7 +134,7 @@ def test_full_page_hides_panel_only_chrome(client_local, workspace):
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()   # full page, no panel=1
     assert "crumb-close" not in body        # no close button on the full page
     assert "Open full page" not in body     # no self-link on the full page
-    assert 'class="panel-crumb"' in body    # breadcrumb still shown
+    assert 'class="area-chip"' in body     # breadcrumb chip still shown on full page
 
 
 @pytest.mark.django_db

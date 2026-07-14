@@ -1,7 +1,7 @@
 {% load web_extras %}
 <div class="panel-inner" x-data="{editTitle:false, editSpec:false}">
   <div class="panel-crumb">
-    <a class="crumb-link" href="{% wurl 'web:area' slice.area.slug %}">{% icon "area" "icon crumb-icon" %}{{ slice.area.name }}</a>
+    <a class="area-chip" href="{% wurl 'web:area' slice.area.slug %}">{% icon "area" "icon area-chip-icon" %}{{ slice.area.name }}</a>
     {% if is_panel %}
     <button class="ghost crumb-close" type="button" aria-label="Close panel"
             hx-on:click="closePanel(document.getElementById('panel'))">{% icon "close" "icon" %}</button>

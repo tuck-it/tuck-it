@@ -1597,9 +1597,11 @@ html.sidebar-collapsed .side-collapse .icon { transform: rotate(0deg); }
 
 /* --- Slice panel redesign --- */
 .panel-crumb { display: flex; align-items: center; gap: 8px; }
-.crumb-link { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-faint); font-size: 12px; text-decoration: none; }
-.crumb-link:hover { color: var(--ink); }
-.crumb-icon { width: 14px; height: 14px; }
+.area-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+  background: var(--paper-deep); border: 1px solid var(--line); border-radius: 20px;
+  color: var(--ink-soft); font-size: 12px; text-decoration: none; width: max-content; }
+.area-chip:hover { border-color: var(--border); color: var(--ink); }
+.area-chip-icon { width: 13px; height: 13px; }
 .crumb-close { margin-left: auto; color: var(--ink-faint); padding: 3px; line-height: 0; }
 
 .panel-titlebar { display: flex; align-items: flex-start; gap: 10px; }
