@@ -496,8 +496,8 @@ body { padding: 0; }
 .settings-page > .hint { margin: -10px 0 20px; }
 .settings-section {
   gap: 10px;
-  margin-bottom: 16px;
-  padding: 18px;
+  margin-bottom: 10px;
+  padding: 14px 18px;
   background: var(--paper-raised);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -548,7 +548,7 @@ body { padding: 0; }
 .shipped-board-prefs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .shipped-board-prefs input { width: 76px; padding: 7px 10px; }
 @media (max-width: 560px) {
-  .settings-section { padding: 16px; }
+  .settings-section { padding: 14px 16px; }
   .token-add { flex-wrap: wrap; }
   .token-add input { min-width: min(100%, 220px); }
   .settings-row { flex-wrap: wrap; gap: 10px; }
@@ -563,11 +563,11 @@ body { padding: 0; }
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line);
 }
-.settings-section .settings-row:first-child { padding-top: 2px; }
-.settings-section .settings-row:last-child { padding-bottom: 2px; border-bottom: 0; }
+.settings-section .settings-row:first-child { padding-top: 0; }
+.settings-section .settings-row:last-child { padding-bottom: 0; border-bottom: 0; }
 .settings-row-text { min-width: 0; }
 .settings-row-label { font-size: 14px; font-weight: 600; color: var(--ink); }
 .settings-row-desc { font-size: 13px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
