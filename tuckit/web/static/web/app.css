@@ -193,7 +193,16 @@ body { padding: 0; }
 
 .tag-hash { opacity: 0.55; }
 
-.row-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Title + optional one-line spec caption, kept on a single line: title holds
+   its width, the caption absorbs the slack and ellipsizes first. */
+.row-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; overflow: hidden; }
+.row-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-desc {
+  flex: 1 1 0; min-width: 3ch;
+  color: var(--ink-faint); font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row-desc::before { content: "·"; margin: 0 8px; color: var(--line-strong); }
 .row-meta { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; }
 .empty { color: var(--ink-faint); font-family: var(--mono); font-size: 13px; padding: 8px 2px; }
 .row-meta { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -981,12 +990,6 @@ body { padding: 0; }
 }
 .panel .field:last-child { border-bottom: 0; }
 
-.row-l {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .avatar {
   width: 24px;
   height: 24px;
@@ -1007,14 +1010,33 @@ body { padding: 0; }
 .nm { line-height: 1.4; font-size: 14px; }
 .sub { color: var(--muted); font-size: 12px; }
 
-/* Member row's role control and Remove/Cancel/Copy-link buttons sit side by
-   side in .row-l — match the page-wide 36px control height (the invite
-   form's role select uses the same .settings-select, so both dropdowns on
-   this page are now the same size) instead of a bespoke smaller one that
-   only matched the row's own button. */
-/* .btn is already 36px everywhere; .ghost (Copy link) stays app-wide
-   unstyled-by-default here, just matched to the row's other controls. */
-.member-row .ghost { height: 28px; }
+/* Members table — explicit Account/Role/Status/Actions columns instead of
+   an implicit row layout. */
+.member-table { width: 100%; border-collapse: collapse; }
+.member-table thead th {
+  text-align: left;
+  padding: 0 10px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  font-weight: 400;
+  border-bottom: 1px solid var(--line);
+}
+.member-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.member-table tbody tr:last-child td { border-bottom: 0; }
+.member-table-actions { text-align: right; white-space: nowrap; }
+.member-table-actions .ghost { height: 28px; margin-right: 6px; }
+.member-cell { display: flex; align-items: center; gap: 10px; }
+
+.status-pill { font-size: 12px; }
+.status-pill--active { color: var(--good); }
+.status-pill--pending { color: var(--ink-faint); }
 
 
 /* Settings-page action button (Remove/Cancel/Save/Invite/Open/Manage — .btn

@@ -34,12 +34,22 @@
 
   <div class="settings-title">Members</div>
   <section class="group settings-section">
-    <div id="members-list" class="panel">
-      {% for m in members %}{% include "web/partials/_member_row.html" %}{% endfor %}
-      {% if can_admin %}
-        {% for inv in invitations %}{% include "web/partials/_invite_row.html" with inv=inv %}{% endfor %}
-      {% endif %}
-    </div>
+    <table class="member-table">
+      <thead>
+        <tr>
+          <th>Account</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th class="member-table-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="members-list">
+        {% for m in members %}{% include "web/partials/_member_row.html" %}{% endfor %}
+        {% if can_admin %}
+          {% for inv in invitations %}{% include "web/partials/_invite_row.html" with inv=inv %}{% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
 
     {% if can_admin %}
     <form class="token-add" hx-post="{% url 'web:invite_create' org.slug %}" hx-target="#members-list" hx-swap="beforeend"

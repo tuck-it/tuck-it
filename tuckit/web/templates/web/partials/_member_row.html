@@ -1,9 +1,11 @@
-<div class="field member-row" id="member-{{ m.id }}">
-  <div class="row-l">
-    <span class="avatar">{{ m.user.email|slice:":1"|upper }}</span>
-    <div><div class="nm">{{ m.user.email }}</div>{% if m.user == request.user %}<div class="sub">You</div>{% endif %}</div>
-  </div>
-  <div class="row-l">
+<tr id="member-{{ m.id }}">
+  <td>
+    <div class="member-cell">
+      <span class="avatar">{{ m.user.email|slice:":1"|upper }}</span>
+      <div><div class="nm">{{ m.user.email }}</div>{% if m.user == request.user %}<div class="sub">You</div>{% endif %}</div>
+    </div>
+  </td>
+  <td>
     {% if can_owner and m.user != request.user %}
       <span class="settings-select"><select hx-post="{% url 'web:org_member_role' org.slug m.id %}"
               hx-target="#member-{{ m.id }}" hx-swap="outerHTML" name="role">
@@ -14,9 +16,12 @@
     {% else %}
       <span class="role-badge role-badge--{{ m.role }}">{{ m.get_role_display }}</span>
     {% endif %}
+  </td>
+  <td><span class="status-pill status-pill--active">Active</span></td>
+  <td class="member-table-actions">
     {% if can_admin and m.role != 'owner' and m.user != request.user %}
       <button class="btn" hx-post="{% url 'web:org_member_remove' org.slug m.id %}"
               hx-target="#member-{{ m.id }}" hx-swap="outerHTML" hx-confirm="Remove this member?">Remove</button>
     {% endif %}
-  </div>
-</div>
+  </td>
+</tr>

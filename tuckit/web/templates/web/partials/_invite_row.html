@@ -1,9 +1,13 @@
-<div class="field member-row" id="invite-{{ inv.id }}">
-  <div class="row-l">
-    <span class="avatar avatar--pending">{{ inv.email|slice:":1"|upper }}</span>
-    <div><div class="nm">{{ inv.email }}</div><div class="sub">Invited · {{ inv.get_role_display }}</div></div>
-  </div>
-  <div class="row-l">
+<tr id="invite-{{ inv.id }}">
+  <td>
+    <div class="member-cell">
+      <span class="avatar avatar--pending">{{ inv.email|slice:":1"|upper }}</span>
+      <div><div class="nm">{{ inv.email }}</div></div>
+    </div>
+  </td>
+  <td><span class="role-badge role-badge--{{ inv.role }}">{{ inv.get_role_display }}</span></td>
+  <td><span class="status-pill status-pill--pending">Invited</span></td>
+  <td class="member-table-actions">
     {% if inv.link %}
     <button type="button" class="ghost" x-data="{copied:false}"
             x-on:click="navigator.clipboard.writeText('{{ inv.link }}'); copied = true; setTimeout(() => copied = false, 1500)"
@@ -13,5 +17,5 @@
             hx-post="{% url 'web:invite_cancel' org.slug inv.id %}"
             hx-target="#invite-{{ inv.id }}" hx-swap="outerHTML"
             hx-confirm="Cancel this invitation?">Cancel</button>
-  </div>
-</div>
+  </td>
+</tr>
