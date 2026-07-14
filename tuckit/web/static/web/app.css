@@ -158,8 +158,8 @@ body { padding: 0; }
   color: var(--ink);
   text-decoration: none;
   line-height: 1.5;
-  min-height: 52px;
-  padding: 9px 14px;
+  min-height: 46px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -628,33 +628,6 @@ body { padding: 0; }
 }
 .panel .token-row:last-child { border-bottom: 0; }
 
-/* Invite row: email/role text + the readonly invite link + Cancel. Was
-   completely unstyled (default input width truncated the link, no shared
-   height with the other panel rows). */
-.invite-row {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  font-size: 14px;
-}
-.panel .invite-row:last-child { border-bottom: 0; }
-.invite-row input {
-  flex: 1 1 240px;
-  min-width: 0;
-  height: 28px;
-  background: var(--paper-deep);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-small);
-  color: var(--ink-soft);
-  font-family: var(--mono);
-  font-size: 12px;
-  padding: 0 8px;
-}
-.invite-row .ghost { flex: 0 0 auto; height: 28px; }
-
 .token-main {
   display: flex;
   align-items: baseline;
@@ -741,10 +714,12 @@ body { padding: 0; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 0 0 30px;
+  margin: 0;
 }
+/* One rhythm owns the inter-group gap: the divider's top padding, not a
+   second bottom margin stacked on top of it. */
 .group + .group {
-  padding-top: 24px;
+  padding-top: 26px;
   border-top: 1px solid var(--line);
 }
 .group--attention {
@@ -753,10 +728,10 @@ body { padding: 0; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
-.group--attention + .group { padding-top: 28px; }
+/* Card already carries its own border — don't draw a second hairline under it. */
+.group--attention + .group { padding-top: 26px; border-top: 0; }
 .group--attention .group-label { color: var(--ink-soft); }
 .group--inbox { max-width: 1080px; }
-.group--archive { margin-top: 4px; }
 
 /* Collapsed state groups (shipped / dropped) use a native <details>. */
 .group-fold-summary { cursor: pointer; list-style: none; margin-bottom: 0; }
@@ -1020,6 +995,9 @@ body { padding: 0; }
   justify-content: center;
   flex: 0 0 auto;
 }
+/* Pending invite row shares the member row's shape; a dashed, unfilled
+   avatar is the only cue that this person hasn't joined yet. */
+.avatar--pending { background: none; border: 1px dashed var(--line); color: var(--ink-faint); }
 
 .nm { line-height: 1.4; font-size: 14px; }
 .sub { color: var(--muted); font-size: 12px; }
@@ -1028,7 +1006,7 @@ body { padding: 0; }
    force them to the same height so they read as one control pair instead of
    a tall dropdown next to a short button. */
 .member-row .settings-select select { min-height: 28px; height: 28px; padding: 0 30px 0 10px; }
-.member-row .btn { height: 28px; }
+.member-row .btn, .member-row .ghost { height: 28px; }
 
 
 .btn {

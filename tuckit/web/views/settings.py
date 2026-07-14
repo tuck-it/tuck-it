@@ -108,9 +108,9 @@ def invite_create(request):
         return HttpResponse(str(exc), status=402)
     except InvalidValue as exc:
         return HttpResponse(str(exc), status=400)
-    link = request.build_absolute_uri(reverse("web:invite_accept", args=[inv.token]))
-    send_invitation_email(invitation=inv, link=link)  # optional; link below is the source of truth
-    return render(request, "web/partials/_invite_row.html", {"inv": inv, "link": link, "org": org})
+    inv.link = request.build_absolute_uri(reverse("web:invite_accept", args=[inv.token]))
+    send_invitation_email(invitation=inv, link=inv.link)  # optional; link below is the source of truth
+    return render(request, "web/partials/_invite_row.html", {"inv": inv, "org": org})
 
 
 @require_POST

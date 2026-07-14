@@ -1,8 +1,17 @@
-<div class="invite-row" id="invite-{{ inv.id }}">
-  <span>{{ inv.email }} · {{ inv.get_role_display }}</span>
-  {% if link %}<input readonly value="{{ link }}" onclick="this.select()">{% endif %}
-  <button class="ghost" type="button"
-          hx-post="{% url 'web:invite_cancel' org.slug inv.id %}"
-          hx-target="closest .invite-row" hx-swap="outerHTML"
-          hx-confirm="Cancel this invitation?">Cancel</button>
+<div class="field member-row" id="invite-{{ inv.id }}">
+  <div class="row-l">
+    <span class="avatar avatar--pending">{{ inv.email|slice:":1"|upper }}</span>
+    <div><div class="nm">{{ inv.email }}</div><div class="sub">Invited · {{ inv.get_role_display }}</div></div>
+  </div>
+  <div class="row-l">
+    {% if inv.link %}
+    <button type="button" class="ghost" x-data="{copied:false}"
+            x-on:click="navigator.clipboard.writeText('{{ inv.link }}'); copied = true; setTimeout(() => copied = false, 1500)"
+            x-text="copied ? 'Copied' : 'Copy link'"></button>
+    {% endif %}
+    <button class="btn" type="button"
+            hx-post="{% url 'web:invite_cancel' org.slug inv.id %}"
+            hx-target="#invite-{{ inv.id }}" hx-swap="outerHTML"
+            hx-confirm="Cancel this invitation?">Cancel</button>
+  </div>
 </div>
