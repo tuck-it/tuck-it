@@ -4,12 +4,14 @@
   <header class="page-head">
     <div class="page-head-l">
       <h1 class="page-title">Home</h1>
-      {% if workspace %}<span class="page-count">{{ building_ct }} building · {{ queued_ct }} backlog</span>{% endif %}
+      {% if workspace %}<span class="page-count">Today's progress and what to focus on next</span>{% endif %}
     </div>
     <button class="button button-small" type="button"
             x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
       {% icon "plus" %}<span>Capture</span></button>
   </header>
+
+  {% include "web/partials/_stat_cards.html" %}
 
   <section class="group">
     {% include "web/partials/_group_label.html" with label="needs_you" count=state.attention|length attention=True primary=True %}

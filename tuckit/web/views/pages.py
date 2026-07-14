@@ -10,6 +10,7 @@ from tuckit.core.services.state import (
     in_progress_state,
     recent_activity,
     cap_shipped,
+    snapshot_today,
 )
 from tuckit.core.services.onboarding import onboarding_state
 from tuckit.web.auth import get_current_workspace
@@ -28,6 +29,24 @@ def home(request):
     building_ct = len(state.get("building", []))
     later_ct = len(state.get("ideas", [])) + len(state.get("someday", []))
     queued_ct = len(state.get("planned", [])) + later_ct
+    metrics = []
+    if ws:
+        snap = snapshot_today(ws)
+        _defs = [
+            ("Building", "building"),
+            ("Backlog", "backlog"),
+            ("Shipped this week", "shipped_week"),
+            ("Needs attention", "attention"),
+        ]
+        for label, key in _defs:
+            d = snap[key]["delta"]
+            metrics.append({
+                "label": label,
+                "value": snap[key]["value"],
+                "delta": d,
+                "abs": abs(d) if d is not None else None,
+                "dir": None if d is None else ("up" if d > 0 else "down" if d < 0 else "flat"),
+            })
     return render(request, "web/home.html", {
         "workspace": ws,
         "state": state,
@@ -41,6 +60,7 @@ def home(request):
         "show_get_started": show_get_started,
         "shipped_total": shipped_total,
         "shipped_hidden": shipped_hidden,
+        "metrics": metrics,
     })
 
 

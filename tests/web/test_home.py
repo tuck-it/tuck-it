@@ -174,6 +174,24 @@ def test_slice_row_has_status_dot_and_arrow(client_local, workspace):
 
 
 @pytest.mark.django_db
+def test_home_shows_summary_cards(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    a = create_area(workspace, "Backend")
+    create_slice(a, "Building one", status="building")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="stat-cards"' in body
+    assert "Building" in body and "Backlog" in body
+    assert "Shipped this week" in body and "Needs attention" in body
+
+
+@pytest.mark.django_db
+def test_home_header_has_subtitle_not_count(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert "Today's progress and what to focus on next" in body
+
+
+@pytest.mark.django_db
 def test_home_recently_shipped_caps_and_links(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
