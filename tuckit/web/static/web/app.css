@@ -182,9 +182,19 @@ body { padding: 0; }
   letter-spacing: 0.07em;
 }
 .group-label.attention { color: var(--ink); }
-/* Active/focus sections (Now, Doing) anchor the page — a step darker and larger
-   than the collapsed backlog folds below, within the same mono label system. */
-.group-label--lead { color: var(--ink); font-size: 13px; }
+/* Active/focus sections (Now, Doing) read as real section titles — the same
+   bold sans treatment as the settings page (18px/700), not a mono tag. Count
+   stays mono/faint at the right. Reset the mono/uppercase from .group-label. */
+.group-label--lead {
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
+/* Keep the count a quiet mono data chip even next to the larger lead title. */
+.group-label--lead .group-count { font-family: var(--mono); font-size: 12px; }
 .group-count { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
 /* Tag — muted text, never a filled chip; hash dimmed one step further. */
@@ -547,8 +557,14 @@ body { padding: 0; }
 /* Settings controls share one input height, border, and focus treatment.
    --paper-deep (not --surface, which is just an alias for the card's own
    --paper-raised background) so a control reads as a distinct well instead
-   of nearly disappearing into the card it sits on. */
-.settings-page :is(input:not([type="checkbox"]):not(.title-edit), select) {
+   of nearly disappearing into the card it sits on. Selects are handled by
+   .settings-select select below instead of here, so they're styled the
+   same way inside the #member-modal dialog too — that modal lives outside
+   .settings-page in the DOM (it's a sibling of <main> in base.html), so a
+   rule scoped to ".settings-page select" never reached it; the select
+   rendered with no background/border/height at all, just appearance:none
+   and a chevron floating over unstyled native browser widget. */
+.settings-page input:not([type="checkbox"]):not(.title-edit) {
   min-height: 28px;
   background: var(--paper-deep);
   border: 1px solid var(--line);
@@ -558,13 +574,15 @@ body { padding: 0; }
   font-size: 13px;
   padding: 0 10px;
 }
-.settings-page :is(input:not([type="checkbox"]):not(.title-edit), select)::placeholder { color: var(--ink-faint); }
-.settings-page :is(input:not([type="checkbox"]):not(.title-edit), select):focus { outline: none; border-color: var(--blue); }
+.settings-page input:not([type="checkbox"]):not(.title-edit)::placeholder { color: var(--ink-faint); }
+.settings-page input:not([type="checkbox"]):not(.title-edit):focus { outline: none; border-color: var(--blue); }
 .settings-select { position: relative; display: inline-flex; align-items: center; }
 .settings-select::after {
   content: "⌄";
   position: absolute;
+  top: 50%;
   right: 10px;
+  transform: translateY(-50%);
   color: var(--ink-faint);
   font-size: 13px;
   line-height: 1;
@@ -573,8 +591,16 @@ body { padding: 0; }
 .settings-select select {
   appearance: none;
   cursor: pointer;
+  min-height: 28px;
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
   padding: 0 30px 0 10px;
 }
+.settings-select select:focus { outline: none; border-color: var(--blue); }
 .shipped-board-prefs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .shipped-board-prefs input { width: 76px; padding: 7px 10px; }
 @media (max-width: 560px) {
@@ -901,10 +927,15 @@ body { padding: 0; }
 .tail-toggle {
   background: none;
   border: none;
-  color: var(--ink-faint);
-  /* No `font: inherit` here — it would reset the .group-label mono/12px this
-     button also carries back to the body sans, making the fold labels louder
-     than the NOW/DOING headers above them. Let .group-label own the type. */
+  /* Collapsed backlog folds (Next / Later / Recently shipped): same Onest sans
+     family as the NOW/DOING titles, one clear step down (14/600, soft ink) —
+     a quiet subhead, not a mono uppercase tag. Overrides .group-label's type. */
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1062,6 +1093,11 @@ body { padding: 0; }
 .member-table tbody tr:last-child td { border-bottom: 0; }
 .member-table-actions { text-align: right; white-space: nowrap; }
 .member-cell { display: flex; align-items: center; gap: 10px; }
+/* Match the Manage/Copy-link/Remove buttons' height so the Role column's
+   badge doesn't look like a smaller, different kind of control next to
+   them. Scoped here rather than on .role-badge itself, which also renders
+   inline with plain text (no neighboring buttons) on the Account page. */
+.member-table .role-badge { height: 28px; display: inline-flex; align-items: center; }
 
 .status-pill { font-size: 12px; }
 .status-pill--active { color: var(--good); }
