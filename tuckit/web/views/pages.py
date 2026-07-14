@@ -25,9 +25,15 @@ def home(request):
         visible, shipped_total = cap_shipped(ws, state.get("shipped", []))
         shipped_hidden = shipped_total - len(visible)
         state = {**state, "shipped": visible}
+    building_ct = len(state.get("building", []))
+    later_ct = len(state.get("ideas", [])) + len(state.get("someday", []))
+    queued_ct = len(state.get("planned", [])) + later_ct
     return render(request, "web/home.html", {
         "workspace": ws,
         "state": state,
+        "building_ct": building_ct,
+        "later_ct": later_ct,
+        "queued_ct": queued_ct,
         "in_progress": in_progress_state(ws) if ws else {"slices": [], "bites": []},
         "roadmap": roadmap_state(ws) if ws else {},
         "recent_activity": recent_activity(ws) if ws else [],

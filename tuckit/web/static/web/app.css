@@ -192,9 +192,16 @@ body { padding: 0; }
   font-weight: 700;
   text-transform: none;
   letter-spacing: normal;
+  /* Count sits right after the name as an assigned value (`now = 3`), not shoved
+     to the far edge where the width made it hard to read. */
+  justify-content: flex-start;
+  gap: 7px;
 }
-/* Keep the count a quiet mono data chip even next to the larger lead title. */
-.group-label--lead .group-count { font-family: var(--mono); font-size: 12px; }
+.group-label--lead .group-count {
+  font-family: inherit; font-size: inherit; font-weight: inherit;
+  color: inherit;
+}
+.group-label--lead .group-count::before { content: "= "; }
 .group-count { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
 /* Tag — muted text, never a filled chip; hash dimmed one step further. */
@@ -761,24 +768,16 @@ body { padding: 0; }
 .group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   margin: 0;
 }
-/* One rhythm owns the inter-group gap: the divider's top padding, not a
-   second bottom margin stacked on top of it. */
+/* Divider sits centred in the inter-group gap: equal breathing room above (the
+   previous list clears the line) and below (before the next title). */
 .group + .group {
-  padding-top: 26px;
+  margin-top: 13px;
+  padding-top: 13px;
   border-top: 1px solid var(--line);
 }
-.group--attention {
-  padding: 16px;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-/* Card already carries its own border — don't draw a second hairline under it. */
-.group--attention + .group { padding-top: 26px; border-top: 0; }
-.group--attention .group-label { color: var(--ink-soft); }
 .group--inbox { max-width: 1080px; }
 
 /* Collapsed state groups (shipped / dropped) use a native <details>. */

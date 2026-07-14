@@ -10,7 +10,7 @@ def test_home_lists_building_and_attention(client_local, workspace):
     resp = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/")
     body = resp.content.decode()
     assert "결제 도입" in body
-    assert "Now" in body   # building group label
+    assert "<span>now</span>" in body   # building group label (snake_case assign style)
 
 
 @pytest.mark.django_db
@@ -99,14 +99,14 @@ def test_home_omits_roadmap_strip_and_recent_activity(client_local, workspace):
 def test_home_has_heading_and_capture(client_local, workspace):
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
     assert 'class="page-head"' in body
-    assert "Needs you" in body and "Now" in body and "Doing" in body
-    assert "Next" not in body                       # planned pipeline moved to Board
+    assert "<span>needs_you</span>" in body and "<span>now</span>" in body and "<span>doing</span>" in body
+    assert "next = " not in body                    # no planned yet → no Next fold
     # a capture action is present in the page header (reuses the capture modal)
     assert 'class="button button-small"' in body   # page-head Capture button
 
 
 @pytest.mark.django_db
-def test_home_shows_doing_bites_and_no_planned(client_local, workspace):
+def test_home_shows_doing_bites_and_planned_in_next(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
@@ -116,7 +116,51 @@ def test_home_shows_doing_bites_and_no_planned(client_local, workspace):
     create_slice(a, "다음 계획", status="planned")
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
     assert "지금 하는 것" in body                    # doing bite on Home
-    assert "다음 계획" not in body                   # planned NOT on Home (it's on Board)
+    # Planned now surfaces on Home inside the collapsed "Next" fold, so the
+    # solopreneur can see queued work without leaving the now-surface.
+    assert "다음 계획" in body
+    assert "next = " in body
+
+
+@pytest.mark.django_db
+def test_home_now_row_shows_spec_summary(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    a = create_area(workspace, "Backend")
+    create_slice(a, "결제 도입", status="building",
+                 spec="---\nname: billing\n---\n# 한 줄 요약 캡션\n본문 이어짐")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="row-desc"' in body      # one-line caption slot rendered
+    assert "한 줄 요약 캡션" in body        # first meaningful spec line, markdown stripped
+
+
+@pytest.mark.django_db
+def test_home_active_headers_are_lead_styled(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.bites import create_bite
+    a = create_area(workspace, "Backend")
+    s = create_slice(a, "빌딩 슬라이스", status="building")
+    create_bite(s, "지금 하는 것", status="doing")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    # needs_you, now, doing headers are all promoted to the lead tier.
+    assert body.count("group-label--lead") >= 3
+    assert '<span>doing</span>' in body
+
+
+@pytest.mark.django_db
+def test_home_building_row_shows_progress_bar(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.bites import create_bite
+    a = create_area(workspace, "Backend")
+    s = create_slice(a, "결제 도입", status="building")
+    create_bite(s, "완료된 것", status="done")
+    create_bite(s, "남은 것", status="todo")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="row-prog-track"' in body   # thin bar on the building row
+    assert "width:50%" in body                # 1 of 2 bites done
+    assert "1/2" in body
 
 
 @pytest.mark.django_db
@@ -141,5 +185,5 @@ def test_home_recently_shipped_caps_and_links(client_local, workspace):
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "shipped two", status="shipped")
     body = client_local.get(f"{p}/").content.decode()
-    assert "Recently shipped 2" in body           # count shows the true total
+    assert "recently_shipped = 2" in body         # count shows the true total
     assert "status=shipped" in body               # unified view-all link

@@ -2,23 +2,26 @@
 {% load web_extras %}
 {% block main %}
   <header class="page-head">
-    <h1 class="page-title">Home</h1>
+    <div class="page-head-l">
+      <h1 class="page-title">Home</h1>
+      {% if workspace %}<span class="page-count">{{ building_ct }} building · {{ queued_ct }} backlog</span>{% endif %}
+    </div>
     <button class="button button-small" type="button"
             x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">
       {% icon "plus" %}<span>Capture</span></button>
   </header>
 
-  <section class="group group--attention">
-    {% include "web/partials/_group_label.html" with label="Needs you" count=state.attention|length attention=True %}
+  <section class="group">
+    {% include "web/partials/_group_label.html" with label="needs_you" count=state.attention|length attention=True primary=True %}
     {% include "web/partials/_attention_panel.html" with items=state.attention %}
   </section>
 
   {% if show_get_started %}{% include "web/partials/_get_started.html" %}{% endif %}
 
-  {% include "web/partials/_status_group.html" with label="Now" slices=state.building empty_text="Nothing in progress. Move a slice to building and it shows up here." %}
+  {% include "web/partials/_status_group.html" with label="now" slices=state.building show_area=True show_desc=True primary=True empty_text="Nothing in progress. Move a slice to building and it shows up here." %}
 
   <section class="group group--doing">
-    <div class="group-label">Doing</div>
+    <div class="group-label group-label--lead"><span>doing</span><span class="group-count">{{ in_progress.bites|length }}</span></div>
     {% if in_progress.bites %}
       <div class="panel">
         {% for bite in in_progress.bites %}
@@ -35,10 +38,37 @@
     {% endif %}
   </section>
 
+  {% if state.planned %}
+    <section class="group" x-data="{open:false}">
+      <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
+        {% icon "chevron" "icon icon-chev" %}
+        next = {{ state.planned|length }}
+      </button>
+      <div class="tail-body" x-show="open" x-cloak>
+        <div class="panel">{% for slice in state.planned %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}</div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if state.ideas or state.someday %}
+    <section class="group" x-data="{open:false}">
+      <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
+        {% icon "chevron" "icon icon-chev" %}
+        later = {{ later_ct }}
+      </button>
+      <div class="tail-body" x-show="open" x-cloak>
+        <div class="panel">
+          {% for slice in state.ideas %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}
+          {% for slice in state.someday %}{% include "web/partials/_slice_row.html" with show_area=True show_desc=True %}{% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
   <section class="group group--archive" x-data="{open:false}">
     <button class="tail-toggle group-label muted" type="button" x-on:click="open=!open" :class="{'tail-open': open}">
       {% icon "chevron" "icon icon-chev" %}
-      Recently shipped {{ shipped_total }}
+      recently_shipped = {{ shipped_total }}
     </button>
     <div class="tail-body" x-show="open" x-cloak>
       {% if state.shipped %}

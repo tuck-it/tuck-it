@@ -24,6 +24,54 @@ def bite_progress_tag(slice):
     return f"{done}/{total}" if total else ""
 
 
+@register.simple_tag(name="bite_bar")
+def bite_bar_tag(slice):
+    """A thin bite-progress bar + count for a row. Empty when the slice has no
+    bites, so a bite-less building slice renders nothing (not a 0-width bar)."""
+    done, total = bites_svc.bite_progress(slice)
+    if not total:
+        return ""
+    pct = round(done / total * 100)
+    return mark_safe(
+        f'<span class="row-prog">'
+        f'<span class="row-prog-track"><i style="width:{pct}%"></i></span>'
+        f'<span class="row-prog-num">{done}/{total}</span>'
+        f"</span>"
+    )
+
+
+@register.filter(name="spec_summary")
+def spec_summary(spec, limit=100):
+    """First meaningful line of a slice's spec, as a one-line row caption.
+
+    `spec` holds a full markdown doc, so skip a leading YAML frontmatter block
+    and strip leading markdown markers (heading #, list/quote bullet, emphasis)
+    before returning the first non-empty content line, truncated to `limit`."""
+    if not spec:
+        return ""
+    lines = spec.splitlines()
+    i = 0
+    if lines and lines[0].strip() == "---":  # YAML frontmatter fence
+        i = 1
+        while i < len(lines) and lines[i].strip() != "---":
+            i += 1
+        i += 1  # step past the closing fence
+    for raw in lines[i:]:
+        line = raw.strip()
+        if not line or line in ("---", "***", "___"):
+            continue
+        line = line.lstrip("#").strip()      # heading markers
+        if line[:1] in "-*+>":               # list / blockquote bullet
+            line = line[1:].strip()
+        line = line.strip("*_`").strip()     # emphasis / inline code
+        if not line:
+            continue
+        if len(line) > limit:
+            line = line[:limit].rstrip() + "…"
+        return line
+    return ""
+
+
 _ICON_PATHS = {
     "home": '<path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/>',
     "triage": '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.5 2 12v7h20v-7l-3.5-6.5H5.5Z"/>',
