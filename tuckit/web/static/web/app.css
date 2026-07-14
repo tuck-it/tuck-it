@@ -1459,8 +1459,7 @@ html.sidebar-collapsed .side-collapse .icon { transform: rotate(0deg); }
   html.sidebar-collapsed .ws-chev,
   html.sidebar-collapsed .search-pill .nav-label,
   html.sidebar-collapsed .side-top-act:not(.side-collapse),
-  html.sidebar-collapsed .area-menu,
-  html.sidebar-collapsed .area-add-btn { display: none; }
+  html.sidebar-collapsed .area-menu { display: none; }
   html.sidebar-collapsed .side-top { flex-direction: column; gap: 6px; }
   html.sidebar-collapsed .nav,
   html.sidebar-collapsed .capture-btn,
