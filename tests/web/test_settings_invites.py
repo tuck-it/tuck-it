@@ -21,12 +21,16 @@ def owner_client(client, db):
 
 
 @pytest.mark.django_db
-def test_owner_creates_invite_and_sees_link(owner_client):
+def test_owner_creates_invite_and_sees_link_via_manage_modal(owner_client):
     client, org = owner_client
     resp = client.post(f"/settings/{org.slug}/invites", {"email": "new@x.com", "role": "member"})
     assert resp.status_code == 200
     inv = Invitation.objects.get(org=org, email="new@x.com")
-    assert inv.token.encode() in resp.content  # link shown
+    assert b"Manage" in resp.content  # row itself just exposes the Manage action
+
+    resp = client.get(f"/settings/{org.slug}/invites/{inv.id}/manage")
+    assert resp.status_code == 200
+    assert inv.token.encode() in resp.content  # link shown in the manage modal
 
 
 @pytest.mark.django_db

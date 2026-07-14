@@ -33,10 +33,12 @@ settings_patterns = [
     path("settings/<slug:org_slug>/rename", settings_org.org_rename, name="org_rename"),
     path("settings/<slug:org_slug>/members/<int:member_id>/role", settings_org.member_role, name="org_member_role"),
     path("settings/<slug:org_slug>/members/<int:member_id>/remove", settings_org.member_remove, name="org_member_remove"),
+    path("settings/<slug:org_slug>/members/<int:member_id>/manage", settings_org.member_manage, name="org_member_manage"),
     path("settings/<slug:org_slug>/delete", settings_org.org_delete, name="org_delete"),
     path("settings/<slug:org_slug>/workspaces/new", workspaces.workspace_create, name="workspace_create"),
     path("settings/<slug:org_slug>/invites", settings_views.invite_create, name="invite_create"),
     path("settings/<slug:org_slug>/invites/<int:invitation_id>/cancel", settings_views.invite_cancel, name="invite_cancel"),
+    path("settings/<slug:org_slug>/invites/<int:invitation_id>/manage", settings_views.invite_manage, name="invite_manage"),
     # workspace level
     path("settings/<slug:org_slug>/<slug:ws_slug>/", settings_views.settings, name="settings"),
     path("settings/<slug:org_slug>/<slug:ws_slug>/workspace", settings_views.workspace_settings, name="settings_workspace"),

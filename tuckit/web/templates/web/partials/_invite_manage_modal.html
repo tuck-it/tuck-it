@@ -1,0 +1,32 @@
+{% load web_extras %}
+<div class="modal-card" role="document">
+  <div class="modal-card-head">
+    <div class="modal-card-title">{{ inv.email }}</div>
+    <button type="button" class="ghost" aria-label="Close" x-on:click="closeMemberModal()">{% icon "close" %}</button>
+  </div>
+
+  <div class="modal-card-row">
+    <span class="hint">Role</span>
+    <span class="role-badge role-badge--{{ inv.role }}">{{ inv.get_role_display }}</span>
+  </div>
+
+  {% if inv.link %}
+  <div class="modal-card-row">
+    <span class="hint">Invite link</span>
+    <button type="button" class="ghost" x-data="{copied:false}"
+            x-on:click="navigator.clipboard.writeText('{{ inv.link }}'); copied = true; setTimeout(() => copied = false, 1500)"
+            x-text="copied ? 'Copied' : 'Copy link'"></button>
+  </div>
+  {% endif %}
+
+  {% if can_admin %}
+  <div class="modal-card-row">
+    <span class="hint">Cancel invitation</span>
+    <button class="btn danger" type="button"
+            hx-post="{% url 'web:invite_cancel' org.slug inv.id %}"
+            hx-target="#invite-{{ inv.id }}" hx-swap="outerHTML"
+            hx-confirm="Cancel this invitation?"
+            hx-on::after-request="if(event.detail.successful) closeMemberModal()">Cancel</button>
+  </div>
+  {% endif %}
+</div>

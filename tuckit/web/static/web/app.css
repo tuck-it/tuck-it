@@ -182,6 +182,9 @@ body { padding: 0; }
   letter-spacing: 0.07em;
 }
 .group-label.attention { color: var(--ink); }
+/* Active/focus sections (Now, Doing) anchor the page — a step darker and larger
+   than the collapsed backlog folds below, within the same mono label system. */
+.group-label--lead { color: var(--ink); font-size: 13px; }
 .group-count { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
 /* Tag — muted text, never a filled chip; hash dimmed one step further. */
@@ -203,6 +206,11 @@ body { padding: 0; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .row-desc::before { content: "·"; margin: 0 8px; color: var(--line-strong); }
+/* Bite-progress bar — building rows only; a quiet neutral fill, never the accent. */
+.row-prog { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; }
+.row-prog-track { width: 44px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.row-prog-track i { display: block; height: 100%; background: var(--line-strong); }
+.row-prog-num { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; }
 .row-meta { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; }
 .empty { color: var(--ink-faint); font-family: var(--mono); font-size: 13px; padding: 8px 2px; }
 .row-meta { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -781,6 +789,26 @@ body { padding: 0; }
   z-index: 30;
 }
 
+/* Member/invite "Manage" modal — small centered dialog (vs. #panel's
+   right-side slide-over), for a single row's actions. Empty/non-empty toggle
+   mirrors #panel: htmx swaps innerHTML in, nothing to show/hide manually. */
+.modal-overlay:empty { display: none; }
+.modal-overlay:not(:empty) {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--overlay);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20vh;
+}
+.modal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; width: 360px; max-width: 90vw; }
+.modal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.modal-card-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.modal-card-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.modal-card-row:first-of-type { border-top: 0; padding-top: 0; }
+
 /* Same partial also renders as ordinary page content on the full slice page
    (web/slice_detail.html), so panel-inner itself carries no positioning. */
 .panel-inner { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
@@ -874,7 +902,9 @@ body { padding: 0; }
   background: none;
   border: none;
   color: var(--ink-faint);
-  font: inherit;
+  /* No `font: inherit` here — it would reset the .group-label mono/12px this
+     button also carries back to the body sans, making the fold labels louder
+     than the NOW/DOING headers above them. Let .group-label own the type. */
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1031,7 +1061,6 @@ body { padding: 0; }
 }
 .member-table tbody tr:last-child td { border-bottom: 0; }
 .member-table-actions { text-align: right; white-space: nowrap; }
-.member-table-actions .ghost { height: 28px; margin-right: 6px; }
 .member-cell { display: flex; align-items: center; gap: 10px; }
 
 .status-pill { font-size: 12px; }

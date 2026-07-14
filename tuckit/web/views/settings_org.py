@@ -66,6 +66,17 @@ def member_role(request, member_id):
     })
 
 
+def member_manage(request, member_id):
+    member = _member_in_org(request, member_id)
+    return render(request, "web/partials/_member_manage_modal.html", {
+        "m": member,
+        "org": request.org,
+        "role_choices": OrgMember.ROLE_CHOICES,
+        "can_owner": is_org_owner(request.user, request.org),
+        "can_admin": is_org_admin(request.user, request.org),
+    })
+
+
 @require_POST
 def member_remove(request, member_id):
     member = _member_in_org(request, member_id)

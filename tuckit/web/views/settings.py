@@ -1,8 +1,9 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from tuckit.core.models import Invitation
 from tuckit.core.services.exceptions import InvalidValue, LimitReached
 from tuckit.core.services.invitations import cancel_invitation, create_invitation, send_invitation_email
 from tuckit.core.services.orgs import delete_workspace, is_org_admin, rename_workspace
@@ -120,3 +121,12 @@ def invite_cancel(request, invitation_id):
         return HttpResponseForbidden("권한이 없습니다")
     cancel_invitation(org=org, invitation_id=invitation_id)
     return HttpResponse(status=204)
+
+
+def invite_manage(request, invitation_id):
+    org = request.org
+    inv = get_object_or_404(Invitation, id=invitation_id, org=org, accepted_at__isnull=True)
+    inv.link = request.build_absolute_uri(reverse("web:invite_accept", args=[inv.token]))
+    return render(request, "web/partials/_invite_manage_modal.html", {
+        "inv": inv, "org": org, "can_admin": is_org_admin(request.user, org),
+    })
