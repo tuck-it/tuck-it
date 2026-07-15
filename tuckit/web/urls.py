@@ -4,7 +4,7 @@ from django.urls import path
 
 from tuckit.web.views import (
     pages, slices, mutations, board, capture, health, workspaces,
-    accounts, settings_org, settings_account, routing, welcome as welcome_views,
+    accounts, settings_org, settings_account, routing,
     onboarding,
 )
 from tuckit.web.views import settings as settings_views
@@ -19,9 +19,6 @@ auth_patterns = [
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("first-org/", onboarding.first_org, name="first_org"),
-    path("welcome/", welcome_views.welcome, name="welcome"),
-    path("welcome/key", welcome_views.welcome_generate_key, name="welcome_generate_key"),
-    path("welcome/agent-activity", welcome_views.welcome_agent_check, name="welcome_agent_check"),
 ]
 
 # --- settings hub (cross-cutting; explicit slugs) ---

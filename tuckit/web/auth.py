@@ -8,9 +8,9 @@ def get_current_workspace(request) -> Workspace | None:
 
 
 def resolve_fallback_workspace(request) -> Workspace | None:
-    """Best-effort workspace for non-tenant pages (e.g. welcome) that still need one:
-    prefers the session's active workspace, else the user's first accessible one.
-    Membership-checked. None if the user has no accessible workspace."""
+    """Best-effort workspace for non-tenant pages (e.g. first_org) that still need
+    one: prefers the session's active workspace, else the user's first accessible
+    one. Membership-checked. None if the user has no accessible workspace."""
     if not request.user.is_authenticated:
         return None
     from tuckit.core.models import OrgMember
@@ -29,10 +29,10 @@ def landing_route(request) -> tuple[str, dict]:
     account state: their workspace's Home, or the create-first-org page if they
     have none. Returns (url_name, reverse_kwargs).
 
-    Leaf pages (root, welcome, first_org) MUST consult this instead of
-    redirecting to one another on inferred state — that is what previously
-    produced the root<->welcome redirect loop. Centralizing the decision here
-    makes cycles structurally impossible.
+    Leaf pages (root, first_org) MUST consult this instead of redirecting to one
+    another on inferred state — that is what previously produced a root-level
+    redirect loop. Centralizing the decision here makes cycles structurally
+    impossible.
     """
     ws = resolve_fallback_workspace(request)
     if ws is None:

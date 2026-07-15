@@ -1,5 +1,5 @@
 """A logged-in user with no accessible workspace (e.g. a createsuperuser account
-that bypassed the register() service) must not bounce between root and welcome.
+that bypassed the register() service) must not get stuck at the app root.
 Regression test for the ERR_TOO_MANY_REDIRECTS login loop; they land on a
 standalone "create your first org" page instead."""
 import pytest
@@ -12,15 +12,6 @@ def test_root_redirects_workspaceless_user_to_first_org(client):
     u = User.objects.create(email="lonely@example.com")
     client.force_login(u)
     r = client.get("/")
-    assert r.status_code == 302
-    assert r.headers["Location"] == "/first-org/"
-
-
-@pytest.mark.django_db
-def test_welcome_redirects_workspaceless_user_to_first_org(client):
-    u = User.objects.create(email="lonely2@example.com")
-    client.force_login(u)
-    r = client.get("/welcome/")
     assert r.status_code == 302
     assert r.headers["Location"] == "/first-org/"
 

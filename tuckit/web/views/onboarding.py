@@ -14,7 +14,7 @@ from tuckit.web.auth import get_current_workspace, landing_route
 def first_org(request):
     """Standalone page for a logged-in user with no accessible workspace (e.g. a
     createsuperuser account): create a first org so they get a workspace, instead
-    of looping between root and welcome. Login-protected by middleware."""
+    of getting stuck at the app root. Login-protected by middleware."""
     if accessible_workspaces(request.user).exists():
         # Already set up — defer to the single landing decision (→ Home).
         name, kwargs = landing_route(request)

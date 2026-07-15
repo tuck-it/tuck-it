@@ -38,6 +38,6 @@ from tuckit.web.auth import landing_route
 @login_required
 def root_redirect(request):
     # The single landing decision lives in landing_route(); this view just obeys
-    # it. No per-view redirect logic → no root<->welcome cycle.
+    # it. No per-view redirect logic → no redirect cycle.
     name, kwargs = landing_route(request)
     return redirect(name, **kwargs)
