@@ -112,7 +112,7 @@ def areas(request):
             if a.is_triage:
                 continue
             counts = {}
-            for s in Slice.objects.filter(area=a).values_list("status", flat=True):
+            for s in Slice.objects.filter(area=a).exclude(status="dropped").values_list("status", flat=True):
                 counts[s] = counts.get(s, 0) + 1
             cards.append({
                 "area": a,

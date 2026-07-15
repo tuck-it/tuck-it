@@ -27,6 +27,17 @@ def test_areas_page_lists_areas(client_local, workspace):
 
 
 @pytest.mark.django_db
+def test_areas_page_slice_count_excludes_dropped(client_local, workspace):
+    area = create_area(workspace, "Backend")
+    create_slice(area, "Retry webhooks", status="idea")
+    create_slice(area, "Add metrics", status="planned")
+    create_slice(area, "Old approach", status="dropped")
+    body = client_local.get(f"{_p(workspace)}/areas/").content.decode()
+    assert "2 slice" in body
+    assert "3 slice" not in body
+
+
+@pytest.mark.django_db
 def test_areas_route_resolves(client_local, workspace):
     from django.urls import reverse
     url = reverse("web:areas", kwargs={"org_slug": workspace.org.slug, "ws_slug": workspace.slug})
