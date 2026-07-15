@@ -8,7 +8,7 @@ from tuckit.core.services.slugs import normalize_slug, validate_slug
 def check_slug(request):
     kind = request.GET.get("kind", "org")
     if kind not in ("org", "workspace"):
-        return JsonResponse({"available": False, "error": "알 수 없는 종류"})
+        return JsonResponse({"available": False, "error": "Unknown kind."})
     try:
         slug = validate_slug(request.GET.get("slug", ""), kind=kind)
     except InvalidValue as exc:
@@ -22,10 +22,10 @@ def check_slug(request):
             or not request.user.is_authenticated
             or not OrgMember.objects.filter(user=request.user, org=org).exists()
         ):
-            return JsonResponse({"available": False, "error": "조직을 찾을 수 없습니다"})
+            return JsonResponse({"available": False, "error": "Organization not found."})
         taken = Workspace.objects.filter(org=org, slug=slug).exists()
     if taken:
-        return JsonResponse({"available": False, "error": "이미 사용 중입니다"})
+        return JsonResponse({"available": False, "error": "Already taken."})
     return JsonResponse({"available": True, "error": None})
 
 

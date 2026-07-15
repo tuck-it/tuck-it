@@ -32,6 +32,7 @@ def test_register_duplicate_slug_shows_error(client):
     })
     assert resp.status_code == 200  # re-rendered with error
     assert not User.objects.filter(email="new@x.com").exists()
+    assert "already taken" in resp.content.decode().lower()  # English error copy
 
 
 @pytest.mark.django_db

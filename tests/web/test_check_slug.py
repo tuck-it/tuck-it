@@ -77,7 +77,7 @@ def test_workspace_kind_blocked_for_anonymous(client, db):
     create_workspace(org, "Design")
     resp = client.get("/settings/check-slug",
                       {"kind": "workspace", "slug": "design", "org": "acme"})
-    assert resp.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}
+    assert resp.json() == {"available": False, "error": "Organization not found."}
 
 
 @pytest.mark.django_db
@@ -89,8 +89,8 @@ def test_workspace_kind_blocked_for_nonmember(client, db):
 
     resp_taken = client.get("/settings/check-slug",
                             {"kind": "workspace", "slug": "design", "org": "acme"})
-    assert resp_taken.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}
+    assert resp_taken.json() == {"available": False, "error": "Organization not found."}
 
     resp_free = client.get("/settings/check-slug",
                            {"kind": "workspace", "slug": "fresh", "org": "acme"})
-    assert resp_free.json() == {"available": False, "error": "조직을 찾을 수 없습니다"}
+    assert resp_free.json() == {"available": False, "error": "Organization not found."}

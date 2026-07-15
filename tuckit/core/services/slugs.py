@@ -27,9 +27,12 @@ def normalize_slug(raw: str) -> str:
 def validate_slug(raw: str, *, kind: str) -> str:
     slug = normalize_slug(raw)
     if not (_MIN <= len(slug) <= _MAX):
-        raise InvalidValue(f"슬러그는 {_MIN}~{_MAX}자여야 합니다")
+        raise InvalidValue(f"The URL must be {_MIN}–{_MAX} characters.")
     if "--" in slug or not _SLUG_RE.match(slug):
-        raise InvalidValue("슬러그는 소문자·숫자·하이픈만 쓸 수 있으며 하이픈으로 시작/끝나거나 연속될 수 없습니다")
+        raise InvalidValue(
+            "Use lowercase letters, numbers, and hyphens only — "
+            "no leading, trailing, or repeated hyphens."
+        )
     if slug in _RESERVED[kind]:
-        raise InvalidValue(f"'{slug}' 는 예약어라 사용할 수 없습니다")
+        raise InvalidValue(f"'{slug}' is reserved and can't be used.")
     return slug

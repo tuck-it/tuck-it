@@ -11,12 +11,12 @@ from tuckit.core.services.slugs import validate_slug
 @transaction.atomic
 def register(*, email, org_name, slug, password) -> tuple[User, Org, Workspace]:
     if User.objects.filter(email=email).exists():
-        raise InvalidValue(f"이미 존재하는 사용자입니다: {email}")
+        raise InvalidValue(f"A user with this email already exists: {email}")
     slug = validate_slug(slug, kind="org")  # raises on bad/reserved format
     if Org.objects.filter(slug=slug).exists():
-        raise InvalidValue(f"이미 사용 중인 조직 슬러그입니다: {slug}")
+        raise InvalidValue(f"That organization URL is already taken: {slug}")
     if not password:
-        raise InvalidValue("비밀번호를 입력해 주세요")
+        raise InvalidValue("Please enter a password.")
     user = User(email=email)
     try:
         validate_password(password, user)
