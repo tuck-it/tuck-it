@@ -161,7 +161,7 @@ body { padding: 0; }
 
 .nav:hover { background: var(--paper-raised); }
 .nav .icon { stroke: var(--ink-faint); }
-.nav.nav--active { background: var(--blue-soft); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--blue); }
+.nav.nav--active { background: var(--blue-soft); color: var(--ink); font-weight: 600; }
 .nav.nav--active .icon { stroke: var(--blue); }
 
 
@@ -1171,7 +1171,7 @@ body { padding: 0; }
 .util-btn:hover { background: var(--paper-raised); color: var(--ink); }
 .util-btn .icon { stroke: var(--ink-faint); }
 .util-btn:hover .icon { stroke: var(--ink); }
-.util-btn--active { color: var(--ink); background: var(--blue-soft); }
+.util-btn--active { color: var(--ink); background: var(--blue-soft); font-weight: 600; }
 .util-btn--active .icon { stroke: var(--blue); }
 
 .capture-btn {

@@ -10,7 +10,6 @@
     {% icon "search" %}<span class="nav-label">Search</span><kbd class="nav-kbd">⌘K</kbd>
   </button>
 
-  <div class="section">Main</div>
   <nav class="nav-group">
     <a class="nav{% if request.resolver_match.url_name == 'home' %} nav--active{% endif %}"
        href="{% wurl 'web:home' %}">{% icon "home" %}<span class="nav-label">Home</span></a>

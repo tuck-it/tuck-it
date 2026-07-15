@@ -35,14 +35,18 @@ def test_top_region_has_workspace_and_search_no_wordmark(client_local, workspace
 
 
 @pytest.mark.django_db
-def test_main_section_header_present(client_local, workspace):
+def test_areas_group_labeled_primary_group_is_not(client_local, workspace):
+    # The primary nav group carries no label (the "Main" header was removed);
+    # only the secondary "Areas" group is labeled.
     body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
-    assert ">Main</div>" in body
+    assert ">Main</div>" not in body
+    assert 'class="section area-section"' in body
 
 
-def test_active_nav_has_accent_bar_via_token():
+def test_active_nav_uses_token_soft_fill_no_bar():
     css = APP_CSS.read_text(encoding="utf-8")
-    assert "inset 3px 0 0 var(--blue)" in css       # accent bar, token color
+    assert "inset 3px 0 0 var(--blue)" not in css    # left accent bar removed
+    assert ".nav.nav--active { background: var(--blue-soft);" in css  # soft fill via token
     assert ".nav-count" in css and "var(--blue-soft)" in css  # inbox pill uses token bg
 
 
@@ -189,3 +193,17 @@ def test_activity_route_and_sidebar_entry_removed(client_local, workspace):
 def test_activity_icon_removed():
     from tuckit.web.templatetags.web_extras import _ICON_PATHS
     assert "activity" not in _ICON_PATHS
+
+
+@pytest.mark.django_db
+def test_active_item_soft_fill_no_bar_and_main_label_removed(client_local, workspace):
+    css = APP_CSS.read_text(encoding="utf-8")
+    # Active item: soft fill kept, left accent bar dropped
+    assert "box-shadow: inset 3px 0 0 var(--blue)" not in css
+    assert ".nav.nav--active { background: var(--blue-soft);" in css
+    # Settings active unified to the same treatment as nav (adds weight)
+    assert re.search(r"\.util-btn--active\s*\{[^}]*font-weight:\s*600", css), ".util-btn--active must be bold like nav"
+    # "Main" label removed; the "Areas" group label is kept
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert '<div class="section">Main</div>' not in body
+    assert 'class="section area-section"' in body
