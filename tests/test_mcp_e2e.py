@@ -60,16 +60,19 @@ def test_mcp_streamable_http_round_trip_returns_real_state(asgi_app):
             headers=headers,
         )
         assert init_resp.status_code == 200, init_resp.text
-        session_id = init_resp.headers.get("mcp-session-id")
-        assert session_id, "server must issue an Mcp-Session-Id on initialize"
-
-        session_headers = {**headers, "Mcp-Session-Id": session_id}
+        # The server runs the Streamable HTTP transport in STATELESS mode (see
+        # core/mcp/server.py), so it issues NO Mcp-Session-Id -- each request is
+        # self-contained and no follow-up needs to reference a prior session.
+        # (A dedicated regression for this lives in tests/test_mcp_stateless.py.)
+        assert init_resp.headers.get("mcp-session-id") is None, (
+            "stateless mode must not issue an Mcp-Session-Id"
+        )
 
         # 2. notifications/initialized (required handshake ack; no response body expected)
         notif_resp = client.post(
             "/mcp",
             json={"jsonrpc": "2.0", "method": "notifications/initialized"},
-            headers=session_headers,
+            headers=headers,
         )
         assert notif_resp.status_code == 202, notif_resp.text
 
@@ -82,7 +85,7 @@ def test_mcp_streamable_http_round_trip_returns_real_state(asgi_app):
                 "method": "tools/call",
                 "params": {"name": "get_project_state", "arguments": {}},
             },
-            headers=session_headers,
+            headers=headers,
         )
         assert call_resp.status_code == 200, call_resp.text
 
