@@ -111,14 +111,15 @@ def test_panel_header_title_and_status_tabs(client_local, workspace):
 
     # panel context
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
-    assert 'class="panel-crumb"' in body
-    assert f'href="/{workspace.org.slug}/{workspace.slug}/areas/{a.slug}/"' in body   # breadcrumb links to area
+    assert 'class="area-chip"' in body
+    assert f'href="/{workspace.org.slug}/{workspace.slug}/areas/{a.slug}/"' in body   # chip links to area
     assert "Design" in body
-    assert 'class="panel-byline"' in body
-    assert "seg--tabs" in body
-    assert body.count('class="status-dot status-dot--') == 4    # a dot on every status tab
-    assert "seg-item--on" in body                               # active (building) tab
-    assert 'class="spec-box"' in body
+    assert 'class="props"' in body
+    assert 'class="status-menu"' in body
+    assert body.count('class="status-opt') == 4          # one option per status
+    assert "status-opt--on" in body                       # active (building) option marked
+    assert "Created" in body and "Updated" in body        # properties rows
+    assert 'class="section-label">Description' in body   # description is now a labeled section
     # panel-only chrome present
     assert "crumb-close" in body
     assert "Open full page" in body
@@ -134,7 +135,7 @@ def test_full_page_hides_panel_only_chrome(client_local, workspace):
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()   # full page, no panel=1
     assert "crumb-close" not in body        # no close button on the full page
     assert "Open full page" not in body     # no self-link on the full page
-    assert 'class="panel-crumb"' in body    # breadcrumb still shown
+    assert 'class="area-chip"' in body     # breadcrumb chip still shown on full page
 
 
 @pytest.mark.django_db
@@ -175,16 +176,16 @@ def test_action_bar_has_copy_and_drop(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_context_tags_have_no_area_chip(client_local, workspace):
+def test_tags_live_in_properties_not_a_context_section(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{workspace.org.slug}/{workspace.slug}"
-    a = create_area(workspace, "Design")
-    s = create_slice(a, "태그")
+    s = create_slice(create_area(workspace, "Design"), "태그")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
-    assert 'class="section-label">Context' in body
-    assert "meta-area" not in body        # area chip removed from the tags row
+    assert 'class="section-label">Context' not in body   # standalone Context section removed
+    assert '<span class="prop-key">Tags' in body          # tags now a property row
     assert "Add tag" in body
+    assert "meta-area" not in body
 
 
 @pytest.mark.django_db
@@ -212,3 +213,16 @@ def test_slice_activity_helper_is_chronological_and_scoped(workspace):
     times = [e.created_at for e in events]
     assert times == sorted(times) and len(events) >= 2        # oldest-first
     assert all(not (e.target_type == "slice" and e.target_id == other.id) for e in events)
+
+
+@pytest.mark.django_db
+def test_description_is_seamless_inline_edit(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    s = create_slice(create_area(workspace, "Design"), "설명")
+    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="section-label">Description' in body   # labeled section
+    assert 'class="spec-edit"' in body                   # inline editor present
+    assert 'rows="6"' not in body                        # no big fixed textarea jump
+    assert 'class="spec-box"' not in body                # framed box removed

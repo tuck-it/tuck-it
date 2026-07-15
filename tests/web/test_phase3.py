@@ -39,18 +39,18 @@ def test_slice_panel_order_and_close_aria(client_local, workspace):
     assert 'aria-label="Close panel"' in body
     assert "Open full" in body
     assert "Backend" in body                         # Area context near title
-    # blueprint order: bites appear before tags; tags before the destructive drop
-    assert body.index('id="bites-') < body.index("billing") < body.index("Drop")
+    # blueprint order: tags (now a property row) appear before bites; bites before the destructive drop
+    assert body.index("billing") < body.index('id="bites-') < body.index("Drop")
 
 
 @pytest.mark.django_db
-def test_slice_panel_renders_segmented_status(client_local, workspace):
+def test_slice_panel_renders_status_dropdown(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{workspace.org.slug}/{workspace.slug}"
     s = create_slice(create_area(workspace, "Backend"), "seg", status="building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
-    assert 'class="seg seg--tabs"' in body and 'seg-item--on' in body
+    assert 'class="status-menu"' in body and 'status-opt--on' in body
 
 
 @pytest.mark.django_db
