@@ -5,6 +5,7 @@ from django.urls import path
 from tuckit.web.views import (
     pages, slices, mutations, board, capture, health, workspaces,
     accounts, settings_org, settings_account, routing, welcome as welcome_views,
+    onboarding,
 )
 from tuckit.web.views import settings as settings_views
 
@@ -59,6 +60,9 @@ P = "<slug:org_slug>/<slug:ws_slug>/"
 app_patterns = [
     path(f"{P}", pages.home, name="home"),
     path(f"{P}onboarding/dismiss", pages.dismiss_onboarding, name="onboarding_dismiss"),
+    path(f"{P}onboarding/area", onboarding.create_first_area, name="onboarding_area"),
+    path(f"{P}onboarding/slice", onboarding.create_first_slice, name="onboarding_slice"),
+    path(f"{P}onboarding/bite", onboarding.create_first_bite, name="onboarding_bite"),
     path(f"{P}capture", capture.capture, name="capture"),
     path(f"{P}triage/", capture.triage_list, name="triage"),
     path(f"{P}attention/", pages.attention, name="attention"),
