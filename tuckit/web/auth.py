@@ -24,6 +24,22 @@ def resolve_fallback_workspace(request) -> Workspace | None:
     return accessible_workspaces(request.user).select_related("org").first()
 
 
+def landing_route(request) -> tuple[str, dict]:
+    """Single source of truth for where a logged-in user should land, based on
+    account state: their workspace's Home, or the create-first-org page if they
+    have none. Returns (url_name, reverse_kwargs).
+
+    Leaf pages (root, welcome, first_org) MUST consult this instead of
+    redirecting to one another on inferred state — that is what previously
+    produced the root<->welcome redirect loop. Centralizing the decision here
+    makes cycles structurally impossible.
+    """
+    ws = resolve_fallback_workspace(request)
+    if ws is None:
+        return ("web:first_org", {})
+    return ("web:home", {"org_slug": ws.org.slug, "ws_slug": ws.slug})
+
+
 def current_workspace_or_fallback(request) -> Workspace | None:
     """Strict tenant workspace if the URL resolved one (get_current_workspace);
     otherwise the same best-effort fallback as resolve_fallback_workspace. Sidebar

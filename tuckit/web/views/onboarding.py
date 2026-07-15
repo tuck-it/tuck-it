@@ -7,16 +7,17 @@ from tuckit.core.services.bites import create_bite
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.orgs import accessible_workspaces, create_org
 from tuckit.core.services.slices import create_slice
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_workspace, landing_route
 
 
 def first_org(request):
     """Standalone page for a logged-in user with no accessible workspace (e.g. a
     createsuperuser account): create a first org so they get a workspace, instead
     of looping between root and welcome. Login-protected by middleware."""
-    ws = accessible_workspaces(request.user).select_related("org").first()
-    if ws is not None:
-        return redirect("web:home", org_slug=ws.org.slug, ws_slug=ws.slug)
+    if accessible_workspaces(request.user).exists():
+        # Already set up — defer to the single landing decision (→ Home).
+        name, kwargs = landing_route(request)
+        return redirect(name, **kwargs)
     if request.method == "POST":
         try:
             org, ws = create_org(request.user, name=request.POST.get("name", ""))

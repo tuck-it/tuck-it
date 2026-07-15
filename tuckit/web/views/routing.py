@@ -32,22 +32,12 @@ def check_slug(request):
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 
-from tuckit.core.services.orgs import accessible_workspaces
+from tuckit.web.auth import landing_route
 
 
 @login_required
 def root_redirect(request):
-    ws_id = request.session.get("active_workspace_id")
-    ws = None
-    if ws_id:
-        ws = Workspace.objects.filter(pk=ws_id).select_related("org").first()
-        if ws and not OrgMember.objects.filter(user=request.user, org=ws.org).exists():
-            ws = None
-    if ws is None:
-        ws = accessible_workspaces(request.user).select_related("org").first()
-    if ws is None:
-        # No accessible workspace (e.g. a createsuperuser account that bypassed
-        # the register() service): send them to a standalone "create your first
-        # org" page, rather than to welcome — which would bounce back here (loop).
-        return redirect("web:first_org")
-    return redirect("web:home", org_slug=ws.org.slug, ws_slug=ws.slug)
+    # The single landing decision lives in landing_route(); this view just obeys
+    # it. No per-view redirect logic → no root<->welcome cycle.
+    name, kwargs = landing_route(request)
+    return redirect(name, **kwargs)
