@@ -83,3 +83,68 @@ def test_new_sidebar_css_uses_no_raw_hex():
     # No 3/6-digit hex color literals anywhere in the components file.
     hexes = re.findall(r"#[0-9a-fA-F]{3,8}\b", css)
     assert hexes == [], f"app.css must use var(--token), found hex: {hexes}"
+
+
+def test_sidebar_shell_is_pinned_and_width_variable():
+    css = APP_CSS.read_text(encoding="utf-8")
+    # Viewport-pinned, self-scrolling shell
+    assert "position: sticky" in css
+    assert "100dvh" in css
+    assert "overflow-y: auto" in css
+    # Width driven by a variable with an animated flex-basis
+    assert "--sidebar-w: 220px" in css            # :root default
+    assert "var(--sidebar-w, 220px)" in css        # consumed by .sidebar
+    assert "transition: flex-basis" in css
+
+
+def test_collapse_animates_and_keeps_chevron_on_top():
+    css = APP_CSS.read_text(encoding="utf-8")
+    # Collapse overrides the width variable (so flex-basis transition animates it)
+    assert "html.sidebar-collapsed .sidebar { --sidebar-w: 60px; }" in css
+    # Old instant flex-basis swap is gone
+    assert "html.sidebar-collapsed .sidebar { flex-basis: 60px; }" not in css
+    # Chevron is pulled to the top of the collapsed column
+    assert "html.sidebar-collapsed .side-collapse { order: -1; }" in css
+
+
+@pytest.mark.django_db
+def test_resize_handle_rendered(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="side-resize"' in body
+    assert 'role="separator"' in body
+    assert 'aria-orientation="vertical"' in body
+
+
+def test_resize_handle_css_present():
+    css = APP_CSS.read_text(encoding="utf-8")
+    assert ".side-resize" in css
+    assert "col-resize" in css                       # resize cursor
+    assert "html.resizing .sidebar { transition: none; }" in css   # 1:1 tracking
+    assert "html.sidebar-collapsed .side-resize { display: none; }" in css  # hidden collapsed
+
+
+SIDEBAR_JS = APP_CSS.parent / "sidebar.js"
+
+
+@pytest.mark.django_db
+def test_sidebar_js_loaded_and_width_restored(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert "sidebar.js" in body                 # behavior script loaded
+    assert "sidebar-width" in body              # pre-paint restore reads the key
+
+
+def test_sidebar_js_clamps_to_bounds():
+    js = SIDEBAR_JS.read_text(encoding="utf-8")
+    assert "180" in js and "420" in js          # min/max bounds
+    assert "sidebar-width" in js                # persists under this key
+    assert "resizing" in js                     # toggles the no-transition drag class
+
+
+def test_sidebar_js_syncs_aria_valuenow_on_load_and_clamps_persisted_width():
+    js = SIDEBAR_JS.read_text(encoding="utf-8")
+    # On load, the handle's aria-valuenow is synced to the restored width
+    # (the server markup hardcodes 220 and the pre-paint script can't reach
+    # the attribute), using the same validated fallback as currentWidth().
+    assert 'handle.setAttribute("aria-valuenow", String(currentWidth()))' in js
+    # endDrag clamps the persisted value instead of writing it raw.
+    assert "clamp(parseInt(getComputedStyle(root).getPropertyValue(\"--sidebar-w\"), 10))" in js
