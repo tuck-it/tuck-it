@@ -67,8 +67,8 @@ def test_reorder_area_before_neighbor(client_local, workspace):
     )
     assert resp.status_code == 204
     ordered = list(list_areas(workspace))
-    # workspace fixture pre-creates Triage + a "Default" area, so filter the
-    # full ordered list down to the three areas this test cares about.
+    # the workspace fixture pre-creates only Triage, so filter the full ordered
+    # list down to the three areas this test cares about.
     ids = [x.id for x in ordered if x.id in {a.id, b.id, c.id}]
     assert ids == [c.id, a.id, b.id]
 

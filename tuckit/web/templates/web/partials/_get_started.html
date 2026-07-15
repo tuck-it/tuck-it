@@ -13,7 +13,7 @@
         <summary><span class="gs-box">✓</span><span class="gs-lbl">Create your first Area</span></summary>
         <div class="gs-card">
           <p class="gs-def"><b>Area</b> — a long-lived domain of responsibility. It never gets “done”; it’s a home for work, so nothing floats around unowned.</p>
-          <p class="gs-eg">Examples: Backend, Marketing, Mobile. (<b>Triage</b> is the one built-in Area — the inbox for anything not yet sorted.)</p>
+          <p class="gs-eg">Examples: Backend, Marketing, Mobile. (Triage is the one built-in Area — the inbox for anything not yet sorted.)</p>
           {% if not onboarding.has_area %}
           <form class="gs-form" method="post" action="{% wurl 'web:onboarding_area' %}">{% csrf_token %}
             <input name="name" placeholder="e.g. Backend" maxlength="200" required>
