@@ -14,6 +14,7 @@ from tuckit.core.services.orgs import (
     rename_org,
 )
 from tuckit.web.htmx import redirect_response
+from tuckit.web.views.settings_shell import settings_context
 
 
 @require_POST
@@ -88,6 +89,13 @@ def org_home(request):
         "can_admin": is_org_admin(request.user, org),
         "can_owner": is_org_owner(request.user, org),
     })
+
+
+def org_general(request):
+    org = request.org
+    ctx = settings_context(request, active="org_general")
+    ctx["org"] = org
+    return render(request, "web/settings/org_general.html", ctx)
 
 
 @require_POST

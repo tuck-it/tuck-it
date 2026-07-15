@@ -63,7 +63,7 @@ def test_nonmember_gets_404_on_other_org_home(org_ctx):
 def test_owner_renames_org(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, owner)
-    resp = client.post(f"/settings/{org.slug}/rename", {"name": "Beta"})
+    resp = client.post(f"/{org.slug}/settings/rename", {"name": "Beta"})
     assert resp.status_code == 200
     org.refresh_from_db()
     assert org.name == "Beta"
@@ -73,7 +73,7 @@ def test_owner_renames_org(org_ctx):
 def test_member_cannot_rename_org(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, member)
-    resp = client.post(f"/settings/{org.slug}/rename", {"name": "Beta"})
+    resp = client.post(f"/{org.slug}/settings/rename", {"name": "Beta"})
     assert resp.status_code == 403
     org.refresh_from_db()
     assert org.name == "Acme"

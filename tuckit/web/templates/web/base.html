@@ -60,7 +60,7 @@
     <div class="sidebar-wrap" id="app-sidebar" x-ref="sidebarWrap" :class="{'menu-open': menu}"
          x-on:keydown.escape.window="if (menu) { menu = false; $refs.menuToggle.focus() }"
          x-on:keydown.tab="trapFocus($event)">
-      {% include "web/partials/_sidebar.html" %}
+      {% block sidebar %}{% include "web/partials/_sidebar.html" %}{% endblock %}
     </div>
     <main class="main">{% include "web/partials/_breadcrumb.html" %}{% block main %}{% endblock %}</main>
   </div>
