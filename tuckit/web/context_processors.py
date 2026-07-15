@@ -86,7 +86,7 @@ def onboarding(request):
     from tuckit.core.models import ActivityEvent
 
     ws = current_workspace_or_fallback(request)
-    if not ws:
+    if not ws or ws.onboarding_completed or ws.onboarding_dismissed:
         return {}
     state = onboarding_state(ws)
     if state.done and not ws.onboarding_completed:

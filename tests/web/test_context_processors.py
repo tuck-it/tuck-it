@@ -65,3 +65,30 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, workspa
 def test_onboarding_context_present_on_non_home_page(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     assert "Get started" in client_local.get(f"{p}/triage/").content.decode()
+
+
+@pytest.mark.django_db
+def test_onboarding_short_circuits_when_completed_or_dismissed(rf, workspace):
+    """Once a workspace is completed or dismissed, the widget can never show
+    again, so the processor must bail out before running onboarding_state's
+    ~6 queries (or the baseline query) at all."""
+    from django.test.utils import CaptureQueriesContext
+    from django.db import connection
+    from tuckit.web.context_processors import onboarding
+
+    for flag in ("onboarding_completed", "onboarding_dismissed"):
+        setattr(workspace, flag, True)
+        workspace.save(update_fields=[flag])
+
+        request = rf.get("/")
+        request.workspace = workspace
+        request.user = type("Anon", (), {"is_authenticated": False})()
+
+        with CaptureQueriesContext(connection) as ctx:
+            result = onboarding(request)
+
+        assert result == {}
+        assert len(ctx.captured_queries) == 0
+
+        setattr(workspace, flag, False)
+        workspace.save(update_fields=[flag])
