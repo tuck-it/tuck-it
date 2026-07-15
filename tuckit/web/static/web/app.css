@@ -1739,4 +1739,5 @@ html.sidebar-collapsed .side-resize { display: none; }
 .ob-dismiss { margin-top: 10px; text-align: right; }
 .ob-dismiss-btn { background: none; border: 0; color: var(--muted); font-size: 12px; cursor: pointer; }
 .ob-dismiss-btn:hover { color: var(--text); }
+#panel:not(:empty) ~ .ob-widget { display: none; }
 @media (max-width: 640px) { .ob-widget { right: 12px; bottom: 12px; left: 12px; width: auto; } }

@@ -17,6 +17,11 @@ def test_widget_shows_four_steps_on_fresh_home(client_local, workspace):
     assert "Add your first Slice" in body
     assert "Break it into Bites" in body
     assert "Connect your agent" in body
+    # a11y: disclosure toggle points at the collapsible body, decorative
+    # checkmark glyphs are hidden from assistive tech.
+    assert 'aria-controls="ob-body"' in body
+    assert 'id="ob-body"' in body
+    assert 'class="ob-box" aria-hidden="true"' in body
 
 
 @pytest.mark.django_db
