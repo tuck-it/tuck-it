@@ -87,7 +87,6 @@ def org_home(request):
         "invitations": invitations,
         "can_admin": is_org_admin(request.user, org),
         "can_owner": is_org_owner(request.user, org),
-        "role_choices": OrgMember.ROLE_CHOICES,
     })
 
 

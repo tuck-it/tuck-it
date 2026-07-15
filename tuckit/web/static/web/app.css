@@ -1336,7 +1336,7 @@ body { padding: 0; }
 .org-row-name {
   color: var(--text);
 }
-.org-row-meta {
+.org-card-meta {
   color: var(--muted);
   font-size: 12px;
 }

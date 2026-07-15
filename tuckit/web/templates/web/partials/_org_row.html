@@ -2,8 +2,8 @@
   <div class="org-card-head">
     <a class="org-card-name" href="{% url 'web:org_home' row.org.slug %}">{{ row.org.name }}</a>
     <span class="role-badge role-badge--{{ row.role }}">{{ row.role }}</span>
-    <span class="org-row-meta">{{ row.workspace_count }} workspace{{ row.workspace_count|pluralize }}</span>
-    {% if row.is_current %}<span class="org-row-meta">· current</span>{% endif %}
+    <span class="org-card-meta">{{ row.workspace_count }} workspace{{ row.workspace_count|pluralize }}</span>
+    {% if row.is_current %}<span class="org-card-meta">· current</span>{% endif %}
     <a class="org-card-open" href="{% url 'web:org_home' row.org.slug %}">Org home →</a>
   </div>
   <div class="org-ws-chips">

@@ -49,7 +49,7 @@ def test_org_page_requires_login(client, db):
 
 
 @pytest.mark.django_db
-def test_nonmember_gets_404_on_other_org_settings(org_ctx):
+def test_nonmember_gets_404_on_other_org_home(org_ctx):
     client, org, owner, member, ws = org_ctx
     other = Org.objects.create(name="Other", slug="other")
     stranger = User.objects.create(email="stranger@x.com")
