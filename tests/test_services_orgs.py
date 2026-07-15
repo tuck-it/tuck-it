@@ -19,12 +19,12 @@ def org_with_owner(db):
 
 
 @pytest.mark.django_db
-def test_create_workspace_sets_up_inbox_and_default(org_with_owner):
+def test_create_workspace_sets_up_inbox_only(org_with_owner):
     org, _ = org_with_owner
     ws = create_workspace(org, "Board")
     assert ws.org == org
     assert Area.objects.filter(workspace=ws, is_triage=True).count() == 1
-    assert Area.objects.filter(workspace=ws, is_triage=False, slug="default").exists()
+    assert Area.objects.filter(workspace=ws, is_triage=False).count() == 0
 
 
 @pytest.mark.django_db
@@ -159,7 +159,7 @@ def test_create_org_makes_org_owner_and_first_workspace():
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
     assert ws.org == org
     assert Area.objects.filter(workspace=ws, is_triage=True).count() == 1
-    assert Area.objects.filter(workspace=ws, is_triage=False, slug="default").exists()
+    assert Area.objects.filter(workspace=ws, is_triage=False).count() == 0
 
 
 @pytest.mark.django_db

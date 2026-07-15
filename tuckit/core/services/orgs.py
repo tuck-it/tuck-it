@@ -1,7 +1,7 @@
 from django.db import transaction
 
 from tuckit.core.models import Org, OrgMember, Workspace
-from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.services.areas import get_or_create_triage
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.slugs import RESERVED_ORG_SLUGS, RESERVED_WORKSPACE_SLUGS, validate_slug
 
@@ -53,7 +53,6 @@ def create_workspace(org: Org, name: str, slug: str | None = None) -> Workspace:
     slug = validate_slug(slug, kind="workspace") if slug else _unique_ws_slug(org, name)
     ws = Workspace.objects.create(org=org, name=name, slug=slug)
     get_or_create_triage(ws)
-    create_area(ws, "Default")
     return ws
 
 

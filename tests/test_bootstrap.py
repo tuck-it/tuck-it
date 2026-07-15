@@ -10,7 +10,7 @@ def test_bootstrap_creates_full_local_setup():
     assert Workspace.objects.count() == 1
     assert User.objects.filter(email="local@tuckit.local").exists()
     assert OrgMember.objects.filter(org=workspace.org, role="owner").exists()
-    assert Area.objects.filter(workspace=workspace, slug="default").exists()
+    assert Area.objects.filter(workspace=workspace, is_triage=False).count() == 0
     assert Area.objects.filter(workspace=workspace, is_triage=True).count() == 1
     assert raw is not None  # token minted on first run
 
@@ -21,7 +21,7 @@ def test_bootstrap_is_idempotent():
     workspace, raw = ensure_bootstrap()
     assert Workspace.objects.count() == 1
     assert OrgMember.objects.count() == 1
-    assert Area.objects.filter(workspace=workspace).count() == 2
+    assert Area.objects.filter(workspace=workspace).count() == 1  # Triage only, not duplicated
     assert raw is None  # no new token on subsequent runs
 
 
