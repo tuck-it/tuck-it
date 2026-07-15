@@ -4,8 +4,9 @@
 <body>
   <main class="auth-shell">
     <div class="auth-card">
-      <div class="auth-brand">tuckit</div>
+      {% include "registration/_auth_brand.html" %}
       <h1 class="auth-title">Create your account</h1>
+      <p class="auth-sub">Shared project state for you and your coding agents.</p>
       {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
       <form method="post" class="auth-form">
         {% csrf_token %}
@@ -47,7 +48,7 @@
               fetch('/settings/check-slug?kind=org&slug=' + encodeURIComponent(slug.value))
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
-                  status.textContent = d.available ? '사용 가능' : (d.error || '사용 불가');
+                  status.textContent = d.available ? 'Available' : (d.error || 'Unavailable');
                   status.className = 'field-hint ' + (d.available ? 'ok' : 'err');
                 });
             }, 250);
@@ -60,6 +61,7 @@
         </div>
         <button type="submit" class="button button-primary">Create account</button>
       </form>
+      <p class="auth-alt">Already have an account? <a href="{% url 'web:login' %}">Log in</a></p>
     </div>
   </main>
 </body>

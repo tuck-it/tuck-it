@@ -59,3 +59,46 @@ def test_invite_screen_uses_design_system(client):
     assert "Join Acme" in body          # English heading with org name
     assert "new@x.com" in body          # locked email shown for anonymous invitee
     assert 'name="password"' in body
+
+
+@pytest.mark.django_db
+@override_settings(REGISTRATION_OPEN=True)
+def test_login_shows_signup_link_when_open(client):
+    body = client.get("/login/").content.decode()
+    assert 'href="/register/"' in body
+    assert "Sign up" in body
+
+
+@pytest.mark.django_db
+@override_settings(REGISTRATION_OPEN=False)
+def test_login_hides_signup_link_when_closed(client):
+    body = client.get("/login/").content.decode()
+    assert 'href="/register/"' not in body
+
+
+@pytest.mark.django_db
+@override_settings(REGISTRATION_OPEN=True)
+def test_register_shows_login_link(client):
+    body = client.get("/register/").content.decode()
+    assert 'href="/login/"' in body
+
+
+@pytest.mark.django_db
+def test_login_shows_tagline(client):
+    body = client.get("/login/").content.decode()
+    assert "Shared project state for you and your coding agents." in body
+
+
+@pytest.mark.django_db
+@override_settings(TUCKIT_MARKETING_URL="https://tuckit.dev")
+def test_auth_brand_links_to_marketing_when_set(client):
+    body = client.get("/login/").content.decode()
+    assert '<a class="auth-brand" href="https://tuckit.dev">' in body
+
+
+@pytest.mark.django_db
+@override_settings(TUCKIT_MARKETING_URL="")
+def test_auth_brand_plain_when_unset(client):
+    body = client.get("/login/").content.decode()
+    assert '<a class="auth-brand"' not in body
+    assert '<div class="auth-brand">' in body

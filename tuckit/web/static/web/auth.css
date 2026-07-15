@@ -102,3 +102,24 @@
 }
 .field-hint.ok { color: var(--good); font-weight: 560; }
 .field-hint.err { color: var(--warn); font-weight: 560; }
+
+/* Cross-link footer (login ↔ register) */
+.auth-alt {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.auth-alt a {
+  color: var(--blue);
+  font-weight: 560;
+}
+
+/* Wordmark as a link back to the marketing site (when configured) */
+a.auth-brand {
+  display: inline-block;
+  text-decoration: none;
+}
+a.auth-brand:hover {
+  color: var(--blue);
+}
