@@ -59,3 +59,9 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, workspa
     # Delete the only Area → has_area now False, but widget must NOT return.
     delete_area(area)
     assert "Get started" not in client_local.get(f"{p}/").content.decode()
+
+
+@pytest.mark.django_db
+def test_onboarding_context_present_on_non_home_page(client_local, workspace):
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    assert "Get started" in client_local.get(f"{p}/triage/").content.decode()
