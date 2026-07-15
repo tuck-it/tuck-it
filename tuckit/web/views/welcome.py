@@ -10,7 +10,9 @@ from tuckit.web.auth import resolve_fallback_workspace
 def welcome(request):
     ws = resolve_fallback_workspace(request)
     if ws is None:
-        return redirect("web:root")
+        # welcome needs a workspace; without one, send the user to create an org
+        # instead of bouncing to root (which would bounce back here — loop).
+        return redirect("web:first_org")
     start_step = 1 if request.GET.get("step") == "connect" else 0
     return render(request, "web/welcome.html", {
         "mcp_url": request.build_absolute_uri("/mcp"),

@@ -46,5 +46,8 @@ def root_redirect(request):
     if ws is None:
         ws = accessible_workspaces(request.user).select_related("org").first()
     if ws is None:
-        return redirect("web:welcome")
+        # No accessible workspace (e.g. a createsuperuser account that bypassed
+        # the register() service): send them to a standalone "create your first
+        # org" page, rather than to welcome — which would bounce back here (loop).
+        return redirect("web:first_org")
     return redirect("web:home", org_slug=ws.org.slug, ws_slug=ws.slug)
