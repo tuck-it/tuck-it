@@ -16,17 +16,14 @@ def org_ctx(client, db):
 
 
 @pytest.mark.django_db
-def test_org_home_renders_members_and_workspaces(org_ctx):
+def test_org_home_is_browse_only(org_ctx):
     client, org, owner, member, ws = org_ctx
     client.force_login(owner)
-    resp = client.get(f"/{org.slug}/")
-    assert resp.status_code == 200
-    body = resp.content.decode()
-    assert "Acme" in body
-    assert "o@a.com" in body and "m@a.com" in body
-    assert "Board" in body
-    # Opening a workspace links to its home
-    assert f'href="/{org.slug}/{ws.slug}/"' in body
+    body = client.get(f"/{org.slug}/").content.decode()
+    assert "Board" in body or ws.name in body                 # workspace grid present
+    assert "m@a.com" not in body                              # members NOT here anymore
+    assert "Delete organization" not in body                 # danger NOT here
+    assert f'href="/{org.slug}/settings/general"' in body    # link into org settings
 
 
 @pytest.mark.django_db

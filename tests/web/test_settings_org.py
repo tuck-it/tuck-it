@@ -20,14 +20,15 @@ def org_ctx(client, db):
 
 
 @pytest.mark.django_db
-def test_org_page_lists_members_and_workspaces(org_ctx):
+def test_org_page_lists_workspaces(org_ctx):
+    # Org home (/<org>/) is browse-only; members live at /<org>/settings/members
+    # (see test_settings_org_pages.py::test_members_page_lists_members_and_invite_form).
     client, org, owner, member, ws = org_ctx
     _login(client, owner)
     resp = client.get(f"/{org.slug}/")
     assert resp.status_code == 200
     body = resp.content.decode()
     assert "Acme" in body
-    assert "o@a.com" in body and "m@a.com" in body
     assert "Board" in body
 
 
@@ -171,23 +172,14 @@ def test_member_cannot_delete_org(org_ctx):
 
 
 @pytest.mark.django_db
-def test_org_page_shows_invite_form_and_pending(org_ctx):
-    client, org, owner, member, ws = org_ctx
-    Invitation.objects.create(org=org, email="pending@x.com", role="member", token="tok-abc")
-    _login(client, owner)
-    body = client.get(f"/{org.slug}/").content.decode()
-    assert "web:invite_create" not in body            # url resolved, not literal
-    assert f'hx-post="/{org.slug}/settings/invites"' in body  # invite form present (org-level)
-    assert "pending@x.com" in body                     # pending invite listed
-
-
-@pytest.mark.django_db
 def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     # Regression: a user who administers TWO orgs has `active_workspace_id` in
     # session pointing at Org A's workspace. Viewing Org B's settings page must
     # build invite create/cancel URLs against Org B (the viewed org), never the
     # session fallback workspace's org (Org A). Otherwise creating/cancelling an
     # invite on Org B's page silently touches Org A's data.
+    # NOTE: invite management now lives at /<org>/settings/members, not org home
+    # (/<org>/), which is browse-only as of the settings-IA refactor.
     client, org_a, owner, member, ws_a = org_ctx
     org_b = Org.objects.create(name="Beta", slug="orgb")
     OrgMember.objects.create(user=owner, org=org_b, role="owner")
@@ -200,7 +192,7 @@ def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     assert home.status_code == 200
     assert client.session.get("active_workspace_id") == ws_a.id
 
-    resp = client.get(f"/{org_b.slug}/")
+    resp = client.get(f"/{org_b.slug}/settings/members")
     assert resp.status_code == 200
     body = resp.content.decode()
     assert f"/{org_b.slug}/settings/invites" in body
