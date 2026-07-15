@@ -72,3 +72,22 @@ def test_checklist_below_needs_you_once_area_exists(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert body.index("needs_you") < body.index("Get started")
+
+
+@pytest.mark.django_db
+def test_step4_shows_generate_key_when_no_key(client_local, workspace):
+    create_area(workspace, "Backend")  # so checklist shows and step 4 reachable
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    body = client_local.get(f"{p}/").content.decode()
+    assert "/onboarding/connect-key" in body     # generate button target
+    assert "/welcome/" not in body               # no link out to the old page
+
+
+@pytest.mark.django_db
+def test_step4_shows_poller_when_key_exists(client_local, workspace):
+    from tuckit.core.models import ApiToken
+    ApiToken.objects.create(workspace=workspace, name="a", token_hash="x")
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    body = client_local.get(f"{p}/").content.decode()
+    assert 'id="gs-listen"' in body              # listening/poller state
+    assert "/onboarding/agent-activity" in body

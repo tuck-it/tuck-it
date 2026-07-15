@@ -65,7 +65,26 @@
         <summary><span class="gs-box">✓</span><span class="gs-lbl">Connect your agent</span></summary>
         <div class="gs-card">
           <p class="gs-def">You just built the structure by hand — so you <b>understand</b> it. From here your AI agent reads and writes these same Areas, Slices, and Bites over MCP. It does the work; nothing it does slips past you.</p>
-          <a class="button button-primary" href="{% url 'web:welcome' %}?step=connect">Connect your agent →</a>
+          <div id="gs-connect">
+            {% if onboarding.connected %}
+              <p class="gs-done-note">✓ Your agent is connected — you're all set.</p>
+            {% else %}
+              <div class="gs-field">
+                <label>MCP endpoint</label>
+                <div class="gs-copyrow" x-data>
+                  <input class="gs-mono" value="{{ mcp_url }}" readonly x-ref="v">
+                  <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.v.value)">Copy</button>
+                </div>
+              </div>
+              {% if onboarding.has_key %}
+                <p class="gs-eg">You've generated a key. Point your agent at the endpoint above — it'll show up here.</p>
+                {% include "web/partials/_get_started_listen.html" %}
+                <button type="button" class="button" hx-post="{% wurl 'web:onboarding_connect_key' %}" hx-target="#gs-connect" hx-swap="innerHTML">Generate another key</button>
+              {% else %}
+                <button type="button" class="button button-primary" hx-post="{% wurl 'web:onboarding_connect_key' %}" hx-target="#gs-connect" hx-swap="innerHTML">Generate agent key</button>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
       </details>
     </li>

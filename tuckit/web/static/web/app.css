@@ -1693,3 +1693,22 @@ html.sidebar-collapsed .side-resize { display: none; }
 .gs-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 .gs-form input { flex: 1 1 12rem; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-small); background: var(--paper); color: var(--text); font: inherit; font-size: 13px; }
 .gs-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Get started — inline agent connect */
+#gs-connect { display: grid; gap: 10px; }
+.gs-field { display: grid; gap: 4px; }
+.gs-field label { font-size: 12px; color: var(--muted); }
+.gs-copyrow { display: flex; gap: 6px; }
+.gs-mono { flex: 1; font-family: var(--mono); font-size: 12px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-small); background: var(--paper); color: var(--text); }
+.gs-mini { font-size: 12px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-small); background: var(--surface); color: var(--text); cursor: pointer; }
+.gs-mini:hover { background: var(--paper-deep); }
+.gs-snip { display: grid; gap: 4px; }
+.gs-code { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-all; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--paper-deep); color: var(--text); margin: 0; }
+.gs-listen { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.gs-radar { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent); animation: gs-pulse 1.8s infinite; }
+@keyframes gs-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .gs-radar { animation: none; } }
+.gs-celebrate { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-small); background: var(--paper-deep); }
+.gs-seal { font-size: 22px; }
+.gs-won { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.gs-done-note { margin: 0; color: var(--good); font-size: 13px; }

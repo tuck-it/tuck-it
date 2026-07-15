@@ -12,6 +12,7 @@ from tuckit.core.services.state import (
     cap_shipped,
     snapshot_today,
 )
+from tuckit.core.models import ActivityEvent
 from tuckit.core.services.onboarding import onboarding_state
 from tuckit.web.auth import get_current_workspace
 
@@ -60,6 +61,11 @@ def home(request):
         "recent_activity": recent_activity(ws) if ws else [],
         "onboarding": ob,
         "show_get_started": show_get_started,
+        "mcp_url": request.build_absolute_uri("/mcp"),
+        "agent_baseline": (
+            ActivityEvent.objects.filter(workspace=ws).order_by("-id")
+            .values_list("id", flat=True).first() or 0
+        ) if ws else 0,
         "shipped_total": shipped_total,
         "shipped_hidden": shipped_hidden,
         "metrics": metrics,
