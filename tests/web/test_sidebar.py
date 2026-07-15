@@ -175,3 +175,17 @@ def test_panel_left_registered_and_rotation_removed():
     assert "chevron" in _ICON_PATHS         # still used by the workspace switcher
     css = APP_CSS.read_text(encoding="utf-8")
     assert "transform: rotate(180deg)" not in css   # chevron-rotation rule gone
+
+
+@pytest.mark.django_db
+def test_activity_route_and_sidebar_entry_removed(client_local, workspace):
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    assert client_local.get(f"{p}/activity/").status_code == 404   # route gone
+    body = client_local.get(f"{p}/").content.decode()
+    assert 'aria-label="Activity"' not in body                     # no sidebar button
+    assert "/activity/" not in body                                # no link anywhere in the shell
+
+
+def test_activity_icon_removed():
+    from tuckit.web.templatetags.web_extras import _ICON_PATHS
+    assert "activity" not in _ICON_PATHS

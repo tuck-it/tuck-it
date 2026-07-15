@@ -2,9 +2,6 @@
 <aside class="sidebar">
   <div class="side-top">
     {% include "web/partials/_workspace_switcher.html" %}
-    <button class="side-top-act" type="button"
-            aria-label="Activity" title="Activity"
-            hx-get="{% wurl 'web:activity' %}?panel=1" hx-target="#panel">{% icon "activity" %}</button>
     <button class="side-collapse" type="button"
             aria-label="Collapse sidebar" title="Collapse sidebar"
             x-on:click="toggleSidebar()">{% icon "panel-left" %}</button>

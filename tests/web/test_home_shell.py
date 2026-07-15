@@ -82,14 +82,6 @@ def test_nav_is_home_inbox_board_only(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_activity_bell_in_utility_row(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
-    body = client_local.get(f"{p}/").content.decode()
-    assert '/activity/?panel=1' in body            # bell opens the slide-over
-    assert 'aria-label="Activity"' in body
-
-
-@pytest.mark.django_db
 def test_bottom_utility_row_replaces_bordered_theme_button(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/").content.decode()

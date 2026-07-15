@@ -69,7 +69,6 @@ app_patterns = [
     path(f"{P}attention/", pages.attention, name="attention"),
     path(f"{P}in-progress/", pages.in_progress, name="in_progress"),
     path(f"{P}roadmap/", pages.roadmap, name="roadmap"),
-    path(f"{P}activity/", pages.activity, name="activity"),
     path(f"{P}areas/new", capture.area_create, name="area_create"),
     path(f"{P}areas/<slug:slug>/", slices.area_view, name="area"),
     path(f"{P}areas/<slug:slug>/slices", capture.area_slice_create, name="area_slice_create"),

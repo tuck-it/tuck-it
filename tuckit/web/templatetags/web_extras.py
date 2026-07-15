@@ -110,7 +110,6 @@ _ICON_PATHS = {
     "chevron": '<path d="m9 6 6 6-6 6"/>',
     "panel-left": '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>',
     "check": '<path d="m5 12 4 4 9-10"/>',
-    "activity": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
     "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     "moon": '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
     "menu": '<path d="M4 7h16M4 12h16M4 17h16"/>',
