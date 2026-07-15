@@ -102,6 +102,27 @@ def roadmap(request):
     })
 
 
+def areas(request):
+    ws = get_current_workspace(request)
+    cards = []
+    if ws:
+        from tuckit.core.services.areas import list_areas
+        from tuckit.core.models import Slice
+        for a in list_areas(ws):
+            if a.is_triage:
+                continue
+            counts = {}
+            for s in Slice.objects.filter(area=a).values_list("status", flat=True):
+                counts[s] = counts.get(s, 0) + 1
+            cards.append({
+                "area": a,
+                "total": sum(counts.values()),
+                "building": counts.get("building", 0),
+                "shipped": counts.get("shipped", 0),
+            })
+    return render(request, "web/areas.html", {"cards": cards, "is_empty": not cards})
+
+
 @require_POST
 def dismiss_onboarding(request):
     ws = get_current_workspace(request)
