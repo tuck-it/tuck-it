@@ -1448,6 +1448,19 @@ html.sidebar-collapsed .side-collapse .icon { transform: rotate(0deg); }
   html.sidebar-collapsed .util-btn { justify-content: center; padding-left: 0; padding-right: 0; }
 }
 
+/* --- Drag-to-resize handle (desktop, expanded only) --- */
+.side-resize {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 6px; z-index: 5;
+  cursor: col-resize; background: none;
+  touch-action: none;              /* let pointer events drive resize on touch */
+}
+.side-resize:hover,
+.side-resize:focus-visible { background: var(--blue-soft); outline: none; }
+html.resizing { cursor: col-resize; user-select: none; }
+html.resizing .sidebar { transition: none; }   /* track the cursor 1:1 while dragging */
+html.sidebar-collapsed .side-resize { display: none; }
+
 /* --- Mobile shell (<768px): top bar + off-canvas menu --- */
 .topbar-mobile { display: none; }
 .sidebar-wrap { display: contents; }
@@ -1496,6 +1509,7 @@ html.sidebar-collapsed .side-collapse .icon { transform: rotate(0deg); }
   }
   .main { max-width: none; padding: 20px 16px; }
   .side-collapse { display: none; }
+  .side-resize { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

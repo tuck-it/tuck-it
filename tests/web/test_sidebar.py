@@ -105,3 +105,19 @@ def test_collapse_animates_and_keeps_chevron_on_top():
     assert "html.sidebar-collapsed .sidebar { flex-basis: 60px; }" not in css
     # Chevron is pulled to the top of the collapsed column
     assert "html.sidebar-collapsed .side-collapse { order: -1; }" in css
+
+
+@pytest.mark.django_db
+def test_resize_handle_rendered(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="side-resize"' in body
+    assert 'role="separator"' in body
+    assert 'aria-orientation="vertical"' in body
+
+
+def test_resize_handle_css_present():
+    css = APP_CSS.read_text(encoding="utf-8")
+    assert ".side-resize" in css
+    assert "col-resize" in css                       # resize cursor
+    assert "html.resizing .sidebar { transition: none; }" in css   # 1:1 tracking
+    assert "html.sidebar-collapsed .side-resize { display: none; }" in css  # hidden collapsed
