@@ -67,6 +67,7 @@ TEMPLATES = [
                 "tuckit.web.context_processors.in_progress_count",
                 "tuckit.web.context_processors.switchable_workspaces",
                 "tuckit.web.context_processors.current_workspace",
+                "tuckit.web.context_processors.auth_chrome",
             ],
         },
     },
@@ -89,6 +90,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Self-service registration is OFF by default (self-host provisions via CLI).
 # Cloud flips this on. See docs/superpowers/specs/2026-07-11-auth-org-model-design.md.
 REGISTRATION_OPEN = env_bool("TUCKIT_REGISTRATION_OPEN", default=False)
+# Optional marketing-site URL. When set, the auth screens' wordmark links back
+# to it (e.g. the landing page). Core ships empty (a self-host has no marketing
+# site); cloud injects https://tuckit.dev via env. Keeps the public core free
+# of any hardcoded cloud hostname.
+TUCKIT_MARKETING_URL = env("TUCKIT_MARKETING_URL", default="") or ""
 # Dotted path to a callable run right after signup, as hook(user=, org=).
 # Core ships None (no-op); cloud sets it to attach billing. Never in core.
 TUCKIT_SIGNUP_HOOK = env("TUCKIT_SIGNUP_HOOK", default=None) or None

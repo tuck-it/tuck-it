@@ -76,3 +76,16 @@ def current_workspace(request):
     TenantMiddleware."""
     ws = current_workspace_or_fallback(request)
     return {"current_workspace": ws} if ws else {}
+
+
+def auth_chrome(request):
+    """Expose auth-screen chrome to every template: whether self-service
+    registration is open (controls the login→signup cross-link) and the optional
+    marketing-site URL (makes the auth-card wordmark a link home). Read from
+    settings per request so tests can override them."""
+    from django.conf import settings
+
+    return {
+        "registration_open": settings.REGISTRATION_OPEN,
+        "marketing_url": getattr(settings, "TUCKIT_MARKETING_URL", "") or "",
+    }

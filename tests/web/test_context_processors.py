@@ -1,8 +1,10 @@
 import pytest
+from django.test import override_settings
 
 from tuckit.core.models import Org, OrgMember, User
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.orgs import create_workspace
+from tuckit.web.context_processors import auth_chrome
 
 
 @pytest.fixture
@@ -36,3 +38,17 @@ def test_sidebar_areas_visible_on_account_settings_page(owner_with_area):
     client, _org, _ws = owner_with_area
     body = client.get("/settings/account").content.decode()
     assert "Backend" in body
+
+
+@override_settings(REGISTRATION_OPEN=True, TUCKIT_MARKETING_URL="https://tuckit.dev")
+def test_auth_chrome_exposes_flags(rf):
+    ctx = auth_chrome(rf.get("/login/"))
+    assert ctx["registration_open"] is True
+    assert ctx["marketing_url"] == "https://tuckit.dev"
+
+
+@override_settings(REGISTRATION_OPEN=False, TUCKIT_MARKETING_URL="")
+def test_auth_chrome_defaults(rf):
+    ctx = auth_chrome(rf.get("/login/"))
+    assert ctx["registration_open"] is False
+    assert ctx["marketing_url"] == ""
