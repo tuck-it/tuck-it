@@ -61,3 +61,12 @@ def test_org_home_requires_login(org_ctx):
     client, org, owner, member, ws = org_ctx
     resp = client.get(f"/{org.slug}/")
     assert resp.status_code in (302, 404)
+
+
+@pytest.mark.django_db
+def test_org_home_breadcrumb(org_ctx):
+    client, org, owner, member, ws = org_ctx
+    client.force_login(owner)
+    body = client.get(f"/{org.slug}/").content.decode()
+    assert 'class="crumbbar"' in body
+    assert 'href="/settings/account"' in body   # "My orgs" → overview

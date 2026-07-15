@@ -1751,3 +1751,10 @@ html.sidebar-collapsed .side-resize { display: none; }
 .ws-menu-org-link:hover { color: var(--blue); }
 .ws-menu-org-go { font-size: 11px; opacity: 0; }
 .ws-menu-org-link:hover .ws-menu-org-go { opacity: 1; }
+
+/* --- App-shell breadcrumb --- */
+.crumbbar { display: flex; align-items: center; gap: 8px; padding: 10px 24px 0; font-size: 13px; }
+.crumbbar a { color: var(--blue); text-decoration: none; }
+.crumbbar a:hover { text-decoration: underline; }
+.crumb-sep { color: var(--muted); }
+.crumb-here { font-weight: 600; color: var(--ink); }

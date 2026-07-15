@@ -103,3 +103,10 @@ def test_capture_button_is_solid_teal_primary():
     block = css.split(".capture-btn {", 1)[1].split("}", 1)[0]
     assert "background: var(--blue)" in block   # solid teal, not paper-raised
     assert "border: none" in block              # mismatched border removed
+
+
+@pytest.mark.django_db
+def test_workspace_breadcrumb_links_to_org_home(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="crumbbar"' in body
+    assert f'href="/{workspace.org.slug}/"' in body    # org segment → org home
