@@ -67,6 +67,7 @@ TEMPLATES = [
                 "tuckit.web.context_processors.in_progress_count",
                 "tuckit.web.context_processors.switchable_workspaces",
                 "tuckit.web.context_processors.current_workspace",
+                "tuckit.web.context_processors.onboarding",
             ],
         },
     },
