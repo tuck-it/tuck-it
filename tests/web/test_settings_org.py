@@ -84,7 +84,7 @@ def test_owner_changes_member_role(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, owner)
     om = OrgMember.objects.get(org=org, user=member)
-    resp = client.post(f"/settings/{org.slug}/members/{om.id}/role", {"role": "admin"})
+    resp = client.post(f"/{org.slug}/settings/members/{om.id}/role", {"role": "admin"})
     assert resp.status_code == 200
     om.refresh_from_db()
     assert om.role == "admin"
@@ -97,7 +97,7 @@ def test_admin_cannot_change_role(org_ctx):
     OrgMember.objects.filter(org=org, user=member).update(role="admin")
     _login(client, member)
     om_owner = OrgMember.objects.get(org=org, user=owner)
-    resp = client.post(f"/settings/{org.slug}/members/{om_owner.id}/role", {"role": "member"})
+    resp = client.post(f"/{org.slug}/settings/members/{om_owner.id}/role", {"role": "member"})
     assert resp.status_code == 403
 
 
@@ -106,7 +106,7 @@ def test_admin_removes_member(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, owner)
     om = OrgMember.objects.get(org=org, user=member)
-    resp = client.post(f"/settings/{org.slug}/members/{om.id}/remove")
+    resp = client.post(f"/{org.slug}/settings/members/{om.id}/remove")
     assert resp.status_code == 204
     assert not OrgMember.objects.filter(id=om.id).exists()
 
@@ -118,7 +118,7 @@ def test_cannot_remove_member_of_other_org(org_ctx):
     stranger = User.objects.create(email="s@s.com")
     om_other = OrgMember.objects.create(user=stranger, org=other, role="member")
     _login(client, owner)
-    resp = client.post(f"/settings/{org.slug}/members/{om_other.id}/remove")
+    resp = client.post(f"/{org.slug}/settings/members/{om_other.id}/remove")
     assert resp.status_code == 404
     assert OrgMember.objects.filter(id=om_other.id).exists()
 
@@ -134,7 +134,7 @@ def test_owner_deletes_org_when_has_another(org_ctx):
     OrgMember.objects.create(user=owner, org=other, role="owner")
     create_workspace(other, "Home")
     _login(client, owner)
-    resp = client.post(f"/settings/{org.slug}/delete")
+    resp = client.post(f"/{org.slug}/settings/delete")
     assert resp.status_code == 302
     assert not OrgModel.objects.filter(id=org.id).exists()
 
@@ -146,7 +146,7 @@ def test_owner_deletes_org_htmx_redirects(org_ctx):
     OrgMember.objects.create(user=owner, org=other, role="owner")
     create_workspace(other, "Home")
     _login(client, owner)
-    resp = client.post(f"/settings/{org.slug}/delete", HTTP_HX_REQUEST="true")
+    resp = client.post(f"/{org.slug}/settings/delete", HTTP_HX_REQUEST="true")
     assert resp.status_code == 204
     assert resp["HX-Redirect"] == "/"  # full browser navigation, not an in-place swap
     assert not OrgModel.objects.filter(id=org.id).exists()
@@ -156,7 +156,7 @@ def test_owner_deletes_org_htmx_redirects(org_ctx):
 def test_cannot_delete_last_org(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, owner)
-    resp = client.post(f"/settings/{org.slug}/delete")
+    resp = client.post(f"/{org.slug}/settings/delete")
     assert resp.status_code == 400
     assert OrgModel.objects.filter(id=org.id).exists()
 
@@ -165,7 +165,7 @@ def test_cannot_delete_last_org(org_ctx):
 def test_member_cannot_delete_org(org_ctx):
     client, org, owner, member, ws = org_ctx
     _login(client, member)
-    resp = client.post(f"/settings/{org.slug}/delete")
+    resp = client.post(f"/{org.slug}/settings/delete")
     assert resp.status_code == 403
     assert OrgModel.objects.filter(id=org.id).exists()
 
@@ -177,7 +177,7 @@ def test_org_page_shows_invite_form_and_pending(org_ctx):
     _login(client, owner)
     body = client.get(f"/{org.slug}/").content.decode()
     assert "web:invite_create" not in body            # url resolved, not literal
-    assert f'hx-post="/settings/{org.slug}/invites"' in body  # invite form present (org-level)
+    assert f'hx-post="/{org.slug}/settings/invites"' in body  # invite form present (org-level)
     assert "pending@x.com" in body                     # pending invite listed
 
 
@@ -203,10 +203,10 @@ def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     resp = client.get(f"/{org_b.slug}/")
     assert resp.status_code == 200
     body = resp.content.decode()
-    assert f"/settings/{org_b.slug}/invites" in body
-    assert f"/settings/{org_a.slug}/invites" not in body
+    assert f"/{org_b.slug}/settings/invites" in body
+    assert f"/{org_a.slug}/settings/invites" not in body
 
-    resp = client.post(f"/settings/{org_b.slug}/invites", {"email": "new@x.com", "role": "member"})
+    resp = client.post(f"/{org_b.slug}/settings/invites", {"email": "new@x.com", "role": "member"})
     assert resp.status_code == 200
     inv = Invitation.objects.get(email="new@x.com")
     assert inv.org_id == org_b.id

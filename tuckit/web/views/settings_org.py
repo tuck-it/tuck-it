@@ -109,3 +109,28 @@ def org_delete(request):
     request.session.pop("active_workspace_id", None)
     org.delete()  # cascades to workspaces/areas/slices/bites via FK on_delete=CASCADE
     return redirect_response(request, "web:root")
+
+
+def org_members(request):
+    org = request.org
+    members = list(list_org_members(org))
+    invitations = list(Invitation.objects.filter(org=org, accepted_at__isnull=True))
+    for inv in invitations:
+        inv.link = request.build_absolute_uri(reverse("web:invite_accept", args=[inv.token]))
+    ctx = settings_context(request, active="org_members")
+    ctx.update({"org": org, "members": members, "invitations": invitations,
+                "role_choices": OrgMember.ROLE_CHOICES})
+    return render(request, "web/settings/org_members.html", ctx)
+
+
+def org_workspaces(request):
+    org = request.org
+    ctx = settings_context(request, active="org_workspaces")
+    ctx.update({"org": org, "workspaces": list(org.workspaces.order_by("name"))})
+    return render(request, "web/settings/org_workspaces.html", ctx)
+
+
+def org_danger(request):
+    ctx = settings_context(request, active="org_danger")
+    ctx["org"] = request.org
+    return render(request, "web/settings/org_danger.html", ctx)

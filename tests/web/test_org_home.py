@@ -34,7 +34,7 @@ def test_org_home_shows_new_workspace_form_for_admin(org_ctx):
     client, org, owner, member, ws = org_ctx
     client.force_login(owner)
     body = client.get(f"/{org.slug}/").content.decode()
-    assert f'action="/settings/{org.slug}/workspaces/new"' in body
+    assert f'action="/{org.slug}/settings/workspaces/new"' in body
 
 
 @pytest.mark.django_db
@@ -42,7 +42,7 @@ def test_org_home_hides_new_workspace_form_for_member(org_ctx):
     client, org, owner, member, ws = org_ctx
     client.force_login(member)
     body = client.get(f"/{org.slug}/").content.decode()
-    assert f'action="/settings/{org.slug}/workspaces/new"' not in body
+    assert f'action="/{org.slug}/settings/workspaces/new"' not in body
 
 
 @pytest.mark.django_db

@@ -66,7 +66,7 @@ def test_navigating_to_inaccessible_workspace_404s(client, two_workspaces):
 def test_create_workspace_in_org(client, two_workspaces):
     user, a, b = two_workspaces
     client.force_login(user)
-    resp = client.post(f"/settings/{a.org.slug}/workspaces/new", {"name": "Gamma"})
+    resp = client.post(f"/{a.org.slug}/settings/workspaces/new", {"name": "Gamma"})
     assert resp.status_code == 302
     assert a.org.workspaces.filter(name="Gamma").exists()
     gamma = a.org.workspaces.get(name="Gamma")

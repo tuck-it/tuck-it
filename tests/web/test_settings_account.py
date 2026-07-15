@@ -123,4 +123,4 @@ def test_account_page_has_new_workspace_form_for_owned_org(acct_ctx):
     client, user, org_a, ws_a, org_b, ws_b = acct_ctx
     _login(client, user, ws_a)          # user is owner of both orgs
     body = client.get("/settings/account").content.decode()
-    assert f'action="/settings/{org_a.slug}/workspaces/new"' in body
+    assert f'action="/{org_a.slug}/settings/workspaces/new"' in body
