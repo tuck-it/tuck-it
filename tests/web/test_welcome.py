@@ -64,3 +64,16 @@ def test_agent_check_ignores_human_and_old_events(client_local, workspace):
     )
     r = client_local.get(f"/welcome/agent-activity?since={old.id}")
     assert r.status_code == 204
+
+
+@pytest.mark.django_db
+def test_welcome_intro_cta_goes_to_home(client_local):
+    body = client_local.get("/welcome/").content.decode()
+    assert "Set up your workspace" in body
+    assert 'x-data="{step: 0 }"' in body
+
+
+@pytest.mark.django_db
+def test_welcome_connect_deeplink_opens_connect_step(client_local):
+    body = client_local.get("/welcome/?step=connect").content.decode()
+    assert 'x-data="{step: 1 }"' in body

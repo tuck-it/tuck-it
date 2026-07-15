@@ -11,10 +11,12 @@ def welcome(request):
     ws = resolve_fallback_workspace(request)
     if ws is None:
         return redirect("web:root")
+    start_step = 1 if request.GET.get("step") == "connect" else 0
     return render(request, "web/welcome.html", {
         "mcp_url": request.build_absolute_uri("/mcp"),
         "workspace": ws,
         "raw_token": None,
+        "start_step": start_step,
         "baseline": (
             ActivityEvent.objects.filter(workspace=ws).order_by("-id")
             .values_list("id", flat=True).first() or 0
