@@ -41,6 +41,16 @@ def test_widget_slice_step_links_to_real_area_page(client_local, workspace):
 
 
 @pytest.mark.django_db
+def test_widget_bite_step_links_to_real_slice(client_local, workspace):
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    area = create_area(workspace, "Backend")
+    sl = create_slice(area, "Retry webhooks", status="idea")
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert f"/slices/{sl.id}/?focus=bite" in body
+
+
+@pytest.mark.django_db
 def test_widget_hidden_when_all_done(client_local, workspace):
     from tuckit.core.models import ActivityEvent
     area = create_area(workspace, "Backend")
