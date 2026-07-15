@@ -213,7 +213,8 @@ def test_active_item_soft_fill_no_bar_and_main_label_removed(client_local, works
 def test_sidebar_areas_label_links_to_overview(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/").content.decode()
-    assert f"{p}/areas/" in body  # Areas label is a link now
+    assert 'class="area-section-link"' in body
+    assert f'href="/{workspace.org.slug}/{workspace.slug}/areas/"' in body
 
 
 @pytest.mark.django_db

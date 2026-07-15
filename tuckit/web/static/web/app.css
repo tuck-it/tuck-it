@@ -120,7 +120,6 @@ body { padding: 0; }
 }
 
 .section.area-section { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.section.area-section > span { flex: 1 1 auto; }
 .area-section-link {
   flex: 1 1 auto;
   color: inherit;
