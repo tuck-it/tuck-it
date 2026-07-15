@@ -1,12 +1,13 @@
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from tuckit.core.models import Area, Slice
+from tuckit.core.models import ActivityEvent, Area, Slice
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.bites import create_bite
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.orgs import accessible_workspaces, create_org
 from tuckit.core.services.slices import create_slice
+from tuckit.core.services.tokens import generate_token
 from tuckit.web.auth import get_current_workspace, landing_route
 
 
@@ -65,3 +66,41 @@ def create_first_bite(request):
     if slice_ and title:
         create_bite(slice_, title, source="human")
     return _home(ws)
+
+
+def _agent_baseline(ws) -> int:
+    return (
+        ActivityEvent.objects.filter(workspace=ws).order_by("-id")
+        .values_list("id", flat=True).first() or 0
+    )
+
+
+@require_POST
+def connect_key(request):
+    ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:root")
+    _token, raw = generate_token(ws, "Agent (onboarding)")
+    return render(request, "web/partials/_get_started_key.html", {
+        "mcp_url": request.build_absolute_uri("/mcp"),
+        "raw_token": raw,
+        "agent_baseline": _agent_baseline(ws),
+    })
+
+
+def agent_check(request):
+    ws = get_current_workspace(request)
+    if ws is None:
+        return redirect("web:root")
+    try:
+        since = int(request.GET.get("since", "0"))
+    except ValueError:
+        since = 0
+    ev = (
+        ActivityEvent.objects.filter(workspace=ws, actor="agent", id__gt=since)
+        .order_by("id").first()
+    )
+    if ev is None:
+        # 200 (not 204 — base.html:42 swaps on 204); re-serve the poller.
+        return render(request, "web/partials/_get_started_listen.html", {"agent_baseline": since})
+    return render(request, "web/partials/_get_started_celebrate.html", {"event": ev})

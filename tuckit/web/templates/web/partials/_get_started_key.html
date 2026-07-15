@@ -1,0 +1,21 @@
+{% load web_extras %}
+<div class="gs-field">
+  <label>MCP endpoint</label>
+  <div class="gs-copyrow" x-data>
+    <input class="gs-mono" value="{{ mcp_url }}" readonly x-ref="v">
+    <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.v.value)">Copy</button>
+  </div>
+</div>
+<div class="gs-field">
+  <label>Workspace key — copy it now, it won't be shown again</label>
+  <div class="gs-copyrow" x-data>
+    <input class="gs-mono" value="{{ raw_token }}" readonly x-ref="v">
+    <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.v.value)">Copy</button>
+  </div>
+</div>
+<div class="gs-snip" x-data>
+  <label>Claude Code</label>
+  <pre class="gs-code" x-ref="cc">claude mcp add tuckit --transport http {{ mcp_url }} --header "Authorization: Bearer {{ raw_token }}"</pre>
+  <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.cc.textContent)">Copy</button>
+</div>
+{% include "web/partials/_get_started_listen.html" %}
