@@ -148,3 +148,44 @@ def test_sidebar_js_syncs_aria_valuenow_on_load_and_clamps_persisted_width():
     assert 'handle.setAttribute("aria-valuenow", String(currentWidth()))' in js
     # endDrag clamps the persisted value instead of writing it raw.
     assert "clamp(parseInt(getComputedStyle(root).getPropertyValue(\"--sidebar-w\"), 10))" in js
+
+
+def test_sidebar_and_panel_density_tightened():
+    css = APP_CSS.read_text(encoding="utf-8")
+    # .sidebar carries an explicit 13px so labels drop from the inherited 16px
+    assert re.search(r"\.sidebar\s*\{[^}]*font-size:\s*13px", css), ".sidebar must set font-size: 13px"
+    assert "min-height: 32px" in css        # nav/capture rows tightened from 40 (new value)
+    assert re.search(r"\.util-btn\s*\{[^}]*min-height:\s*30px", css), ".util-btn must be 30px"
+    assert "min-height: 40px" not in css    # no 40px sidebar rows remain
+    # slice-panel frame stepped down (reading body untouched)
+    assert ".panel-titlebar .panel-title { font-size: 20px;" in css
+    assert ".section-label { font-size: 11px;" in css
+
+
+@pytest.mark.django_db
+def test_collapse_button_uses_panel_left_icon(client_local, workspace):
+    body = client_local.get(f"/{workspace.org.slug}/{workspace.slug}/").content.decode()
+    assert 'class="side-collapse"' in body
+    assert 'd="M9 3v18"' in body            # panel-left divider line rendered on the collapse button
+
+
+def test_panel_left_registered_and_rotation_removed():
+    from tuckit.web.templatetags.web_extras import _ICON_PATHS
+    assert "panel-left" in _ICON_PATHS
+    assert "chevron" in _ICON_PATHS         # still used by the workspace switcher
+    css = APP_CSS.read_text(encoding="utf-8")
+    assert "transform: rotate(180deg)" not in css   # chevron-rotation rule gone
+
+
+@pytest.mark.django_db
+def test_activity_route_and_sidebar_entry_removed(client_local, workspace):
+    p = f"/{workspace.org.slug}/{workspace.slug}"
+    assert client_local.get(f"{p}/activity/").status_code == 404   # route gone
+    body = client_local.get(f"{p}/").content.decode()
+    assert 'aria-label="Activity"' not in body                     # no sidebar button
+    assert "/activity/" not in body                                # no link anywhere in the shell
+
+
+def test_activity_icon_removed():
+    from tuckit.web.templatetags.web_extras import _ICON_PATHS
+    assert "activity" not in _ICON_PATHS

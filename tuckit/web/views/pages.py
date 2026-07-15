@@ -8,7 +8,6 @@ from tuckit.core.services.state import (
     roadmap_board_view,
     ROADMAP_STATUS_KEYS,
     in_progress_state,
-    recent_activity,
     cap_shipped,
     snapshot_today,
 )
@@ -58,7 +57,6 @@ def home(request):
         "queued_ct": queued_ct,
         "in_progress": in_progress_state(ws) if ws else {"slices": [], "bites": []},
         "roadmap": roadmap_state(ws) if ws else {},
-        "recent_activity": recent_activity(ws) if ws else [],
         "onboarding": ob,
         "show_get_started": show_get_started,
         "mcp_url": request.build_absolute_uri("/mcp"),
@@ -113,14 +111,6 @@ def roadmap(request):
         "shipped_total": board["shipped_total"],
         "shipped_hidden": board["shipped_hidden"],
     })
-
-
-def activity(request):
-    ws = get_current_workspace(request)
-    events = recent_activity(ws, limit=100) if ws else []
-    is_panel = request.GET.get("panel") == "1" and request.headers.get("HX-Request")
-    template = "web/partials/_activity_panel.html" if is_panel else "web/activity.html"
-    return render(request, template, {"events": events})
 
 
 @require_POST
