@@ -15,7 +15,9 @@
        x-on:click.outside="open = false" role="menu" style="display:none">
     {% regroup switchable_workspaces by org as org_groups %}
     {% for group in org_groups %}
-      <div class="ws-menu-org">{{ group.grouper.name }}</div>
+      <a class="ws-menu-org ws-menu-org-link" href="{% url 'web:org_home' group.grouper.slug %}" role="menuitem">
+        {{ group.grouper.name }}<span class="ws-menu-org-go">Home →</span>
+      </a>
       {% for ws in group.list %}
         <a href="{% url 'web:home' ws.org.slug ws.slug %}"
            class="ws-menu-item{% if ws.id == current_workspace.id %} ws-menu-item--active{% endif %}" role="menuitem">
@@ -25,6 +27,9 @@
       {% endfor %}
     {% endfor %}
     <div class="ws-menu-sep"></div>
+    <a class="ws-menu-item ws-menu-settings" href="{% url 'web:settings_account' %}" role="menuitem">
+      {% icon "settings" %}<span>All organizations</span>
+    </a>
     <a class="ws-menu-item ws-menu-settings"
        href="{% url 'web:settings_workspace' current_workspace.org.slug current_workspace.slug %}" role="menuitem">
       {% icon "settings" %}<span>Workspace settings</span>

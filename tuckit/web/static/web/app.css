@@ -1745,3 +1745,9 @@ html.sidebar-collapsed .side-resize { display: none; }
 .org-ws-new input { border: 0; background: transparent; font: inherit; color: var(--blue); width: 140px; }
 .org-ws-new input:focus-visible { outline: none; }
 .org-card-foot { padding: 8px 15px; border-top: 1px dashed var(--line); }
+
+/* --- Switcher: navigable org header --- */
+.ws-menu-org-link { display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: var(--muted); }
+.ws-menu-org-link:hover { color: var(--blue); }
+.ws-menu-org-go { font-size: 11px; opacity: 0; }
+.ws-menu-org-link:hover .ws-menu-org-go { opacity: 1; }
