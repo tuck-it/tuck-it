@@ -17,6 +17,10 @@
     return 220;
   }
 
+  // Reflect the restored width to assistive tech on load (the server markup
+  // and the pre-paint restore can't set this — the handle only exists now).
+  handle.setAttribute("aria-valuenow", String(currentWidth()));
+
   function apply(w, persist) {
     root.style.setProperty("--sidebar-w", w + "px");
     handle.setAttribute("aria-valuenow", String(w));
@@ -43,7 +47,7 @@
     dragging = false;
     root.classList.remove("resizing");
     if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
-    var w = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-w"), 10);
+    var w = clamp(parseInt(getComputedStyle(root).getPropertyValue("--sidebar-w"), 10));
     if (w) localStorage.setItem("sidebar-width", String(w));
   }
   handle.addEventListener("pointerup", endDrag);

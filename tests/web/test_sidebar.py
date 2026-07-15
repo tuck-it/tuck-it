@@ -138,3 +138,13 @@ def test_sidebar_js_clamps_to_bounds():
     assert "180" in js and "420" in js          # min/max bounds
     assert "sidebar-width" in js                # persists under this key
     assert "resizing" in js                     # toggles the no-transition drag class
+
+
+def test_sidebar_js_syncs_aria_valuenow_on_load_and_clamps_persisted_width():
+    js = SIDEBAR_JS.read_text(encoding="utf-8")
+    # On load, the handle's aria-valuenow is synced to the restored width
+    # (the server markup hardcodes 220 and the pre-paint script can't reach
+    # the attribute), using the same validated fallback as currentWidth().
+    assert 'handle.setAttribute("aria-valuenow", String(currentWidth()))' in js
+    # endDrag clamps the persisted value instead of writing it raw.
+    assert "clamp(parseInt(getComputedStyle(root).getPropertyValue(\"--sidebar-w\"), 10))" in js
