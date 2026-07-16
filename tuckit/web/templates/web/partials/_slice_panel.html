@@ -33,6 +33,15 @@
         </div>
       </div>
     </div>
+    {% if bites_total %}
+    <div class="prop-row">
+      <span class="prop-key">Progress</span>
+      <div class="prop-val prop-val--progress">
+        <span class="group-count">{{ bites_done }}/{{ bites_total }}</span>
+        <span class="row-prog-track"><i style="width: {{ bites_pct }}%"></i></span>
+      </div>
+    </div>
+    {% endif %}
     <div class="prop-row">
       <span class="prop-key">Created</span>
       <span class="prop-val">{% if slice.source == 'agent' %}agent{% else %}you{% endif %}</span>
@@ -62,43 +71,57 @@
     </form>
   </div>
   {% for entry in plans %}
-  <div class="desc-block plan-section" x-data="{editBody:false, editCons:false}">
-    <div class="bites-head">
-      <span class="section-label">{{ entry.plan.title|default:"Plan" }}</span>
-      <button class="ghost" type="button"
+  <div class="plan-block">
+    <div class="plan-head">
+      <div class="plan-head-main">
+        <div class="plan-eyebrow">Plan</div>
+        <div class="plan-name">{{ entry.plan.title|default:"Untitled plan" }}</div>
+      </div>
+      <button class="ghost plan-del" type="button"
               hx-post="{% wurl 'web:plan_delete' entry.plan.id %}{{ panel_qs }}"
               hx-target="closest .panel-inner" hx-swap="outerHTML"
-              hx-confirm="Delete this plan and its bites?">Delete plan</button>
+              hx-confirm="Delete this plan and its bites?">Delete</button>
     </div>
-    <div class="spec" x-show="!editBody"
-         x-on:click="editBody=true; $nextTick(()=>{ $refs.body.focus(); autosize($refs.body); })">{% if entry.plan.body %}{{ entry.plan_html|safe }}{% else %}<span class="muted">Click to add an overview…</span>{% endif %}</div>
-    <form x-show="editBody" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
-          hx-target="closest .panel-inner" hx-swap="outerHTML">
-      <textarea name="body" class="spec-edit" x-ref="body" rows="2"
-                x-on:input="autosize($event.target)"
-                x-on:keydown.escape.stop="editBody=false"
-                x-on:keydown.meta.enter.prevent="$el.form.requestSubmit()"
-                x-on:keydown.ctrl.enter.prevent="$el.form.requestSubmit()"
-                x-on:blur="$el.value !== $el.defaultValue ? $el.form.requestSubmit() : (editBody=false)">{{ entry.plan.body }}</textarea>
-    </form>
+    <div class="plan-card" x-data="{editBody:false, editCons:false}">
 
-    <div class="section-label">Constraints</div>
-    <div class="spec" x-show="!editCons"
-         x-on:click="editCons=true; $nextTick(()=>{ $refs.cons.focus(); autosize($refs.cons); })">{% if entry.plan.constraints %}{{ entry.constraints_html|safe }}{% else %}<span class="muted">Click to add constraints…</span>{% endif %}</div>
-    <form x-show="editCons" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
-          hx-target="closest .panel-inner" hx-swap="outerHTML">
-      <textarea name="constraints" class="spec-edit" x-ref="cons" rows="2"
-                x-on:input="autosize($event.target)"
-                x-on:keydown.escape.stop="editCons=false"
-                x-on:keydown.meta.enter.prevent="$el.form.requestSubmit()"
-                x-on:blur="$el.value !== $el.defaultValue ? $el.form.requestSubmit() : (editCons=false)">{{ entry.plan.constraints }}</textarea>
-    </form>
-
-    {% if entry.bites %}
-    <div class="plan-bites">
-      {% for bite in entry.bites %}{% include "web/partials/_bite_row.html" %}{% endfor %}
+    <div class="plan-field">
+      <div class="section-label">Overview</div>
+      <div class="spec" x-show="!editBody"
+           x-on:click="editBody=true; $nextTick(()=>{ $refs.body.focus(); autosize($refs.body); })">{% if entry.plan.body %}{{ entry.plan_html|safe }}{% else %}<span class="muted">Click to add an overview…</span>{% endif %}</div>
+      <form x-show="editBody" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
+            hx-target="closest .panel-inner" hx-swap="outerHTML">
+        <textarea name="body" class="spec-edit" x-ref="body" rows="2"
+                  x-on:input="autosize($event.target)"
+                  x-on:keydown.escape.stop="editBody=false"
+                  x-on:keydown.meta.enter.prevent="$el.form.requestSubmit()"
+                  x-on:keydown.ctrl.enter.prevent="$el.form.requestSubmit()"
+                  x-on:blur="$el.value !== $el.defaultValue ? $el.form.requestSubmit() : (editBody=false)">{{ entry.plan.body }}</textarea>
+      </form>
     </div>
-    {% endif %}
+
+    <div class="plan-field">
+      <div class="section-label">Constraints</div>
+      <div class="spec" x-show="!editCons"
+           x-on:click="editCons=true; $nextTick(()=>{ $refs.cons.focus(); autosize($refs.cons); })">{% if entry.plan.constraints %}{{ entry.constraints_html|safe }}{% else %}<span class="muted">Click to add constraints…</span>{% endif %}</div>
+      <form x-show="editCons" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
+            hx-target="closest .panel-inner" hx-swap="outerHTML">
+        <textarea name="constraints" class="spec-edit" x-ref="cons" rows="2"
+                  x-on:input="autosize($event.target)"
+                  x-on:keydown.escape.stop="editCons=false"
+                  x-on:keydown.meta.enter.prevent="$el.form.requestSubmit()"
+                  x-on:blur="$el.value !== $el.defaultValue ? $el.form.requestSubmit() : (editCons=false)">{{ entry.plan.constraints }}</textarea>
+      </form>
+    </div>
+
+    <div class="plan-field plan-bites">
+      <div class="section-label">Bites</div>
+      {% if entry.bites %}
+        {% for bite in entry.bites %}{% include "web/partials/_bite_row.html" %}{% endfor %}
+      {% else %}
+        <div class="plan-bites-empty muted">None yet — the agent adds these as the plan is written.</div>
+      {% endif %}
+    </div>
+    </div>{# .plan-card #}
   </div>
   {% endfor %}
 
@@ -110,26 +133,23 @@
     </form>
   </div>
 
+  {% if not bites_total %}
   <div class="bites-block" id="bites-{{ slice.id }}">
-    <div class="bites-head">
-      <span class="section-label">Bites</span>
-      {% if bites_total %}
-        <span class="group-count">{{ bites_done }}/{{ bites_total }}</span>
-        <span class="row-prog-track"><i style="width: {{ bites_pct }}%"></i></span>
-      {% endif %}
-    </div>
-    {% if not bites_total %}
     <div class="bites-empty">
       <div class="bites-empty-title">No bites yet</div>
       <div class="bites-empty-sub">Add a plan, then break it into steps.</div>
     </div>
-    {% endif %}
   </div>
+  {% endif %}
 
   {% if activity %}
-  <div class="slice-activity">
-    <div class="section-label">Activity</div>
-    <div class="timeline">
+  <div class="slice-activity" x-data="{open: {{ activity|length }} <= 3}">
+    <button type="button" class="activity-head" x-on:click="open=!open" :aria-expanded="open">
+      <span class="section-label">Activity</span>
+      <span class="group-count">{{ activity|length }}</span>
+      <span class="bite-chev" :class="open && 'bite-chev--open'">{% icon "chevron" "icon icon-chev" %}</span>
+    </button>
+    <div class="timeline" x-show="open" x-cloak>
       {% for event in activity %}{% include "web/partials/_activity_row.html" %}{% endfor %}
     </div>
   </div>

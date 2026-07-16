@@ -932,6 +932,76 @@ body { padding: 0; }
   font: inherit; line-height: 1.6; resize: none; overflow: hidden; }
 .spec-edit:focus { outline: none; border-color: var(--accent); }
 
+/* Markdown headings inside a field (Spec, plan overview/constraints, bite body)
+   must not use the page h1-h3 scale (28/22/18px) — they'd dwarf the 13px body.
+   Scale them to field size: h1 15 / h2 14 / h3+ 13, distinguished by weight. */
+.spec :is(h1, h2, h3, h4, h5, h6),
+.bite-body-md :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 650; letter-spacing: -0.01em; line-height: 1.3; margin: 12px 0 4px;
+}
+.spec :is(h1, h2, h3, h4, h5, h6):first-child,
+.bite-body-md :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+.spec h1, .bite-body-md h1 { font-size: 15px; }
+.spec h2, .bite-body-md h2 { font-size: 14px; }
+.spec :is(h3, h4, h5, h6),
+.bite-body-md :is(h3, h4, h5, h6) { font-size: 13px; }
+
+/* Plan block — a header (Plan eyebrow + name) sits ABOVE its card, the same
+   "label above a box" rhythm as the Spec section, so the two read consistently.
+   The card is ONE bordered box; its parts are named (Overview / Constraints /
+   Bites) so it's clear what is a plan vs a bite. Inner fields are borderless in
+   read mode (no box-in-box) and only lift to a subtle field while editing. */
+.plan-block { display: flex; flex-direction: column; gap: var(--space-4); }
+.plan-head { display: flex; align-items: flex-start; gap: var(--space-5); }
+.plan-head-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.plan-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--blue); }
+.plan-name { font-size: 14px; font-weight: 650; letter-spacing: -0.01em; color: var(--ink); }
+.plan-del { margin-left: auto; flex: 0 0 auto; color: var(--ink-faint); }
+.plan-del:hover { color: var(--ink); }
+
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  background: var(--paper-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-7);
+}
+
+/* Each labelled part of a plan: tight label + its content. */
+.plan-field { display: flex; flex-direction: column; gap: var(--space-3); }
+.plan-card .section-label { margin-bottom: 0; }
+
+/* Read mode: no border/background — the card is the only box. A hover tint
+   (bleeding into the card padding) signals the field is click-to-edit. */
+.plan-card .spec {
+  border: none; background: none; border-radius: var(--radius-small);
+  padding: 4px 8px; margin: 0 -8px;
+}
+.plan-card .spec:hover { background: var(--paper-raised); }
+/* Edit mode: lift to a subtle field so it reads as active. */
+.plan-card .spec-edit { background: var(--paper-raised); }
+
+/* The bites checklist, divided from the constraints above. */
+.plan-card .plan-bites { border-top: 1px solid var(--line); padding-top: var(--space-6); }
+.plan-bites-empty { font-size: 12px; }
+/* Expanded bite detail: an indented left-rule, not another nested box. */
+.plan-card .bite-body {
+  background: none; border: none; border-left: 2px solid var(--line);
+  border-radius: 0; margin: 4px 0 8px 24px; padding: 4px 0 4px 12px;
+}
+
+/* Add-plan form — title input + inline submit. */
+.plan-add { display: flex; align-items: center; gap: var(--space-4); }
+.plan-add .bite-add { flex: 1; margin-top: 0; }
+
+/* Collapsible Activity — a full-width header button toggles the timeline so a
+   long history doesn't force endless scroll (open by default only when short). */
+.activity-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0; background: none; border: none; font: inherit; color: inherit; cursor: pointer; }
+.activity-head .section-label { margin-bottom: 0; }
+.activity-head .bite-chev { margin-left: auto; }
+
 /* Bite row + checkbox — flat list item, filled square only on the done state
    (a form control affordance, not a status "chip"). */
 .bite { padding: 4px 0; line-height: 1.5; }

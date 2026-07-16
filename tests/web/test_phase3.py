@@ -40,8 +40,9 @@ def test_slice_panel_order_and_close_aria(client_local, workspace):
     assert 'aria-label="Close panel"' in body
     assert "Open full" in body
     assert "Backend" in body                         # Area context near title
-    # blueprint order: tags (now a property row) appear before bites; bites before the destructive drop
-    assert body.index("billing") < body.index('id="bites-') < body.index("Drop")
+    # blueprint order: tags (a property row) appear before the plan's bites;
+    # bites (inside the plan card) come before the destructive drop
+    assert body.index("billing") < body.index("step one") < body.index("Drop")
 
 
 @pytest.mark.django_db
