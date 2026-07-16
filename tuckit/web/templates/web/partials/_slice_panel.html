@@ -39,7 +39,7 @@
     </div>
     <div class="prop-row">
       <span class="prop-key">Updated</span>
-      <span class="prop-val">{{ slice.updated_at|timesince }} 전</span>
+      <span class="prop-val">{{ slice.updated_at|timesince }} ago</span>
     </div>
     <div class="prop-row prop-row--tags">
       <span class="prop-key">Tags</span>
@@ -48,9 +48,9 @@
   </div>
 
   <div class="desc-block">
-    <div class="section-label">Description</div>
+    <div class="section-label">Spec</div>
     <div class="spec" x-show="!editSpec"
-         x-on:click="editSpec=true; $nextTick(()=>{ $refs.specEdit.focus(); autosize($refs.specEdit); })">{% if slice.spec %}{{ spec_html|safe }}{% else %}<span class="muted">설명을 추가하려면 클릭…</span>{% endif %}</div>
+         x-on:click="editSpec=true; $nextTick(()=>{ $refs.specEdit.focus(); autosize($refs.specEdit); })">{% if slice.spec %}{{ spec_html|safe }}{% else %}<span class="muted">Click to add a spec…</span>{% endif %}</div>
     <form x-show="editSpec" x-cloak hx-post="{% wurl 'web:slice_edit' slice.id %}{{ panel_qs }}"
           hx-target="closest .panel-inner" hx-swap="outerHTML">
       <textarea name="spec" class="spec-edit" x-ref="specEdit" rows="2"
@@ -75,8 +75,8 @@
     </div>
     {% if not bites %}
     <div class="bites-empty">
-      <div class="bites-empty-title">아직 bite가 없습니다</div>
-      <div class="bites-empty-sub">이 slice를 구현하기 위한 작은 단계를 추가해보세요.</div>
+      <div class="bites-empty-title">No bites yet</div>
+      <div class="bites-empty-sub">Add small steps to implement this slice.</div>
       <button class="ghost bites-empty-cta" type="button" x-on:click="$refs.biteAdd.focus()">{% icon "plus" "icon" %} Add your first bite</button>
     </div>
     {% endif %}

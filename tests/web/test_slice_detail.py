@@ -119,7 +119,7 @@ def test_panel_header_title_and_status_tabs(client_local, workspace):
     assert body.count('class="status-opt') == 4          # one option per status
     assert "status-opt--on" in body                       # active (building) option marked
     assert "Created" in body and "Updated" in body        # properties rows
-    assert 'class="section-label">Description' in body   # description is now a labeled section
+    assert 'class="section-label">Spec' in body          # spec is a labeled section
     # panel-only chrome present
     assert "crumb-close" in body
     assert "Open full page" in body
@@ -150,7 +150,7 @@ def test_bites_progress_and_empty_state(client_local, workspace):
     # empty: card shown, no count
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="bites-empty"' in body
-    assert "아직 bite가 없습니다" in body
+    assert "No bites yet" in body
     assert 'class="row-prog-track"' not in body   # no progress bar when there are no bites
 
     # with bites: count + progress shown, card gone
@@ -216,13 +216,16 @@ def test_slice_activity_helper_is_chronological_and_scoped(workspace):
 
 
 @pytest.mark.django_db
-def test_description_is_seamless_inline_edit(client_local, workspace):
+def test_spec_is_boxed_inline_edit(client_local, workspace):
+    from pathlib import Path
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{workspace.org.slug}/{workspace.slug}"
-    s = create_slice(create_area(workspace, "Design"), "설명")
+    s = create_slice(create_area(workspace, "Design"), "spec slice")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
-    assert 'class="section-label">Description' in body   # labeled section
+    assert 'class="section-label">Spec' in body          # labeled section
     assert 'class="spec-edit"' in body                   # inline editor present
     assert 'rows="6"' not in body                        # no big fixed textarea jump
-    assert 'class="spec-box"' not in body                # framed box removed
+    # Spec reads as a field: boxed like the other props (border + background).
+    css = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css").read_text()
+    assert ".spec, .spec-edit {" in css                  # shared box rule present

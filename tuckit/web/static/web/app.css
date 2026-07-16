@@ -558,6 +558,42 @@ body { padding: 0; }
   outline: none;
 }
 
+/* Full capture modal — quiet optional authoring block beneath the title. */
+.capture-modal--full { width: 480px; display: flex; flex-direction: column; gap: 10px; }
+.capture-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.capture-optrow { display: flex; gap: 10px; }
+.capture-field { display: flex; flex-direction: column; gap: 4px; }
+.capture-field--inline { flex: 1; }
+.capture-lbl { color: var(--muted); font-size: 11px; }
+.capture-hint { color: var(--ink-faint); }
+.capture-select,
+.capture-spec,
+.capture-bite-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+.capture-spec { font-size: 13px; padding: 6px 8px; resize: none; }
+.capture-select:focus,
+.capture-spec:focus,
+.capture-bite-input:focus { outline: none; border-color: var(--accent); }
+.capture-tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.capture-bites { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.capture-bite { display: flex; align-items: center; gap: 4px; width: 100%; }
+.capture-bite-input { flex: 1; }
+.capture-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
 [x-cloak] {
   display: none !important;
 }
@@ -880,13 +916,21 @@ body { padding: 0; }
 
 .meta { font-size: 12px; color: var(--ink-faint); }
 
+/* Boxed like .props so Spec reads as a field alongside Status/Tags. */
+.spec, .spec-edit {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--paper-solid);
+  padding: 8px 10px;
+}
 .spec { line-height: 1.6; cursor: text; }
 .spec :is(p, ul, ol) { margin: 0 0 8px; }
+.spec :is(p, ul, ol):last-child { margin-bottom: 0; }
 .spec pre { background: var(--paper-deep); border: 1px solid var(--line); border-radius: var(--radius-small); padding: 8px 10px; overflow-x: auto; }
 .spec code { font-family: var(--mono); font-size: 12px; }
-.spec-edit { width: 100%; background: transparent; border: none; color: var(--ink);
-  font: inherit; line-height: 1.6; padding: 0; resize: none; overflow: hidden; }
-.spec-edit:focus { outline: none; }
+.spec-edit { width: 100%; color: var(--ink);
+  font: inherit; line-height: 1.6; resize: none; overflow: hidden; }
+.spec-edit:focus { outline: none; border-color: var(--accent); }
 
 /* Bite row + checkbox — flat list item, filled square only on the done state
    (a form control affordance, not a status "chip"). */
