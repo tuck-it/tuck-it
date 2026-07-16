@@ -47,3 +47,13 @@ async def test_update_and_status_bite():
     await update_bite(ctx, b["id"], body="use RS256")
     updated = await set_bite_status(ctx, b["id"], "done")
     assert updated["status"] == "done"
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_list_bites_returns_body():
+    raw, slice_id = await _seed()
+    ctx = make_ctx(raw)
+    await create_bite(ctx, slice_id, "JWT", body="use RS256 keys")
+    listed = await list_bites(ctx, slice_id)
+    assert listed[0]["body"] == "use RS256 keys"

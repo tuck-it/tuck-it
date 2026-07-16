@@ -16,6 +16,7 @@ def bite_dict(bite) -> dict:
     return {
         "id": bite.id,
         "title": bite.title,
+        "body": bite.body,
         "status": bite.status,
         "slice_id": bite.slice_id,
     }
