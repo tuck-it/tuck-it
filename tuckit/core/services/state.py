@@ -4,7 +4,8 @@ from django.utils import timezone
 
 from tuckit.core.models import Area, Bite, Slice, Workspace, WorkspaceStatSnapshot
 from tuckit.core.services.areas import list_areas
-from tuckit.core.services.bites import slice_bites
+from tuckit.core.services.bites import list_bites, slice_bites
+from tuckit.core.services.plans import list_plans
 from tuckit.core.services.slices import list_slices
 
 _OPEN_BITE_STATUSES = ["todo", "doing"]
@@ -71,21 +72,18 @@ def render_slice_markdown(slice_: Slice) -> str:
     lines.append("")
     if slice_.spec:
         lines += [slice_.spec, ""]
-    from tuckit.core.services.plans import get_plan
-    plan = get_plan(slice_)
-    if plan:
+    for plan in list_plans(slice_):
+        lines.append(f"## {plan.title or 'Plan'}")
         if plan.body:
-            lines += ["## Plan", plan.body, ""]
+            lines += [plan.body, ""]
         if plan.constraints:
-            lines += ["## Constraints", plan.constraints, ""]
-    bites = list(slice_bites(slice_))
-    if bites:
-        lines.append("## Bites")
-        for b in bites:
+            lines += ["### Constraints", plan.constraints, ""]
+        for b in list_bites(plan):
             check = "x" if b.status == "done" else " "
             lines.append(f"- [{check}] {b.title}")
             if b.body:
                 lines += [f"      {line}" for line in b.body.splitlines()]
+        lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 

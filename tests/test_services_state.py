@@ -329,4 +329,26 @@ def test_render_slice_markdown_includes_plan_and_constraints(workspace):
     create_plan(s, body="Goal: ship auth", constraints="no billing")
     md = render_slice_markdown(s)
     assert "## Plan" in md and "Goal: ship auth" in md
-    assert "## Constraints" in md and "no billing" in md
+    assert "### Constraints" in md and "no billing" in md
+
+
+@pytest.mark.django_db
+def test_render_slice_markdown_renders_every_plan(workspace):
+    from tuckit.core.services.plans import create_plan
+    area = create_area(workspace, "Backend")
+    s = create_slice(area, "Auth", spec="design")
+    p1 = create_plan(s, title="Backend plan", body="Backend goal", constraints="no billing")
+    p2 = create_plan(s, title="Frontend plan", body="Frontend goal")
+    create_bite(p1, "Backend bite")
+    create_bite(p2, "Frontend bite")
+
+    md = render_slice_markdown(s)
+
+    assert "## Backend plan" in md
+    assert "Backend goal" in md
+    assert "### Constraints" in md and "no billing" in md
+    assert "- [ ] Backend bite" in md
+
+    assert "## Frontend plan" in md
+    assert "Frontend goal" in md
+    assert "- [ ] Frontend bite" in md
