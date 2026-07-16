@@ -77,6 +77,8 @@ def render_slice_markdown(slice_: Slice) -> str:
         for b in bites:
             check = "x" if b.status == "done" else " "
             lines.append(f"- [{check}] {b.title}")
+            if b.body:
+                lines += [f"      {line}" for line in b.body.splitlines()]
     return "\n".join(lines).rstrip() + "\n"
 
 

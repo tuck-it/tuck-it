@@ -71,6 +71,16 @@ def test_render_slice_markdown_includes_spec_and_bites(workspace):
 
 
 @pytest.mark.django_db
+def test_render_slice_markdown_includes_bite_body(workspace):
+    area = create_area(workspace, "Backend")
+    s = create_slice(area, "Auth")
+    create_bite(s, "JWT", body="use RS256 keys")
+    md = render_slice_markdown(s)
+    assert "- [ ] JWT" in md
+    assert "use RS256 keys" in md
+
+
+@pytest.mark.django_db
 def test_someday_slice_is_exclusive_to_someday_bucket(workspace):
     area = create_area(workspace, "Backend")
     create_slice(area, "Planned someday", status="planned", tags=["someday"])
