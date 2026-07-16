@@ -2,7 +2,7 @@ import markdown as md
 import nh3
 
 from tuckit.core.services.activity import slice_activity
-from tuckit.core.services.bites import list_bites, bite_progress
+from tuckit.core.services.bites import slice_bites, bite_progress
 from tuckit.core.services.plans import get_plan
 
 
@@ -21,7 +21,7 @@ def slice_panel_context(slice_, is_panel: bool = False) -> dict:
     return {
         "slice": slice_,
         "spec_html": render_markdown_html(slice_.spec),
-        "bites": list(list_bites(slice_)),
+        "bites": list(slice_bites(slice_)),
         "statuses": ["idea", "planned", "building", "shipped"],
         "activity": slice_activity(slice_),
         "is_panel": is_panel,

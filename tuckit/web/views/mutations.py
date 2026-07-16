@@ -6,7 +6,7 @@ from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice, get_bite
 from tuckit.core.services.slices import set_slice_status, update_slice
 from tuckit.core.services.bites import create_bite, set_bite_status, update_bite
-from tuckit.core.services.plans import create_plan, get_plan, update_plan
+from tuckit.core.services.plans import create_plan, ensure_default_plan, get_plan, update_plan
 from tuckit.web.auth import get_current_workspace
 from tuckit.web.panel import slice_panel_context
 
@@ -72,7 +72,8 @@ def slice_tags(request, slice_id):
 
 def bite_create(request, slice_id):
     slice_ = _slice_or_404(request, slice_id)
-    create_bite(slice_, request.POST["title"], source="human")
+    plan = ensure_default_plan(slice_, actor="human")
+    create_bite(plan, request.POST["title"], source="human")
     resp = _panel(request, slice_)
     widget = render_to_string("web/partials/_onboarding_widget.html", {"oob": True}, request=request)
     if widget.strip():

@@ -6,6 +6,7 @@ import pytest
 
 from tuckit.core.models import Slice
 from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.services.bites import slice_bites
 
 
 P = lambda ws: f"/{ws.org.slug}/{ws.slug}"
@@ -36,7 +37,7 @@ def test_capture_rich_creates_full_slice_and_redirects(client_local, workspace):
     assert s.spec == "Paddle webhook 처리"
     assert s.status == "planned"
     assert {t.name for t in s.tags.all()} == {"billing", "urgent"}
-    assert [b.title for b in s.bites.order_by("rank")] == ["웹훅 서명 검증", "이벤트 저장"]
+    assert [b.title for b in slice_bites(s).order_by("rank")] == ["웹훅 서명 검증", "이벤트 저장"]
     assert resp["HX-Redirect"].endswith(f"/slices/{s.id}/")
 
 
@@ -70,7 +71,7 @@ def test_capture_skips_blank_bite_rows(client_local, workspace):
     }, HTTP_HX_REQUEST="true")
     assert resp.status_code == 204
     s = Slice.objects.get(title="with bites")
-    assert [b.title for b in s.bites.all()] == ["real step"]
+    assert [b.title for b in slice_bites(s)] == ["real step"]
 
 
 @pytest.mark.django_db

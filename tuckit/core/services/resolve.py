@@ -25,6 +25,6 @@ def get_slice(workspace: Workspace, slice_id: int) -> Slice:
 
 def get_bite(workspace: Workspace, bite_id: int) -> Bite:
     try:
-        return Bite.objects.get(pk=bite_id, slice__area__workspace=workspace)
+        return Bite.objects.get(pk=bite_id, plan__slice__area__workspace=workspace)
     except Bite.DoesNotExist:
         raise NotFound(f"bite {bite_id} not found")

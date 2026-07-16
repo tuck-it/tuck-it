@@ -4,6 +4,7 @@ import pytest
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.bites import create_bite
+from tuckit.core.services.plans import create_plan
 
 
 @pytest.mark.django_db
@@ -11,7 +12,7 @@ def test_slice_full_page_renders_spec_and_bites(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     a = create_area(workspace, "Backend")
     s = create_slice(a, "결제 도입", spec="## 목표\nStripe 붙이기", status="building")
-    create_bite(s, "SDK 연동", status="done")
+    create_bite(create_plan(s, title="Plan"), "SDK 연동", status="done")
     resp = client_local.get(f"{p}/slices/{s.id}/")
     body = resp.content.decode()
     assert resp.status_code == 200
@@ -70,11 +71,12 @@ def test_slice_panel_shows_its_activity_thread(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
     from tuckit.core.services.bites import create_bite
+    from tuckit.core.services.plans import create_plan
     p = f"/{workspace.org.slug}/{workspace.slug}"
     a = create_area(workspace, "Backend")
     s = create_slice(a, "스레드 슬라이스", status="idea")   # logs created (slice)
     set_slice_status(s, "building")                          # logs status_changed (slice)
-    create_bite(s, "첫 바이트")                              # logs created (bite)
+    create_bite(create_plan(s, title="Plan"), "첫 바이트")                              # logs created (bite)
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="slice-activity"' in body                  # thread section present
     assert body.count('class="activity-row"') >= 3           # slice + status + bite events
@@ -87,9 +89,11 @@ def test_slice_panel_context_flags_and_progress(workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
+    from tuckit.core.services.plans import create_plan
     s = create_slice(create_area(workspace, "Design"), "T")
-    create_bite(s, "a", status="done")
-    create_bite(s, "b")  # 1 of 2 done -> 50%
+    p = create_plan(s, title="Plan")
+    create_bite(p, "a", status="done")
+    create_bite(p, "b")  # 1 of 2 done -> 50%
 
     panel = slice_panel_context(s, is_panel=True)
     assert panel["is_panel"] is True
@@ -143,6 +147,7 @@ def test_bites_progress_and_empty_state(client_local, workspace):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
+    from tuckit.core.services.plans import create_plan
     p = f"/{workspace.org.slug}/{workspace.slug}"
     a = create_area(workspace, "Design")
     s = create_slice(a, "S")
@@ -154,8 +159,9 @@ def test_bites_progress_and_empty_state(client_local, workspace):
     assert 'class="row-prog-track"' not in body   # no progress bar when there are no bites
 
     # with bites: count + progress shown, card gone
-    create_bite(s, "a", status="done")
-    create_bite(s, "b")
+    plan_ = create_plan(s, title="Plan")
+    create_bite(plan_, "a", status="done")
+    create_bite(plan_, "b")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="bites-empty"' not in body
     assert "1/2" in body

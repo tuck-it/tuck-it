@@ -10,12 +10,13 @@ from tuckit.core.services.areas import create_area as _create_area
 from tuckit.core.services.areas import list_areas as _list_areas
 from tuckit.core.services.bites import (
     create_bite as _create_bite,
-    list_bites as _list_bites,
+    slice_bites as _slice_bites,
     reorder_bite as _reorder_bite,
     set_bite_status as _set_bite_status,
     update_bite as _update_bite,
 )
 from tuckit.core.services.plans import create_plan as _create_plan
+from tuckit.core.services.plans import ensure_default_plan as _ensure_default_plan
 from tuckit.core.services.plans import get_plan as _get_plan
 from tuckit.core.services.plans import update_plan as _update_plan
 from tuckit.core.services.resolve import get_area
@@ -256,7 +257,7 @@ async def list_bites(ctx: Context, slice_id: int) -> list[dict]:
 
     def _run():
         s = _resolve_slice(workspace, slice_id)
-        return [bite_dict(b) for b in _list_bites(s)]
+        return [bite_dict(b) for b in _slice_bites(s)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -276,9 +277,10 @@ async def create_bite(
 
     def _run():
         s = _resolve_slice(workspace, slice_id)
+        plan = _ensure_default_plan(s)
         after = _resolve_bite(workspace, after_id) if after_id is not None else None
         before = _resolve_bite(workspace, before_id) if before_id is not None else None
-        b = _create_bite(s, title, body=body, status=status, after=after, before=before, source="agent")
+        b = _create_bite(plan, title, body=body, status=status, after=after, before=before, source="agent")
         return bite_dict(b)
 
     return await sync_to_async(_run, thread_sensitive=True)()

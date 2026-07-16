@@ -9,6 +9,7 @@ from django.urls import reverse
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, rename_area, delete_area, reorder_area
 from tuckit.core.services.bites import create_bite
+from tuckit.core.services.plans import ensure_default_plan
 from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices, grouped_slices
 from tuckit.core.services.resolve import get_area, get_slice, get_area_by_slug
 from tuckit.web.auth import get_current_workspace
@@ -58,8 +59,10 @@ def capture(request):
     try:
         with transaction.atomic():
             slice_ = create_slice(target_area, title, spec=spec, status=status, tags=tags, source="human")
-            for bite_title in bite_titles:
-                create_bite(slice_, bite_title, source="human")
+            if bite_titles:
+                plan = ensure_default_plan(slice_, actor="human")
+                for bite_title in bite_titles:
+                    create_bite(plan, bite_title, source="human")
     except InvalidValue as e:
         return HttpResponse(str(e), status=400)
 

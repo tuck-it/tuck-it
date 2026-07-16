@@ -18,7 +18,7 @@ def bite_dict(bite) -> dict:
         "title": bite.title,
         "body": bite.body,
         "status": bite.status,
-        "slice_id": bite.slice_id,
+        "slice_id": bite.plan.slice_id,
     }
 
 
