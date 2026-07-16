@@ -433,24 +433,6 @@ body { padding: 0; }
 .board-col-more { padding-left: 8px; }
 .board-col-more:hover, .group-more:hover { color: var(--ink); }
 
-/* Non-drag status control — quiet until the card is hovered/focused. */
-.card-move {
-  margin-top: 6px;
-  width: 100%;
-  opacity: 0;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-small);
-  color: var(--ink-soft);
-  font: inherit;
-  font-size: 11px;
-  padding: 3px 6px;
-  transition: opacity var(--ease);
-}
-.slice-card:hover .card-move,
-.slice-card:focus-within .card-move { opacity: 1; }
-.card-move:focus { opacity: 1; border-color: var(--blue); outline: none; }
-
 /* Drag states — visible drop target + quiet ghost, tinted lift on the card. */
 .board-col--droppable .board-col-cards {
   outline: 2px dashed var(--blue-soft);
@@ -1517,7 +1499,6 @@ html.sidebar-collapsed .side-resize { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar { transition: none; }
-  .card-move { transition: none; }
 }
 
 /* Home summary metrics — at-a-glance counts with day-over-day movement. */

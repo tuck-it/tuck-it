@@ -45,7 +45,7 @@ def test_roadmap_page_shows_distribution_and_slices(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     body = client_local.get(f"{p}/roadmap/").content.decode()
     assert "로드맵 항목" in body
-    assert "Planned" in body
+    assert 'data-status="planned"' in body   # rendered in its status column
     assert "캡처" not in body   # triage slices excluded from roadmap
 
 

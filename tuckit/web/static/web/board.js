@@ -22,8 +22,6 @@
         animation: 150,
         ghostClass: "slice-card--ghost",
         chosenClass: "slice-card--chosen",
-        filter: ".card-move",
-        preventOnFilter: false,
         onStart: function () {
           document.querySelectorAll(".board-col").forEach(function (col) {
             col.classList.add("board-col--droppable");

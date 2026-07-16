@@ -7,13 +7,4 @@
     {% include "web/partials/_tag_text.html" %}
     <span class="card-bites">{% bite_progress slice %}</span>
   </div>
-  <select class="card-move" name="status" aria-label="Move to status"
-          hx-post="{% wurl 'web:slice_move' slice.id %}{% if board_scope %}?scope={{ board_scope }}{% endif %}" hx-trigger="change"
-          hx-target="#board" hx-swap="outerHTML" hx-push-url="false"
-          onclick="event.stopPropagation()">
-    <option value="idea"{% if slice.status == "idea" %} selected{% endif %}>Idea</option>
-    <option value="planned"{% if slice.status == "planned" %} selected{% endif %}>Planned</option>
-    <option value="building"{% if slice.status == "building" %} selected{% endif %}>Building</option>
-    <option value="shipped"{% if slice.status == "shipped" %} selected{% endif %}>Shipped</option>
-  </select>
 </div>

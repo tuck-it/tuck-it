@@ -86,29 +86,6 @@ def test_move_foreign_neighbor_404s_without_change(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_card_has_status_move_control(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
-    a = create_area(workspace, "B")
-    create_slice(a, "card one", status="building")
-    body = client_local.get(f"{p}/areas/{a.slug}/?view=board").content.decode()
-    assert 'aria-label="Move to status"' in body
-    assert 'class="card-move"' in body
-
-
-@pytest.mark.django_db
-def test_move_via_hx_returns_board_html(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
-    a = create_area(workspace, "B")
-    s = create_slice(a, "movable", status="planned")
-    resp = client_local.post(f"{p}/slices/{s.id}/move", {"status": "building"},
-                             HTTP_HX_REQUEST="true")
-    assert resp.status_code == 200
-    body = resp.content.decode()
-    assert 'id="board"' in body                    # re-rendered board
-    assert Slice.objects.get(pk=s.id).status == "building"
-
-
-@pytest.mark.django_db
 def test_move_without_hx_returns_204(client_local, workspace):
     p = f"/{workspace.org.slug}/{workspace.slug}"
     a = create_area(workspace, "B")
@@ -144,26 +121,6 @@ def test_roadmap_tab_list_view_still_available(client_local, workspace):
     assert "roadmap-dist" in body                   # the distribution strip
     assert 'id="board"' not in body                 # not the kanban
     assert "list-view slice" in body
-
-
-@pytest.mark.django_db
-def test_workspace_scope_move_rerenders_all_areas(client_local, workspace):
-    """A move from the Board tab (?scope=workspace) re-renders every area's
-    cards, not just the moved slice's area."""
-    p = f"/{workspace.org.slug}/{workspace.slug}"
-    design = create_area(workspace, "Design")
-    core = create_area(workspace, "Core")
-    moved = create_slice(design, "moved slice", status="planned")
-    create_slice(core, "other-area slice", status="idea")
-    resp = client_local.post(
-        f"{p}/slices/{moved.id}/move?scope=workspace",
-        {"status": "building"}, HTTP_HX_REQUEST="true",
-    )
-    body = resp.content.decode()
-    assert resp.status_code == 200
-    assert Slice.objects.get(pk=moved.id).status == "building"
-    assert "other-area slice" in body               # foreign area still present
-    assert 'class="card-area"' in body
 
 
 @pytest.mark.django_db
@@ -220,7 +177,6 @@ def test_board_js_declares_drag_states():
     js = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "board.js").read_text()
     assert "ghostClass" in js
     assert "board-col--droppable" in js
-    assert 'filter: ".card-move"' in js
 
 
 def test_app_css_declares_droppable_state():
@@ -228,24 +184,6 @@ def test_app_css_declares_droppable_state():
     css = (Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css").read_text()
     assert ".board-col--droppable" in css
     assert ".slice-card--ghost" in css
-
-
-@pytest.mark.django_db
-def test_workspace_move_rerender_keeps_shipped_footer(client_local, workspace):
-    workspace.shipped_board_mode = "count"
-    workspace.shipped_board_limit = 1
-    workspace.save(update_fields=["shipped_board_mode", "shipped_board_limit"])
-    p = f"/{workspace.org.slug}/{workspace.slug}"
-    a = create_area(workspace, "Design")
-    create_slice(a, "shipped one", status="shipped")
-    create_slice(a, "shipped two", status="shipped")
-    mover = create_slice(a, "mover", status="planned")
-    resp = client_local.post(
-        f"{p}/slices/{mover.id}/move?scope=workspace",
-        {"status": "building"}, HTTP_HX_REQUEST="true",
-    )
-    body = resp.content.decode()
-    assert "View all shipped (2)" in body
 
 
 @pytest.mark.django_db
