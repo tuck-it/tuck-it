@@ -84,3 +84,14 @@ class Bite(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Plan(models.Model):
+    SOURCE_CHOICES = [("human", "Human"), ("agent", "Agent")]
+
+    slice = models.OneToOneField(Slice, on_delete=models.CASCADE, related_name="plan")
+    body = models.TextField(blank=True, default="")
+    constraints = models.TextField(blank=True, default="")
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="human")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
