@@ -21,7 +21,12 @@ from tests.test_mcp_tools_state import make_ctx
 def _seed():
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="P", slug="p")
-    other = Workspace.objects.create(org=org, name="O", slug="o")
+    # A different org, not just a different workspace: Org is now the tenant
+    # boundary (Task 5 moves resolve.get_area/etc to org-scoped lookups), so
+    # cross-tenant rejection must be tested across orgs, not sibling
+    # workspaces of the same org.
+    other_org = Org.objects.create(name="Other Org", slug="other-org")
+    other = Workspace.objects.create(org=other_org, name="O", slug="o")
     _, raw = generate_token(ws, "t")
     area = create_area(ws, "Backend")
     return ws, other, raw, area.id

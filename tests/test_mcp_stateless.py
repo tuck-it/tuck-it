@@ -106,4 +106,4 @@ def test_tool_call_without_session_id_succeeds(asgi_app):
     result = call_resp.json()["result"]
     assert result.get("isError") is not True, result
     payload = json.loads(result["content"][0]["text"])
-    assert payload["product"]["name"] == "MyProduct"
+    assert payload["org"]["name"] == "Acme"

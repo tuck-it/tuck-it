@@ -1,7 +1,7 @@
 from asgiref.sync import sync_to_async
 
 from tuckit.core.services.exceptions import NotFound
-from tuckit.core.services.tokens import resolve_workspace
+from tuckit.core.services.tokens import resolve_org
 
 
 def _bearer(headers) -> str | None:
@@ -36,13 +36,13 @@ class BearerAuthMiddleware:
         await self.app(scope, receive, send)
 
 
-async def require_workspace(ctx):
-    """Authoritative auth: resolve the caller's bearer token to a Workspace, or raise."""
+async def require_org(ctx):
+    """Authoritative auth: resolve the caller's bearer token to an Org, or raise."""
     request = ctx.request_context.request
     raw = _bearer(request.headers) if request is not None else None
     if raw is None:
         raise NotFound("missing bearer token")
-    workspace = await sync_to_async(resolve_workspace, thread_sensitive=True)(raw)
-    if workspace is None:
+    org = await sync_to_async(resolve_org, thread_sensitive=True)(raw)
+    if org is None:
         raise NotFound("invalid or unknown API token")
-    return workspace
+    return org

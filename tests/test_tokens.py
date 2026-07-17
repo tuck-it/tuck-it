@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 
 from tuckit.core.models import Org, Workspace
-from tuckit.core.services.tokens import generate_token, hash_token, list_tokens, resolve_workspace, revoke_token
+from tuckit.core.services.tokens import generate_token, hash_token, list_tokens, resolve_org, revoke_token
 
 
 @pytest.fixture
@@ -20,19 +20,19 @@ def test_generate_token_stores_only_hash(ws):
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_owner_and_stamps_use(ws):
+def test_resolve_org_returns_owner_and_stamps_use(ws):
     _, raw = generate_token(ws, "cli")
-    resolved = resolve_workspace(raw)
-    assert resolved == ws
+    resolved = resolve_org(raw)
+    assert resolved == ws.org
     from tuckit.core.models import ApiToken
 
     assert ApiToken.objects.get(workspace=ws).last_used_at is not None
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_none_for_bad_token(ws):
+def test_resolve_org_returns_none_for_bad_token(ws):
     generate_token(ws, "cli")
-    assert resolve_workspace("not-a-real-token") is None
+    assert resolve_org("not-a-real-token") is None
 
 
 @pytest.mark.django_db

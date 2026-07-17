@@ -7,7 +7,7 @@ from tuckit.core.models.workspace import Workspace
 
 @pytest.mark.django_db
 def test_capture_lands_in_triage_as_idea(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     client_local.post(f"{p}/capture", {"title": "재시도 큐"}, HTTP_HX_REQUEST="true")
     inbox = get_or_create_triage(ws)
@@ -16,7 +16,7 @@ def test_capture_lands_in_triage_as_idea(client_local, org):
 
 @pytest.mark.django_db
 def test_triage_lists_captures(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     inbox = get_or_create_triage(ws)
     create_slice(inbox, "정리 대상")
@@ -25,7 +25,7 @@ def test_triage_lists_captures(client_local, org):
 
 @pytest.mark.django_db
 def test_triage_moves_out(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     inbox = get_or_create_triage(ws)
     p = f"/{org.slug}/{ws.slug}"
     backend = create_area(ws, "Backend")
@@ -36,7 +36,7 @@ def test_triage_moves_out(client_local, org):
 
 @pytest.mark.django_db
 def test_area_create_makes_area(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     client_local.post(f"{p}/areas/new", {"name": "Backend"}, HTTP_HX_REQUEST="true")
     assert org.areas.filter(is_triage=False, name="Backend").exists()
@@ -44,7 +44,7 @@ def test_area_create_makes_area(client_local, org):
 @pytest.mark.django_db
 def test_capture_returns_toast_count_and_row(client_local, org):
     # No full-page reload: capture returns OOB swaps for toast, count, and the new row.
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     get_or_create_triage(ws)
     resp = client_local.post(f"{p}/capture", {"title": "빠른 기록"}, HTTP_HX_REQUEST="true")
@@ -68,7 +68,7 @@ def test_capture_returns_toast_count_and_row(client_local, org):
 
 @pytest.mark.django_db
 def test_area_create_returns_oob_area_nav(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     resp = client_local.post(f"{p}/areas/new", {"name": "새 영역"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
@@ -79,7 +79,7 @@ def test_area_create_returns_oob_area_nav(client_local, org):
 
 @pytest.mark.django_db
 def test_triage_invalid_status_returns_400(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     inbox = get_or_create_triage(ws)
     p = f"/{org.slug}/{ws.slug}"
     area = create_area(ws, "Backend")
@@ -95,7 +95,7 @@ def test_triage_invalid_status_returns_400(client_local, org):
 def test_triage_row_has_no_manual_caret_and_area_placeholder(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     create_slice(get_or_create_triage(ws), "미분류 항목")
     body = client_local.get(f"{p}/triage/").content.decode()
@@ -106,7 +106,7 @@ def test_triage_row_has_no_manual_caret_and_area_placeholder(client_local, org):
 def test_triage_status_only_keeps_area(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(get_or_create_triage(ws), "상태만 변경")
     resp = client_local.post(f"{p}/slices/{s.id}/triage", {"area_id": "", "status": "planned"})
@@ -116,7 +116,7 @@ def test_triage_status_only_keeps_area(client_local, org):
 
 @pytest.mark.django_db
 def test_triage_foreign_area_404s(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     inbox = get_or_create_triage(ws)
     s = create_slice(inbox, "다른 워크스페이스로")
@@ -134,7 +134,7 @@ def test_triage_foreign_area_404s(client_local, org):
 def test_inbox_heading_and_agent_source_badge(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     tri = get_or_create_triage(ws)
     create_slice(tri, "에이전트가 만든 것", status="idea", source="agent")

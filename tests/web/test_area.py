@@ -6,7 +6,7 @@ from tuckit.core.services.slices import create_slice
 
 @pytest.mark.django_db
 def test_area_view_groups_by_status(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Backend")
     create_slice(a, "결제 도입", status="building")
@@ -21,7 +21,7 @@ def test_area_view_groups_by_status(client_local, org):
 def test_area_view_other_workspace_404(client_local, org):
     from tuckit.core.models import Org, Workspace
     from tuckit.core.services.areas import create_area
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     other_org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=other_org, name="O", slug="o")
@@ -31,7 +31,7 @@ def test_area_view_other_workspace_404(client_local, org):
 
 @pytest.mark.django_db
 def test_area_header_uses_page_head_and_description(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     p = f"/{org.slug}/{ws.slug}"
     a.description = "Payments and auth."
@@ -45,7 +45,7 @@ def test_area_header_uses_page_head_and_description(client_local, org):
 
 @pytest.mark.django_db
 def test_area_header_omits_description_when_blank(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Backend")  # description defaults to ""
     body = client_local.get(f"{p}/areas/{a.slug}/").content.decode()
@@ -55,7 +55,7 @@ def test_area_header_omits_description_when_blank(client_local, org):
 
 @pytest.mark.django_db
 def test_area_list_collapses_shipped_and_dropped(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     create_slice(a, "building one", status="building")
     create_slice(a, "shipped one", status="shipped")
@@ -76,7 +76,7 @@ def test_area_list_collapses_shipped_and_dropped(client_local, org):
 
 @pytest.mark.django_db
 def test_area_list_empty_copy_is_english(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Empty")
     body = client_local.get(f"{p}/areas/{a.slug}/").content.decode()
@@ -87,7 +87,7 @@ def test_area_list_empty_copy_is_english(client_local, org):
 @pytest.mark.django_db
 def test_add_slice_creates_idea_slice_in_area(client_local, org):
     from tuckit.core.models import Slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Backend")
     resp = client_local.post(f"{p}/areas/{a.slug}/slices", {"title": "new idea"},
@@ -103,7 +103,7 @@ def test_add_slice_creates_idea_slice_in_area(client_local, org):
 @pytest.mark.django_db
 def test_add_slice_ignores_blank_title(client_local, org):
     from tuckit.core.models import Slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Backend")
     resp = client_local.post(f"{p}/areas/{a.slug}/slices", {"title": "   "},
@@ -115,7 +115,7 @@ def test_add_slice_ignores_blank_title(client_local, org):
 
 @pytest.mark.django_db
 def test_area_page_autoopens_slice_add_on_focus_hint(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/areas/{area.slug}/?focus=slice").content.decode()
@@ -125,7 +125,7 @@ def test_area_page_autoopens_slice_add_on_focus_hint(client_local, org):
 @pytest.mark.django_db
 def test_add_slice_other_workspace_404(client_local, org):
     from tuckit.core.models import Org, Workspace
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     other_org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=other_org, name="O", slug="o")

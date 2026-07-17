@@ -8,7 +8,7 @@ def test_all_pages_reachable(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
 
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Backend")
     s = create_slice(a, "결제 도입", status="building")

@@ -10,7 +10,7 @@ def _p(ws):
 
 @pytest.mark.django_db
 def test_area_create_oob_refreshes_widget(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     r = client_local.post(f"{_p(ws)}/areas/new", {"name": "Backend"})
     body = r.content.decode()
     # Sidebar area nav OOB (existing) + widget OOB (new) both present.
@@ -21,7 +21,7 @@ def test_area_create_oob_refreshes_widget(client_local, org):
 
 @pytest.mark.django_db
 def test_slice_create_oob_refreshes_widget(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     r = client_local.post(f"{_p(ws)}/areas/{area.slug}/slices", {"title": "Retry webhooks"})
     body = r.content.decode()
@@ -30,7 +30,7 @@ def test_slice_create_oob_refreshes_widget(client_local, org):
 
 @pytest.mark.django_db
 def test_no_widget_oob_once_onboarding_complete(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     # A workspace that already dismissed onboarding gets no widget OOB noise.
     ws.onboarding_dismissed = True
     ws.save(update_fields=["onboarding_dismissed"])

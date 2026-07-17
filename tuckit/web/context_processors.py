@@ -34,7 +34,7 @@ def attention_count(request):
     ws = current_workspace_or_fallback(request)
     if not ws:
         return {}
-    return {"attention_count": len(attention_items(ws))}
+    return {"attention_count": len(attention_items(ws.org))}
 
 
 def in_progress_count(request):
@@ -101,7 +101,7 @@ def onboarding(request):
     ws = current_workspace_or_fallback(request)
     if not ws or ws.onboarding_completed or ws.onboarding_dismissed:
         return {}
-    state = onboarding_state(ws)
+    state = onboarding_state(ws.org)
     if state.done and not ws.onboarding_completed:
         ws.onboarding_completed = True
         ws.save(update_fields=["onboarding_completed"])

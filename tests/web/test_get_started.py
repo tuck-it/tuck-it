@@ -13,7 +13,7 @@ def _p(ws):
 
 @pytest.mark.django_db
 def test_widget_shows_four_steps_on_fresh_home(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"{_p(ws)}/").content.decode()
     assert 'id="onboarding-widget"' in body
     assert "Create your first Area" in body
@@ -30,7 +30,7 @@ def test_widget_shows_four_steps_on_fresh_home(client_local, org):
 @pytest.mark.django_db
 def test_widget_area_step_posts_to_real_endpoint(client_local, org):
     # Area is created inline in the widget via the REAL area_create endpoint.
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"{_p(ws)}/").content.decode()
     assert "/areas/new" in body  # web:area_create target
     assert "/onboarding/area" not in body  # bespoke endpoint retired
@@ -38,7 +38,7 @@ def test_widget_area_step_posts_to_real_endpoint(client_local, org):
 
 @pytest.mark.django_db
 def test_widget_slice_step_links_to_real_area_page(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     create_area(ws, "Backend")
     body = client_local.get(f"{_p(ws)}/").content.decode()
     # Slice step deep-links into the real Area page with a focus hint.
@@ -49,7 +49,7 @@ def test_widget_slice_step_links_to_real_area_page(client_local, org):
 def test_widget_bite_step_links_to_real_slice(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="idea")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -59,7 +59,7 @@ def test_widget_bite_step_links_to_real_slice(client_local, org):
 @pytest.mark.django_db
 def test_widget_hidden_when_all_done(client_local, org):
     from tuckit.core.models import ActivityEvent
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
@@ -73,7 +73,7 @@ def test_widget_hidden_when_all_done(client_local, org):
 
 @pytest.mark.django_db
 def test_dismiss_hides_widget(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = _p(ws)
     r = client_local.post(f"{p}/onboarding/dismiss")
     assert r.status_code in (200, 204, 302)
@@ -86,7 +86,7 @@ def test_dismiss_hides_widget(client_local, org):
 def test_step4_shows_generate_key_when_no_key(client_local, org):
     # Reach step 4 (onboarding.current == 4) by completing area/slice/bite first —
     # the widget only renders the connect UI once current == 4.
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
@@ -98,7 +98,7 @@ def test_step4_shows_generate_key_when_no_key(client_local, org):
 @pytest.mark.django_db
 def test_step4_shows_poller_when_key_exists(client_local, org):
     from tuckit.core.models import ApiToken
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")

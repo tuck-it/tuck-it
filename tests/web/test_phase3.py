@@ -7,7 +7,7 @@ from tuckit.core.models import Workspace
 def test_triage_heading_has_count_and_capture(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     create_slice(get_or_create_triage(ws), "loose end")
     body = client_local.get(f"{p}/triage/").content.decode()
@@ -20,7 +20,7 @@ def test_triage_heading_has_count_and_capture(client_local, org):
 def test_triage_row_shows_provenance_and_english_controls(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     create_slice(get_or_create_triage(ws), "loose end")
     body = client_local.get(f"{p}/triage/").content.decode()
@@ -36,7 +36,7 @@ def test_slice_panel_order_and_close_aria(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "panel order", status="building", tags=["billing"])
     create_bite(create_plan(s, title="Plan"), "step one")
@@ -54,7 +54,7 @@ def test_slice_panel_order_and_close_aria(client_local, org):
 def test_slice_panel_renders_status_dropdown(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "Backend"), "seg", status="building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -63,7 +63,7 @@ def test_slice_panel_renders_status_dropdown(client_local, org):
 
 @pytest.mark.django_db
 def test_slide_over_container_is_labelled_dialog(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'id="panel"' in body

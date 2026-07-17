@@ -16,4 +16,4 @@ def test_get_or_create_tags_is_idempotent(ws):
     second = get_or_create_tags(ws, ["bug"])
     assert {t.name for t in first} == {"bug", "someday"}
     assert second[0].id == next(t.id for t in first if t.name == "bug")
-    assert list_tags(ws).count() == 2
+    assert list_tags(ws.org).count() == 2

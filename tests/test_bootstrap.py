@@ -7,7 +7,7 @@ from tuckit.core.models import Area, OrgMember, User, Workspace
 @pytest.mark.django_db
 def test_bootstrap_creates_full_local_setup():
     org, raw = ensure_bootstrap()
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     assert Workspace.objects.count() == 1
     assert User.objects.filter(email="local@tuckit.local").exists()
     assert OrgMember.objects.filter(org=org, role="owner").exists()
@@ -20,7 +20,7 @@ def test_bootstrap_creates_full_local_setup():
 def test_bootstrap_is_idempotent():
     ensure_bootstrap()
     org, raw = ensure_bootstrap()
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     assert Workspace.objects.count() == 1
     assert OrgMember.objects.count() == 1
     assert Area.objects.filter(workspace=ws).count() == 1  # Triage only, not duplicated

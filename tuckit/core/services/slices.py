@@ -53,7 +53,7 @@ def create_slice(
         )
         if tags:
             slice_.tags.set(get_or_create_tags(area.workspace, tags))
-        record_activity(area.workspace, actor=source, verb="created", target=slice_)
+        record_activity(area.org, actor=source, verb="created", target=slice_)
     return slice_
 
 
@@ -80,7 +80,7 @@ def update_slice(
             slice_.tags.set(get_or_create_tags(slice_.area.workspace, tags))
         if status is not None and status != old_status:
             record_activity(
-                slice_.area.workspace, actor=actor, verb=status_verb(status),
+                slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
     return slice_
@@ -102,7 +102,7 @@ def set_slice_status(slice_: Slice, status: str, *, actor: str = "human") -> Sli
         slice_.save(update_fields=["status", "completed_at", "updated_at"])
         if status != old_status:
             record_activity(
-                slice_.area.workspace, actor=actor, verb=status_verb(status),
+                slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
     return slice_
@@ -125,7 +125,7 @@ def set_slice_area(
         slice_.save(update_fields=["area", "rank", "updated_at"])
         if area.id != old_area.id:  # no spurious event when the area didn't change (e.g. concurrent re-triage)
             record_activity(
-                area.workspace, actor=actor, verb="triaged" if old_area.is_triage else "moved",
+                area.org, actor=actor, verb="triaged" if old_area.is_triage else "moved",
                 target=slice_, from_value=old_area.name, to_value=area.name,
             )
     return slice_

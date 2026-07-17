@@ -39,7 +39,7 @@ def capture(request):
     area = None
     if request.POST.get("area_id"):
         try:
-            area = get_area(ws, int(request.POST["area_id"]))
+            area = get_area(ws.org, int(request.POST["area_id"]))
         except (NotFound, ValueError):
             raise Http404
 
@@ -87,8 +87,8 @@ def triage(request, slice_id):
     ws = get_current_workspace(request)
     area_id = request.POST.get("area_id")
     try:
-        slice_ = get_slice(ws, slice_id)
-        area = get_area(ws, int(area_id)) if area_id else None
+        slice_ = get_slice(ws.org, slice_id)
+        area = get_area(ws.org, int(area_id)) if area_id else None
     except NotFound:
         raise Http404
     try:
@@ -113,7 +113,7 @@ def area_create(request):
 def area_rename(request, area_id):
     ws = get_current_workspace(request)
     try:
-        area = get_area(ws, area_id)
+        area = get_area(ws.org, area_id)
     except NotFound:
         raise Http404
     try:
@@ -132,7 +132,7 @@ def area_rename(request, area_id):
 def area_delete(request, area_id):
     ws = get_current_workspace(request)
     try:
-        area = get_area(ws, area_id)
+        area = get_area(ws.org, area_id)
     except NotFound:
         raise Http404
     try:
@@ -145,9 +145,9 @@ def area_delete(request, area_id):
 def area_reorder(request, area_id):
     ws = get_current_workspace(request)
     try:
-        area = get_area(ws, area_id)
-        before = get_area(ws, int(request.POST["before_id"])) if request.POST.get("before_id") else None
-        after = get_area(ws, int(request.POST["after_id"])) if request.POST.get("after_id") else None
+        area = get_area(ws.org, area_id)
+        before = get_area(ws.org, int(request.POST["before_id"])) if request.POST.get("before_id") else None
+        after = get_area(ws.org, int(request.POST["after_id"])) if request.POST.get("after_id") else None
     except NotFound:
         raise Http404
     reorder_area(area, before=before, after=after)
@@ -157,7 +157,7 @@ def area_reorder(request, area_id):
 def area_slice_create(request, slug):
     ws = get_current_workspace(request)
     try:
-        area = get_area_by_slug(ws, slug)
+        area = get_area_by_slug(ws.org, slug)
     except NotFound:
         raise Http404
     title = request.POST.get("title", "").strip()

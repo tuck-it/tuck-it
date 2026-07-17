@@ -11,7 +11,7 @@ def _p(ws):
 
 @pytest.mark.django_db
 def test_areas_page_empty_state(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"{_p(ws)}/areas/").content.decode()
     assert "domain of responsibility" in body  # the Area definition copy
     assert "/areas/new" in body                 # real Create Area CTA
@@ -20,7 +20,7 @@ def test_areas_page_empty_state(client_local, org):
 
 @pytest.mark.django_db
 def test_areas_page_lists_areas(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     create_slice(area, "Retry webhooks", status="idea")
     body = client_local.get(f"{_p(ws)}/areas/").content.decode()
@@ -31,7 +31,7 @@ def test_areas_page_lists_areas(client_local, org):
 
 @pytest.mark.django_db
 def test_areas_page_slice_count_excludes_dropped(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     create_slice(area, "Retry webhooks", status="idea")
     create_slice(area, "Add metrics", status="planned")
@@ -44,6 +44,6 @@ def test_areas_page_slice_count_excludes_dropped(client_local, org):
 @pytest.mark.django_db
 def test_areas_route_resolves(client_local, org):
     from django.urls import reverse
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     url = reverse("web:areas", kwargs={"org_slug": org.slug, "ws_slug": ws.slug})
     assert client_local.get(url).status_code == 200

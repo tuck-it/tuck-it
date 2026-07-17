@@ -9,7 +9,7 @@ from tuckit.core.services.slices import create_slice
 
 @pytest.mark.django_db
 def test_slice_detail_labels_field_spec_not_description(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "labelled slice", spec="some detail")
     p = f"/{org.slug}/{ws.slug}"
@@ -20,7 +20,7 @@ def test_slice_detail_labels_field_spec_not_description(client_local, org):
 
 @pytest.mark.django_db
 def test_slice_detail_uses_english_copy(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "empty slice")  # no spec, no bites → empty states show
     p = f"/{org.slug}/{ws.slug}"

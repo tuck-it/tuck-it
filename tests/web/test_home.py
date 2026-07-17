@@ -7,7 +7,7 @@ from tuckit.core.models import Workspace
 def test_home_lists_building_and_attention(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     backend = create_area(ws, "Backend")
     create_slice(backend, "Payments work", status="building")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -18,7 +18,7 @@ def test_home_lists_building_and_attention(client_local, org):
 @pytest.mark.django_db
 def test_home_sidebar_excludes_triage_area(client_local, org):
     from tuckit.core.services.areas import create_area
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     create_area(ws, "Backend")
     resp = client_local.get(f"/{org.slug}/{ws.slug}/")
     body = resp.content.decode()
@@ -30,7 +30,7 @@ def test_home_sidebar_excludes_triage_area(client_local, org):
 def test_tags_render_with_hash_span(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "제품")
     create_slice(a, "태그 있는 슬라이스", status="building", tags=["billing"])
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -44,7 +44,7 @@ def test_home_attention_shows_reason_label(client_local, org):
     from tuckit.core.models import Slice
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "제품")
     s = create_slice(a, "정체된 작업", status="building")
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
@@ -60,7 +60,7 @@ def test_home_stale_building_slice_not_duplicated_in_now(client_local, org):
     from tuckit.core.models import Slice
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "제품")
     s = create_slice(a, "정체된 빌딩 슬라이스", status="building")
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
@@ -71,7 +71,7 @@ def test_home_stale_building_slice_not_duplicated_in_now(client_local, org):
 
 @pytest.mark.django_db
 def test_home_all_clear_when_no_attention(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert "Nothing needs your attention right now." in body       # confident done signal
     assert "all-clear" in body
@@ -81,7 +81,7 @@ def test_home_all_clear_when_no_attention(client_local, org):
 def test_home_omits_roadmap_strip_and_recent_activity(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "빌딩", status="planned")
     set_slice_status(s, "building")
@@ -93,7 +93,7 @@ def test_home_omits_roadmap_strip_and_recent_activity(client_local, org):
 
 @pytest.mark.django_db
 def test_home_has_heading_and_capture(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="page-head"' in body
     assert "<span>needs_you</span>" in body
@@ -107,7 +107,7 @@ def test_home_shows_doing_bites_and_planned_in_next(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "Building slice", status="building")
     create_bite(create_plan(s, title="Plan"), "Active bite", status="doing")
@@ -122,7 +122,7 @@ def test_home_shows_doing_bites_and_planned_in_next(client_local, org):
 def test_home_now_row_shows_spec_summary(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     create_slice(a, "결제 도입", status="building",
                  spec="---\nname: billing\n---\n# 한 줄 요약 캡션\n본문 이어짐")
@@ -137,7 +137,7 @@ def test_home_active_headers_present(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "Building slice", status="building")
     create_bite(create_plan(s, title="Plan"), "Doing bite", status="doing")
@@ -151,7 +151,7 @@ def test_home_active_headers_present(client_local, org):
 
 @pytest.mark.django_db
 def test_home_columns_have_subtitles(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert "slices you're building" in body   # Focus
     assert "sub-tasks in progress" in body     # Doing
@@ -163,7 +163,7 @@ def test_home_columns_have_subtitles(client_local, org):
 def test_home_focus_column_previews_five_then_view_all(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     for i in range(1, 7):
         create_slice(a, f"buildslice{i}", status="building")
@@ -176,7 +176,7 @@ def test_home_focus_column_previews_five_then_view_all(client_local, org):
 
 @pytest.mark.django_db
 def test_home_sections_are_titled_boxes(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     # Three titled boxes: needs_you, Overview (the columns), recently_shipped.
     assert body.count('class="home-section"') >= 3
@@ -191,7 +191,7 @@ def test_home_building_row_shows_progress_bar(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     s = create_slice(a, "결제 도입", status="building")
     p = create_plan(s, title="Plan")
@@ -207,7 +207,7 @@ def test_home_building_row_shows_progress_bar(client_local, org):
 def test_slice_row_has_status_dot_and_arrow(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     create_slice(create_area(ws, "Backend"), "row look", status="building")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="status-dot' in body     # status indicator kept
@@ -218,7 +218,7 @@ def test_slice_row_has_status_dot_and_arrow(client_local, org):
 def test_home_shows_summary_cards(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Backend")
     create_slice(a, "Building one", status="building")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -229,7 +229,7 @@ def test_home_shows_summary_cards(client_local, org):
 
 @pytest.mark.django_db
 def test_home_header_has_subtitle_not_count(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert "Today's progress and what to focus on next" in body
 
@@ -238,7 +238,7 @@ def test_home_header_has_subtitle_not_count(client_local, org):
 def test_home_recently_shipped_strip_shows_items(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "Design")
     create_slice(a, "Shipped feature", status="shipped")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -251,10 +251,10 @@ def test_home_recently_shipped_strip_shows_items(client_local, org):
 def test_home_recently_shipped_caps_and_links(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
-    ws.shipped_board_mode = "count"
-    ws.shipped_board_limit = 1
-    ws.save(update_fields=["shipped_board_mode", "shipped_board_limit"])
+    ws = Workspace.objects.get(org=org)
+    org.shipped_board_mode = "count"
+    org.shipped_board_limit = 1
+    org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Design")
     create_slice(a, "shipped one", status="shipped")

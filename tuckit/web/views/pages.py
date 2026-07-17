@@ -16,10 +16,10 @@ from tuckit.web.auth import get_current_workspace
 
 def home(request):
     ws = get_current_workspace(request)
-    state = home_state(ws) if ws else {}
+    state = home_state(ws.org) if ws else {}
     metrics = []
     if ws:
-        snap = snapshot_today(ws, state)
+        snap = snapshot_today(ws.org, state)
         _defs = [
             ("Building", "building"),
             ("Backlog", "backlog"),
@@ -37,7 +37,7 @@ def home(request):
             })
     shipped_total = shipped_hidden = 0
     if ws:
-        visible, shipped_total = cap_shipped(ws, state.get("shipped", []))
+        visible, shipped_total = cap_shipped(ws.org, state.get("shipped", []))
         shipped_hidden = shipped_total - len(visible)
         state = {**state, "shipped": visible}
     building_ct = len(state.get("building", []))
@@ -51,8 +51,8 @@ def home(request):
         "later_items": later_items,
         "later_ct": later_ct,
         "queued_ct": queued_ct,
-        "in_progress": in_progress_state(ws) if ws else {"slices": [], "bites": []},
-        "roadmap": roadmap_state(ws) if ws else {},
+        "in_progress": in_progress_state(ws.org) if ws else {"slices": [], "bites": []},
+        "roadmap": roadmap_state(ws.org) if ws else {},
         "shipped_total": shipped_total,
         "shipped_hidden": shipped_hidden,
         "metrics": metrics,
@@ -62,14 +62,14 @@ def home(request):
 def attention(request):
     ws = get_current_workspace(request)
     return render(request, "web/attention.html", {
-        "items": attention_items(ws) if ws else [],
+        "items": attention_items(ws.org) if ws else [],
     })
 
 
 def in_progress(request):
     ws = get_current_workspace(request)
     return render(request, "web/in_progress.html", {
-        "state": in_progress_state(ws) if ws else {"slices": [], "bites": []},
+        "state": in_progress_state(ws.org) if ws else {"slices": [], "bites": []},
     })
 
 
@@ -78,7 +78,7 @@ def roadmap(request):
     status = request.GET.get("status")
     if ws and status in ROADMAP_STATUS_KEYS:
         # Focused single-status flat list — the "view all" / archive surface.
-        state = roadmap_state(ws)
+        state = roadmap_state(ws.org)
         return render(request, "web/roadmap.html", {
             "filter_status": status,
             "filter_slices": state.get(status, []),
@@ -86,7 +86,7 @@ def roadmap(request):
         })
 
     view = "list" if request.GET.get("view") == "list" else "board"
-    board = roadmap_board_view(ws) if ws else {
+    board = roadmap_board_view(ws.org) if ws else {
         "state": {}, "groups": [], "shipped_total": 0, "shipped_hidden": 0,
     }
     return render(request, "web/roadmap.html", {

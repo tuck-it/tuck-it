@@ -11,7 +11,7 @@ from tuckit.web.panel import slice_panel_context
 def area_view(request, slug):
     ws = get_current_workspace(request)
     try:
-        area = get_area_by_slug(ws, slug)
+        area = get_area_by_slug(ws.org, slug)
     except NotFound:
         raise Http404
     groups = grouped_slices(area)
@@ -28,7 +28,7 @@ def area_view(request, slug):
 def slice_detail(request, slice_id):
     ws = get_current_workspace(request)
     try:
-        slice_ = get_slice(ws, slice_id)
+        slice_ = get_slice(ws.org, slice_id)
     except NotFound:
         raise Http404
     is_panel = request.GET.get("panel") == "1" and bool(request.headers.get("HX-Request"))

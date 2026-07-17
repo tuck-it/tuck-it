@@ -59,7 +59,7 @@ def test_auth_chrome_defaults(rf):
 def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
     from tuckit.core.models import ActivityEvent, Workspace
     from tuckit.core.services.areas import delete_area
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     p = create_plan(sl, title="Plan")
@@ -81,7 +81,7 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
 @pytest.mark.django_db
 def test_onboarding_context_present_on_non_home_page(client_local, org):
     from tuckit.core.models import Workspace
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     assert "Get started" in client_local.get(f"{p}/triage/").content.decode()
 
@@ -96,7 +96,7 @@ def test_onboarding_short_circuits_when_completed_or_dismissed(rf, org):
     from tuckit.core.models import Workspace
     from tuckit.web.context_processors import onboarding
 
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
 
     for flag in ("onboarding_completed", "onboarding_dismissed"):
         setattr(ws, flag, True)

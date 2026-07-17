@@ -44,7 +44,7 @@ def test_backfill_creates_org_and_migrates_membership():
 @pytest.mark.django_db
 def test_dismissed_workspace_backfilled_completed(org):
     from django.apps import apps
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     ws.onboarding_dismissed = True
     ws.onboarding_completed = False
     ws.save(update_fields=["onboarding_dismissed", "onboarding_completed"])

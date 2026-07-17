@@ -7,7 +7,7 @@ from tuckit.core.services.slices import create_slice
 
 @pytest.mark.django_db
 def test_slice_can_have_multiple_plans(org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     s = create_slice(create_area(ws, "B"), "S")
     p1 = Plan.objects.create(slice=s, title="Backend", body="o1", constraints="c1")
     p2 = Plan.objects.create(slice=s, title="UI", body="o2")

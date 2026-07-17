@@ -1,37 +1,37 @@
-from tuckit.core.models import Area, Bite, Plan, Slice, Workspace
+from tuckit.core.models import Area, Bite, Org, Plan, Slice
 from tuckit.core.services.exceptions import NotFound
 
 
-def get_area(workspace: Workspace, area_id: int) -> Area:
+def get_area(org: Org, area_id: int) -> Area:
     try:
-        return Area.objects.get(pk=area_id, workspace=workspace)
+        return Area.objects.get(pk=area_id, org=org)
     except Area.DoesNotExist:
         raise NotFound(f"area {area_id} not found")
 
 
-def get_area_by_slug(workspace: Workspace, slug: str) -> Area:
+def get_area_by_slug(org: Org, slug: str) -> Area:
     try:
-        return Area.objects.get(slug=slug, workspace=workspace)
+        return Area.objects.get(slug=slug, org=org)
     except Area.DoesNotExist:
         raise NotFound(f"area {slug} not found")
 
 
-def get_slice(workspace: Workspace, slice_id: int) -> Slice:
+def get_slice(org: Org, slice_id: int) -> Slice:
     try:
-        return Slice.objects.get(pk=slice_id, area__workspace=workspace)
+        return Slice.objects.get(pk=slice_id, area__org=org)
     except Slice.DoesNotExist:
         raise NotFound(f"slice {slice_id} not found")
 
 
-def get_bite(workspace: Workspace, bite_id: int) -> Bite:
+def get_bite(org: Org, bite_id: int) -> Bite:
     try:
-        return Bite.objects.get(pk=bite_id, plan__slice__area__workspace=workspace)
+        return Bite.objects.get(pk=bite_id, plan__slice__area__org=org)
     except Bite.DoesNotExist:
         raise NotFound(f"bite {bite_id} not found")
 
 
-def get_plan(workspace: Workspace, plan_id: int) -> Plan:
+def get_plan(org: Org, plan_id: int) -> Plan:
     try:
-        return Plan.objects.get(pk=plan_id, slice__area__workspace=workspace)
+        return Plan.objects.get(pk=plan_id, slice__area__org=org)
     except Plan.DoesNotExist:
         raise NotFound(f"plan {plan_id} not found")

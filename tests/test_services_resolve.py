@@ -13,7 +13,11 @@ from tuckit.core.services.slices import create_slice
 def data(db):
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="A", slug="a")
-    other = Workspace.objects.create(org=org, name="B", slug="b")
+    # A different org, not just a different workspace: resolve.py's
+    # get_area/get_slice/get_bite are now org-scoped (Org is the tenant
+    # boundary), so "rejects other tenant" must use a genuinely different org.
+    other_org = Org.objects.create(name="Other Org", slug="other-org")
+    other = Workspace.objects.create(org=other_org, name="B", slug="b")
     area = create_area(ws, "Backend")
     slice_ = create_slice(area, "Auth")
     plan = create_plan(slice_, title="Plan")
@@ -24,34 +28,34 @@ def data(db):
 @pytest.mark.django_db
 def test_get_area_returns_own(data):
     ws, _other, area, _s, _b = data
-    assert get_area(ws, area.id) == area
+    assert get_area(ws.org, area.id) == area
 
 
 @pytest.mark.django_db
 def test_get_area_rejects_other_workspace(data):
     _ws, other, area, _s, _b = data
     with pytest.raises(NotFound):
-        get_area(other, area.id)
+        get_area(other.org, area.id)
 
 
 @pytest.mark.django_db
 def test_get_area_rejects_missing(data):
     ws, _other, _area, _s, _b = data
     with pytest.raises(NotFound):
-        get_area(ws, 999999)
+        get_area(ws.org, 999999)
 
 
 @pytest.mark.django_db
 def test_get_slice_scoped(data):
     ws, other, _area, slice_, _b = data
-    assert get_slice(ws, slice_.id) == slice_
+    assert get_slice(ws.org, slice_.id) == slice_
     with pytest.raises(NotFound):
-        get_slice(other, slice_.id)
+        get_slice(other.org, slice_.id)
 
 
 @pytest.mark.django_db
 def test_get_bite_scoped(data):
     ws, other, _area, _s, bite = data
-    assert get_bite(ws, bite.id) == bite
+    assert get_bite(ws.org, bite.id) == bite
     with pytest.raises(NotFound):
-        get_bite(other, bite.id)
+        get_bite(other.org, bite.id)

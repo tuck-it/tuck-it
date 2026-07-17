@@ -6,7 +6,7 @@ from tuckit.core.models import Slice, Bite, Workspace
 
 @pytest.mark.django_db
 def test_status_change_updates_and_returns_panel(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "B"), "x", status="planned")
     resp = client_local.post(f"{p}/slices/{s.id}/status", {"status": "building"}, HTTP_HX_REQUEST="true")
@@ -15,7 +15,7 @@ def test_status_change_updates_and_returns_panel(client_local, org):
 
 @pytest.mark.django_db
 def test_invalid_status_rejected(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "B"), "x", status="planned")
     resp = client_local.post(f"{p}/slices/{s.id}/status", {"status": "blocked"}, HTTP_HX_REQUEST="true")
@@ -24,7 +24,7 @@ def test_invalid_status_rejected(client_local, org):
 
 @pytest.mark.django_db
 def test_bite_toggle(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     """Bites are no longer hand-added from the panel; they're authored via a
     Plan (by an agent or the plan API) and only toggled here."""
     from tuckit.core.services.plans import create_plan
@@ -38,7 +38,7 @@ def test_bite_toggle(client_local, org):
 
 @pytest.mark.django_db
 def test_spec_edit(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "B"), "x")
     client_local.post(f"{p}/slices/{s.id}/edit", {"spec": "새 스펙"}, HTTP_HX_REQUEST="true")
@@ -48,7 +48,7 @@ def test_spec_edit(client_local, org):
 def test_status_control_is_dropdown(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "X", status="building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -61,7 +61,7 @@ def test_bite_body_updates_and_renders(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "슬라이스")
     b = create_bite(create_plan(s, title="Plan"), "Slack 연동")
@@ -77,7 +77,7 @@ def test_bite_body_is_sanitized(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "슬라이스")
     b = create_bite(create_plan(s, title="Plan"), "위험", body="<script>alert(1)</script>정상")
@@ -89,7 +89,7 @@ def test_bite_body_is_sanitized(client_local, org):
 def test_slice_tag_add_then_remove(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "태그 편집")
 
@@ -106,7 +106,7 @@ def test_slice_tag_add_then_remove(client_local, org):
 def test_slice_panel_active_shows_drop_control(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "진행 중인 것", status="building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -116,7 +116,7 @@ def test_slice_panel_active_shows_drop_control(client_local, org):
 def test_slice_panel_dropped_shows_restore(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "버린 것", status="dropped")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -131,7 +131,7 @@ def test_slice_panel_dropped_shows_restore(client_local, org):
 def test_slice_panel_shows_byline(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "메타 확인")  # default source=human
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -148,7 +148,7 @@ def test_bite_source_time_renders_korean(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     s = create_slice(create_area(ws, "제품"), "슬라이스")
     b = create_bite(create_plan(s, title="Plan"), "노트 bite", body="## 메모")

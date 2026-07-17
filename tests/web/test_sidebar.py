@@ -17,7 +17,7 @@ def test_search_and_dots_icons_have_paths():
 @pytest.mark.django_db
 def test_command_palette_rendered_with_area_rows(client_local, org):
     from tuckit.core.services.areas import create_area
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     create_area(ws, "Backend")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'id="command-palette"' in body           # overlay present
@@ -28,7 +28,7 @@ def test_command_palette_rendered_with_area_rows(client_local, org):
 
 @pytest.mark.django_db
 def test_top_region_has_workspace_and_search_no_wordmark(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="side-top"' in body
     assert 'class="ws-switch"' in body          # workspace switcher is at top
@@ -39,7 +39,7 @@ def test_top_region_has_workspace_and_search_no_wordmark(client_local, org):
 
 @pytest.mark.django_db
 def test_areas_group_labeled_primary_group_is_not(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     # The primary nav group carries no label (the "Main" header was removed);
     # only the secondary "Areas" group is labeled.
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
@@ -56,7 +56,7 @@ def test_active_nav_uses_token_soft_fill_no_bar():
 
 @pytest.mark.django_db
 def test_collapse_button_and_toggle_present(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="side-collapse"' in body
     assert "toggleSidebar()" in body
@@ -71,7 +71,7 @@ def test_collapsed_rail_css_present():
 @pytest.mark.django_db
 def test_areas_header_add_and_row_menu(client_local, org):
     from tuckit.core.services.areas import create_area
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     create_area(ws, "Backend")
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="section area-section"' in body      # header row
@@ -83,7 +83,7 @@ def test_areas_header_add_and_row_menu(client_local, org):
 
 @pytest.mark.django_db
 def test_theme_toggle_is_labeled_row(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert "util-theme" in body
     assert "util-theme-label" in body     # promoted to a labeled row
@@ -120,7 +120,7 @@ def test_collapse_animates_and_keeps_chevron_on_top():
 
 @pytest.mark.django_db
 def test_resize_handle_rendered(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="side-resize"' in body
     assert 'role="separator"' in body
@@ -140,7 +140,7 @@ SIDEBAR_JS = APP_CSS.parent / "sidebar.js"
 
 @pytest.mark.django_db
 def test_sidebar_js_loaded_and_width_restored(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert "sidebar.js" in body                 # behavior script loaded
     assert "sidebar-width" in body              # pre-paint restore reads the key
@@ -177,7 +177,7 @@ def test_sidebar_and_panel_density_tightened():
 
 @pytest.mark.django_db
 def test_collapse_button_uses_panel_left_icon(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert 'class="side-collapse"' in body
     assert 'd="M9 3v18"' in body            # panel-left divider line rendered on the collapse button
@@ -193,7 +193,7 @@ def test_panel_left_registered_and_rotation_removed():
 
 @pytest.mark.django_db
 def test_activity_route_and_sidebar_entry_removed(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     assert client_local.get(f"{p}/activity/").status_code == 404   # route gone
     body = client_local.get(f"{p}/").content.decode()
@@ -208,7 +208,7 @@ def test_activity_icon_removed():
 
 @pytest.mark.django_db
 def test_active_item_soft_fill_no_bar_and_main_label_removed(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     css = APP_CSS.read_text(encoding="utf-8")
     # Active item: soft fill kept, left accent bar dropped
     assert "box-shadow: inset 3px 0 0 var(--blue)" not in css
@@ -223,7 +223,7 @@ def test_active_item_soft_fill_no_bar_and_main_label_removed(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_areas_label_links_to_overview(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="area-section-link"' in body
@@ -232,7 +232,7 @@ def test_sidebar_areas_label_links_to_overview(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_areas_active_on_overview(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/areas/").content.decode()
     assert "area-section-link--active" in body
@@ -240,6 +240,6 @@ def test_sidebar_areas_active_on_overview(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_settings_opens_settings_mode(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
     assert f'href="/{org.slug}/settings/workspaces/{ws.slug}/general"' in body

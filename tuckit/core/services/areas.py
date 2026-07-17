@@ -9,6 +9,8 @@ TRIAGE_NAME = "Triage"
 
 
 def list_areas(workspace: Workspace, include_archived: bool = False) -> QuerySet:
+    """NOTE: deliberately still workspace-scoped, not org-scoped — see task-5
+    report. Kept in lockstep with create_area/get_or_create_triage below."""
     qs = Area.objects.filter(workspace=workspace)
     if not include_archived:
         qs = qs.filter(archived=False)
@@ -26,21 +28,31 @@ def _unique_slug(workspace: Workspace, name: str) -> str:
 
 
 def create_area(workspace: Workspace, name: str, description: str = "", slug: str | None = None) -> Area:
+    """NOTE: deliberately still workspace-scoped, not org-scoped — see task-5
+    report. tests/test_mcp_tools_*.py seed data by calling this directly with
+    a real Workspace, so its signature can't move without touching those
+    protected files; MCP's create_area/list_areas tools bridge org -> a
+    workspace of that org internally (core/mcp/server.py)."""
     slug = slug or _unique_slug(workspace, name)
     rank = rank_for(Area, {"workspace": workspace})
     return Area.objects.create(
-        workspace=workspace, org=workspace.org, name=name, description=description, slug=slug, rank=rank
+        workspace=workspace, org=workspace.org, name=name, description=description, slug=slug, rank=rank  # TODO(task-12): drop workspace=
     )
 
 
 def get_or_create_triage(workspace: Workspace) -> Area:
+    """NOTE: deliberately still workspace-scoped, not org-scoped — see task-5
+    report. An org can hold several workspaces (each created via
+    orgs.create_workspace, which immediately seeds its own triage here); an
+    org-scoped lookup would hand a freshly created workspace the *other*
+    workspace's triage area instead of creating its own."""
     triage = Area.objects.filter(workspace=workspace, is_triage=True).first()
     if triage is not None:
         return triage
     first = Area.objects.filter(workspace=workspace).order_by("rank").first()
     rank = rank_for(Area, {"workspace": workspace}, before=first)
     return Area.objects.create(
-        workspace=workspace,
+        workspace=workspace,  # TODO(task-12): drop workspace=
         org=workspace.org,
         name=TRIAGE_NAME,
         slug=_unique_slug(workspace, TRIAGE_NAME),

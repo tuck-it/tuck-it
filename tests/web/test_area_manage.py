@@ -6,7 +6,7 @@ from tuckit.core.services.areas import create_area, get_or_create_triage, list_a
 
 @pytest.mark.django_db
 def test_rename_area_updates_and_returns_row(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Old")
     resp = client_local.post(f"{p}/areas/{a.id}/rename", {"name": "New"}, HTTP_HX_REQUEST="true")
@@ -18,7 +18,7 @@ def test_rename_area_updates_and_returns_row(client_local, org):
 
 @pytest.mark.django_db
 def test_rename_area_blank_returns_400(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Keep")
     resp = client_local.post(f"{p}/areas/{a.id}/rename", {"name": "  "}, HTTP_HX_REQUEST="true")
@@ -29,7 +29,7 @@ def test_rename_area_blank_returns_400(client_local, org):
 
 @pytest.mark.django_db
 def test_delete_area_returns_204_and_removes(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Gone")
     resp = client_local.post(f"{p}/areas/{a.id}/delete", HTTP_HX_REQUEST="true")
@@ -39,7 +39,7 @@ def test_delete_area_returns_204_and_removes(client_local, org):
 
 @pytest.mark.django_db
 def test_delete_triage_returns_400(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     triage = get_or_create_triage(ws)
     resp = client_local.post(f"{p}/areas/{triage.id}/delete", HTTP_HX_REQUEST="true")
@@ -49,7 +49,7 @@ def test_delete_triage_returns_400(client_local, org):
 
 @pytest.mark.django_db
 def test_manage_foreign_area_404s(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     other_org = Org.objects.create(name="Other", slug="other")
     other_ws = Workspace.objects.create(org=other_org, name="Other WS", slug="other-ws")
     p = f"/{org.slug}/{ws.slug}"
@@ -62,7 +62,7 @@ def test_manage_foreign_area_404s(client_local, org):
 
 @pytest.mark.django_db
 def test_reorder_area_before_neighbor(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "A")
     b = create_area(ws, "B")
     c = create_area(ws, "C")
@@ -81,7 +81,7 @@ def test_reorder_area_before_neighbor(client_local, org):
 
 @pytest.mark.django_db
 def test_reorder_foreign_neighbor_404s(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     a = create_area(ws, "A")
     other_org = Org.objects.create(name="Other", slug="other")
     other_ws = Workspace.objects.create(org=other_org, name="Other WS", slug="other-ws")
@@ -95,7 +95,7 @@ def test_reorder_foreign_neighbor_404s(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_row_has_rename_and_delete_affordances(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Visible")
     # any authenticated page renders the sidebar
@@ -108,7 +108,7 @@ def test_sidebar_row_has_rename_and_delete_affordances(client_local, org):
 
 @pytest.mark.django_db
 def test_rename_response_is_swappable_row(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Old")
     body = client_local.post(
@@ -121,7 +121,7 @@ def test_rename_response_is_swappable_row(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_loads_reorder_script(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     create_area(ws, "Any")
     body = client_local.get(f"{p}/triage/").content.decode()
@@ -132,7 +132,7 @@ def test_sidebar_loads_reorder_script(client_local, org):
 def test_rename_current_area_keeps_active_highlight(client_local, org):
     # Renaming the area you are currently viewing must not drop its sidebar
     # highlight. htmx sends HX-Current-URL; the view uses it to re-mark active.
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Cur")
     body = client_local.post(
@@ -146,7 +146,7 @@ def test_rename_current_area_keeps_active_highlight(client_local, org):
 @pytest.mark.django_db
 def test_rename_other_area_is_not_active(client_local, org):
     # Renaming an area while viewing a different page leaves it un-highlighted.
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/{ws.slug}"
     a = create_area(ws, "Other")
     body = client_local.post(

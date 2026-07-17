@@ -8,7 +8,7 @@ from tuckit.core.services.tokens import generate_token, hash_token
 
 @pytest.mark.django_db
 def test_token_create_shows_raw_once(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.post(f"{sp}/tokens", {"name": "Claude Code"}, HTTP_HX_REQUEST="true")
     body = resp.content.decode()
@@ -18,7 +18,7 @@ def test_token_create_shows_raw_once(client_local, org):
 
 @pytest.mark.django_db
 def test_token_create_stores_only_hash_not_raw(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.post(f"{sp}/tokens", {"name": "Claude Code"}, HTTP_HX_REQUEST="true")
     body = resp.content.decode()
@@ -34,7 +34,7 @@ def test_token_create_stores_only_hash_not_raw(client_local, org):
 
 @pytest.mark.django_db
 def test_settings_page_lists_masked_tokens(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     token, raw = generate_token(ws, "Existing")
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.get(f"{sp}/agent")
@@ -47,7 +47,7 @@ def test_settings_page_lists_masked_tokens(client_local, org):
 
 @pytest.mark.django_db
 def test_workspace_rename(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     client_local.post(f"{sp}/rename", {"name": "My Product"}, HTTP_HX_REQUEST="true")
     ws.refresh_from_db()
@@ -56,7 +56,7 @@ def test_workspace_rename(client_local, org):
 
 @pytest.mark.django_db
 def test_token_revoke_removes_token(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     token, _ = generate_token(ws, "to-remove")
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.post(f"{sp}/tokens/{token.id}/revoke", HTTP_HX_REQUEST="true")
@@ -66,7 +66,7 @@ def test_token_revoke_removes_token(client_local, org):
 
 @pytest.mark.django_db
 def test_token_revoke_is_workspace_scoped(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     other_org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=other_org, name="Other", slug="other")
     token, _ = generate_token(other, "cli")
@@ -80,7 +80,7 @@ def test_token_revoke_is_workspace_scoped(client_local, org):
 def test_token_list_is_a_panel(client_local, org):
     from tuckit.core.services.tokens import generate_token
 
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     generate_token(ws, "CI")
     sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     body = client_local.get(f"{sp}/agent").content.decode()
@@ -89,7 +89,7 @@ def test_token_list_is_a_panel(client_local, org):
 
 @pytest.mark.django_db
 def test_shipped_board_prefs_updates(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/settings/workspaces/{ws.slug}/shipped-board/prefs"
     resp = client_local.post(p, {"mode": "days", "limit": "30"})
     assert resp.status_code == 204
@@ -100,7 +100,7 @@ def test_shipped_board_prefs_updates(client_local, org):
 
 @pytest.mark.django_db
 def test_shipped_board_prefs_rejects_bad_mode(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/settings/workspaces/{ws.slug}/shipped-board/prefs"
     resp = client_local.post(p, {"mode": "weeks", "limit": "5"})
     assert resp.status_code == 400
@@ -108,7 +108,7 @@ def test_shipped_board_prefs_rejects_bad_mode(client_local, org):
 
 @pytest.mark.django_db
 def test_shipped_board_prefs_rejects_out_of_range(client_local, org):
-    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}/settings/workspaces/{ws.slug}/shipped-board/prefs"
     resp = client_local.post(p, {"mode": "count", "limit": "0"})
     assert resp.status_code == 400

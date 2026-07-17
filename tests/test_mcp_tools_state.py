@@ -23,7 +23,7 @@ async def test_get_project_state_tool_returns_state():
     ws = await _make_ws()
     _, raw = await _make_token(ws)
     result = await get_project_state(make_ctx(raw))
-    assert result["product"]["name"] == "MyProduct"
+    assert result["org"]["name"] == "Acme"
     assert [a["shipped"][0]["title"] for a in result["areas"]] == ["Auth"]
 
 

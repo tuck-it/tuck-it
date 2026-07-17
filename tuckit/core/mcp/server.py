@@ -4,8 +4,9 @@ from asgiref.sync import sync_to_async
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from tuckit.core.mcp.auth import require_workspace
+from tuckit.core.mcp.auth import require_org
 from tuckit.core.mcp.serializers import area_dict, bite_dict, plan_dict, slice_dict
+from tuckit.core.models import Workspace
 from tuckit.core.services.areas import create_area as _create_area
 from tuckit.core.services.areas import list_areas as _list_areas
 from tuckit.core.services.bites import (
@@ -91,48 +92,57 @@ mcp = FastMCP(
 )
 
 
-def _project_state(workspace, area_id: int | None) -> dict:
-    area = get_area(workspace, area_id) if area_id is not None else None
-    return _get_project_state(workspace, area=area)
+def _a_workspace(org) -> Workspace:
+    """areas.create_area/list_areas are still workspace-scoped (see task-5
+    report: their signature can't move without touching the protected
+    tests/test_mcp_tools_*.py files, which seed data by calling them
+    directly with a real Workspace). Bridge the org this tool call resolved
+    to one of its workspaces -- dropped once Task 12 removes Workspace."""
+    return Workspace.objects.filter(org=org).order_by("id").first()
+
+
+def _project_state(org, area_id: int | None) -> dict:
+    area = get_area(org, area_id) if area_id is not None else None
+    return _get_project_state(org, area=area)
 
 
 @mcp.tool()
 async def get_project_state(ctx: Context, area_id: int | None = None) -> dict:
     """Return the current project state (shipped / building / roadmap / ideas / someday),
-    assembled live from the workspace's slices and bites. Optionally scope to one area by id."""
-    workspace = await require_workspace(ctx)
-    return await sync_to_async(_project_state, thread_sensitive=True)(workspace, area_id)
+    assembled live from the org's slices and bites. Optionally scope to one area by id."""
+    org = await require_org(ctx)
+    return await sync_to_async(_project_state, thread_sensitive=True)(org, area_id)
 
 
 @mcp.tool()
 async def list_areas(ctx: Context) -> list[dict]:
-    """List the workspace's areas (long-lived responsibility domains, e.g. backend/frontend)."""
-    workspace = await require_workspace(ctx)
+    """List the org's areas (long-lived responsibility domains, e.g. backend/frontend)."""
+    org = await require_org(ctx)
 
     def _run():
-        return [area_dict(a) for a in _list_areas(workspace)]
+        return [area_dict(a) for a in _list_areas(_a_workspace(org))]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
 
 @mcp.tool()
 async def create_area(ctx: Context, name: str, description: str = "") -> dict:
-    """Create a new area in the workspace."""
-    workspace = await require_workspace(ctx)
+    """Create a new area in the org."""
+    org = await require_org(ctx)
 
     def _run():
-        return area_dict(_create_area(workspace, name, description=description))
+        return area_dict(_create_area(_a_workspace(org), name, description=description))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
 
 @mcp.tool()
 async def list_tags(ctx: Context) -> list[str]:
-    """List all tag names defined in the workspace."""
-    workspace = await require_workspace(ctx)
+    """List all tag names defined in the org."""
+    org = await require_org(ctx)
 
     def _run():
-        return [t.name for t in _list_tags(workspace)]
+        return [t.name for t in _list_tags(org)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -140,10 +150,10 @@ async def list_tags(ctx: Context) -> list[str]:
 @mcp.tool()
 async def list_slices(ctx: Context, area_id: int, status: str | None = None, tag: str | None = None) -> list[dict]:
     """List slices in an area, optionally filtered by status or tag name."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        area = get_area(workspace, area_id)
+        area = get_area(org, area_id)
         return [slice_dict(s) for s in _list_slices(area, status=status, tag=tag)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -152,10 +162,10 @@ async def list_slices(ctx: Context, area_id: int, status: str | None = None, tag
 @mcp.tool()
 async def get_slice(ctx: Context, slice_id: int) -> str:
     """Return a slice rendered as markdown (its spec plus a bite checklist)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        return render_slice_markdown(_resolve_slice(workspace, slice_id))
+        return render_slice_markdown(_resolve_slice(org, slice_id))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -166,10 +176,10 @@ async def create_plan(
 ) -> dict:
     """Create a plan under a slice (a slice may hold multiple plans, each with its
     own title, overview `body`, and `constraints`)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        s = _resolve_slice(workspace, slice_id)
+        s = _resolve_slice(org, slice_id)
         return plan_dict(_create_plan(s, title=title, body=body, constraints=constraints, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -178,10 +188,10 @@ async def create_plan(
 @mcp.tool()
 async def list_plans(ctx: Context, slice_id: int) -> list[dict]:
     """List the plans under a slice."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        s = _resolve_slice(workspace, slice_id)
+        s = _resolve_slice(org, slice_id)
         return [plan_dict(p) for p in _list_plans(s)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -197,10 +207,10 @@ async def update_plan(
 ) -> dict:
     """Update a plan's title, overview `body`, and/or `constraints`. Omitted fields
     are left unchanged."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        plan = _resolve_plan(workspace, plan_id)
+        plan = _resolve_plan(org, plan_id)
         return plan_dict(_update_plan(plan, title=title, body=body, constraints=constraints, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -219,12 +229,12 @@ async def create_slice(
 ) -> dict:
     """Create a slice in an area. Use status='idea' for a quick capture ('do this next session').
     Optionally position it with after_id/before_id (another slice's id in the same area)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        area = get_area(workspace, area_id)
-        after = _resolve_slice(workspace, after_id) if after_id is not None else None
-        before = _resolve_slice(workspace, before_id) if before_id is not None else None
+        area = get_area(org, area_id)
+        after = _resolve_slice(org, after_id) if after_id is not None else None
+        before = _resolve_slice(org, before_id) if before_id is not None else None
         s = _create_slice(
             area, title, spec=spec, status=status, tags=tags,
             after=after, before=before, source="agent",
@@ -244,10 +254,10 @@ async def update_slice(
     tags: list[str] | None = None,
 ) -> dict:
     """Update a slice's title, spec, status, and/or tags (tags replace the existing set)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        s = _resolve_slice(workspace, slice_id)
+        s = _resolve_slice(org, slice_id)
         return slice_dict(_update_slice(s, title=title, spec=spec, status=status, tags=tags, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -256,10 +266,10 @@ async def update_slice(
 @mcp.tool()
 async def set_slice_status(ctx: Context, slice_id: int, status: str) -> dict:
     """Set a slice's status (idea/planned/building/shipped/dropped)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        return slice_dict(_set_slice_status(_resolve_slice(workspace, slice_id), status, actor="agent"))
+        return slice_dict(_set_slice_status(_resolve_slice(org, slice_id), status, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -267,12 +277,12 @@ async def set_slice_status(ctx: Context, slice_id: int, status: str) -> dict:
 @mcp.tool()
 async def reorder_slice(ctx: Context, slice_id: int, after_id: int | None = None, before_id: int | None = None) -> dict:
     """Move a slice to just after (after_id) or just before (before_id) another slice in its area."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        s = _resolve_slice(workspace, slice_id)
-        after = _resolve_slice(workspace, after_id) if after_id is not None else None
-        before = _resolve_slice(workspace, before_id) if before_id is not None else None
+        s = _resolve_slice(org, slice_id)
+        after = _resolve_slice(org, after_id) if after_id is not None else None
+        before = _resolve_slice(org, before_id) if before_id is not None else None
         return slice_dict(_reorder_slice(s, after=after, before=before))
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -281,10 +291,10 @@ async def reorder_slice(ctx: Context, slice_id: int, after_id: int | None = None
 @mcp.tool()
 async def list_bites(ctx: Context, plan_id: int) -> list[dict]:
     """List the bites (implementation steps) of a plan."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        plan = _resolve_plan(workspace, plan_id)
+        plan = _resolve_plan(org, plan_id)
         return [bite_dict(b) for b in _list_bites(plan)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -301,12 +311,12 @@ async def create_bite(
     before_id: int | None = None,
 ) -> dict:
     """Add a bite (implementation step) to a plan, optionally positioned with after_id/before_id."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        plan = _resolve_plan(workspace, plan_id)
-        after = _resolve_bite(workspace, after_id) if after_id is not None else None
-        before = _resolve_bite(workspace, before_id) if before_id is not None else None
+        plan = _resolve_plan(org, plan_id)
+        after = _resolve_bite(org, after_id) if after_id is not None else None
+        before = _resolve_bite(org, before_id) if before_id is not None else None
         b = _create_bite(plan, title, body=body, status=status, after=after, before=before, source="agent")
         return bite_dict(b)
 
@@ -322,10 +332,10 @@ async def update_bite(
     status: str | None = None,
 ) -> dict:
     """Update a bite's title, body, and/or status."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        b = _resolve_bite(workspace, bite_id)
+        b = _resolve_bite(org, bite_id)
         return bite_dict(_update_bite(b, title=title, body=body, status=status, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -334,10 +344,10 @@ async def update_bite(
 @mcp.tool()
 async def set_bite_status(ctx: Context, bite_id: int, status: str) -> dict:
     """Set a bite's status (todo/doing/done/dropped)."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        return bite_dict(_set_bite_status(_resolve_bite(workspace, bite_id), status, actor="agent"))
+        return bite_dict(_set_bite_status(_resolve_bite(org, bite_id), status, actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -345,12 +355,12 @@ async def set_bite_status(ctx: Context, bite_id: int, status: str) -> dict:
 @mcp.tool()
 async def reorder_bite(ctx: Context, bite_id: int, after_id: int | None = None, before_id: int | None = None) -> dict:
     """Move a bite to just after (after_id) or just before (before_id) another bite in its slice."""
-    workspace = await require_workspace(ctx)
+    org = await require_org(ctx)
 
     def _run():
-        b = _resolve_bite(workspace, bite_id)
-        after = _resolve_bite(workspace, after_id) if after_id is not None else None
-        before = _resolve_bite(workspace, before_id) if before_id is not None else None
+        b = _resolve_bite(org, bite_id)
+        after = _resolve_bite(org, after_id) if after_id is not None else None
+        before = _resolve_bite(org, before_id) if before_id is not None else None
         return bite_dict(_reorder_bite(b, after=after, before=before))
 
     return await sync_to_async(_run, thread_sensitive=True)()
