@@ -27,15 +27,11 @@ def test_navigating_to_org_sets_active(client, two_workspaces):
     assert client.session["active_org_id"] == b.org.id
 
 
-@pytest.mark.django_db
-def test_switcher_renders_sibling_workspace_links(client, two_workspaces):
-    # The switcher is a popover of links, not a POST form: each accessible
-    # workspace is a plain <a href="/<org>/<ws>/">.
-    user, a, b = two_workspaces
-    client.force_login(user)
-    body = client.get(f"/{a.org.slug}/").content.decode()
-    assert f'href="/{b.org.slug}/"' in body
-    assert f'href="/{a.org.slug}/"' in body
+# Removed in Task 6: test_switcher_renders_sibling_workspace_links asserted the
+# switcher links to sibling *workspaces* of one org. With workspace gone from the
+# URL, a,b share an org so both asserts collapsed to the same href="/<org>/" —
+# a vacuous always-true check. The switcher becomes a flat *org* list in Task 9,
+# which deletes this whole file after porting any live coverage into test_sidebar.
 
 
 @pytest.mark.django_db
