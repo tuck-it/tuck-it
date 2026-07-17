@@ -62,7 +62,7 @@ body { padding: 0; }
 .search-pill .icon { stroke: var(--ink-faint); }
 .search-pill .nav-label { text-align: left; }
 
-/* --- Workspace switcher popover --- */
+/* --- Org switcher popover --- */
 .ws-switch-wrap { position: relative; padding: 0 4px 8px; }
 .ws-switch {
   display: flex; align-items: center; gap: 9px; width: 100%;
@@ -716,7 +716,7 @@ body { padding: 0; }
 }
 .settings-section > .settings-subhead:first-of-type { margin-top: 4px; }
 
-/* Inline-edit workspace name, token list, MCP snippet. A bordered control on
+/* Inline-edit org name, token list, MCP snippet. A bordered control on
    hover (not plain text) so it reads as editable before the click. */
 .settings-name-display {
   display: flex;
@@ -1155,7 +1155,7 @@ body { padding: 0; }
   font-weight: 600;
 }
 
-/* Generic bordered row inside a .panel (member row, workspace row, ...). */
+/* Generic bordered row inside a .panel (member row, org row, ...). */
 .field {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -1813,29 +1813,13 @@ html.sidebar-collapsed .side-resize { display: none; }
 .orghome-name { font-size: 22px; font-weight: 650; margin: 0; }
 .orghome-meta { color: var(--muted); font-size: 13px; }
 .orghome-bar-r { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-.ws-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; background: var(--paper-raised); text-decoration: none; color: var(--ink); }
-.ws-card:hover { border-color: var(--line-strong); }
-.ws-card-name { font-weight: 600; }
-.ws-card-open { color: var(--blue); font-size: 12px; }
-.ws-new { display: flex; border: 1px dashed var(--line); border-radius: var(--radius); }
-.ws-new-input { width: 100%; border: 0; background: transparent; padding: 14px; color: var(--blue); font: inherit; border-radius: var(--radius); }
-.ws-new-input:focus-visible { outline: none; }
 
-/* --- Account overview: org cards + workspace chips --- */
+/* --- Account overview: org cards --- */
 .org-card { border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
 .org-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 15px; background: var(--paper-raised); border-bottom: 1px solid var(--line); }
 .org-card-name { font-weight: 650; font-size: 15px; color: var(--ink); text-decoration: none; }
 .org-card-name:hover { color: var(--blue); }
 .org-card-open { margin-left: auto; color: var(--blue); font-size: 12px; text-decoration: none; }
-.org-ws-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 15px; }
-.org-ws-chip { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: var(--radius-small); padding: 7px 11px; text-decoration: none; color: var(--ink); }
-.org-ws-chip:hover { border-color: var(--line-strong); }
-.org-ws-chip .nm { font-size: 13px; }
-.org-ws-chip .go { color: var(--blue); font-size: 11px; }
-.org-ws-new { border-style: dashed; }
-.org-ws-new input { border: 0; background: transparent; font: inherit; color: var(--blue); width: 140px; }
-.org-ws-new input:focus-visible { outline: none; }
 .org-card-foot { padding: 8px 15px; border-top: 1px dashed var(--line); }
 
 /* --- Onboarding floating widget --- */

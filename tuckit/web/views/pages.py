@@ -96,7 +96,7 @@ def roadmap(request):
         "has_any_slice": any(v for k, v in board["state"].items() if k != "shipped") or board["shipped_total"] > 0,
         # Board tab spans every area, so surface each slice's area on its card/row.
         "show_area": True,
-        "board_scope": "workspace",
+        "board_scope": True,
         "shipped_total": board["shipped_total"],
         "shipped_hidden": board["shipped_hidden"],
     })

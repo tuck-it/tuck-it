@@ -84,7 +84,7 @@ def org_delete(request):
     if not is_org_owner(request.user, org):
         return HttpResponseForbidden("You don't have permission.")
     request.session.pop("active_org_id", None)
-    org.delete()  # cascades to workspaces/areas/slices/bites via FK on_delete=CASCADE
+    org.delete()  # cascades to areas/slices/bites via FK on_delete=CASCADE
     # Always land on the org picker: with the model gone there is no guaranteed
     # "other" org to fall back to, and the picker is a safe destination whether
     # or not one exists.
