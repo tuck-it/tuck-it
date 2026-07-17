@@ -127,9 +127,6 @@ def test_account_page_lists_workspaces_not_just_counts(acct_ctx):
     assert f'href="/{org_a.slug}/"' in body
 
 
-@pytest.mark.django_db
-def test_account_page_has_new_workspace_form_for_owned_org(acct_ctx):
-    client, user, org_a, ws_a, org_b, ws_b = acct_ctx
-    _login(client, user, ws_a)          # user is owner of both orgs
-    body = client.get(f"/{org_a.slug}/settings/account/organizations").content.decode()
-    assert f'action="/{org_a.slug}/settings/workspaces/new"' in body
+# test_account_page_has_new_workspace_form_for_owned_org removed in Task 8: the
+# settings IA merge drops workspace creation from the account/organizations page
+# along with the rest of the workspace-settings surface.

@@ -28,14 +28,6 @@ def test_org_general_renders_in_settings_shell(ctx):
 
 
 @pytest.mark.django_db
-def test_settings_root_redirects_to_workspace_general(ctx):
-    client, org, owner, ws = ctx
-    resp = client.get(f"/{org.slug}/settings/")
-    assert resp.status_code in (301, 302)
-    assert resp["Location"] == f"/{org.slug}/settings/workspaces/{ws.slug}/general"
-
-
-@pytest.mark.django_db
 def test_settings_general_404_for_nonmember(ctx):
     client, org, owner, ws = ctx
     other = Org.objects.create(name="Other", slug="other")

@@ -12,12 +12,6 @@
         <span class="nm">{{ ws.name }}</span><span class="go">Open →</span>
       </a>
     {% endfor %}
-    {% if row.can_create_ws %}
-      <form class="org-ws-chip org-ws-new" method="post" action="{% url 'web:workspace_create' row.org.slug %}">
-        {% csrf_token %}
-        <input name="name" placeholder="＋ New workspace" maxlength="200" autocomplete="off" required>
-      </form>
-    {% endif %}
   </div>
   {% if row.can_leave %}
   <div class="org-card-foot">

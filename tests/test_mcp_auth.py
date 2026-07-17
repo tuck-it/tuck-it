@@ -19,7 +19,7 @@ def test_authenticated_request_routes_through_mcp_rewrite(asgi_app):
     # Create a workspace and generate a real token.
     org = Org.objects.create(name="Acme", slug="acme")
     workspace = Workspace.objects.create(org=org, name="Test Workspace", slug="test-ws")
-    _, raw_token = generate_token(workspace, "test-token")
+    _, raw_token = generate_token(org, "test-token")
 
     with TestClient(asgi_app) as client:
         # With Authorization header -> should reach the MCP mount (not 401/404).

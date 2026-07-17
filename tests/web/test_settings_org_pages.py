@@ -28,14 +28,6 @@ def test_members_page_lists_members_and_invite_form(ctx):
 
 
 @pytest.mark.django_db
-def test_workspaces_page_lists_and_creates(ctx):
-    client, org, owner, member, ws = ctx
-    body = client.get(f"/{org.slug}/settings/workspaces").content.decode()
-    assert "Product" in body
-    assert f'action="/{org.slug}/settings/workspaces/new"' in body
-
-
-@pytest.mark.django_db
 def test_danger_page_owner_only(ctx):
     client, org, owner, member, ws = ctx
     assert client.get(f"/{org.slug}/settings/danger").status_code == 200

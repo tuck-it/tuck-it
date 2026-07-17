@@ -101,12 +101,16 @@ def is_org_owner(user, org) -> bool:
     return OrgMember.objects.filter(user=user, org=org, role="owner").exists()
 
 
-def rename_org(org: Org, name: str) -> Org:
+def rename_org(org: Org, name: str, description: str | None = None) -> Org:
     name = (name or "").strip()
     if not name:
         raise InvalidValue("조직 이름을 입력하세요")
     org.name = name
-    org.save(update_fields=["name"])
+    update_fields = ["name"]
+    if description is not None:
+        org.description = description
+        update_fields.append("description")
+    org.save(update_fields=update_fields)
     return org
 
 

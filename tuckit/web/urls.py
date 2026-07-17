@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_not_required
 from django.urls import path
 
 from tuckit.web.views import (
-    pages, slices, mutations, board, capture, health, workspaces,
+    pages, slices, mutations, board, capture, health,
     accounts, settings_org, settings_account, settings_shell, routing,
     onboarding,
 )
@@ -39,23 +39,15 @@ settings_patterns = [
     path("<slug:org_slug>/settings/invites", settings_views.invite_create, name="invite_create"),
     path("<slug:org_slug>/settings/invites/<int:invitation_id>/cancel", settings_views.invite_cancel, name="invite_cancel"),
     path("<slug:org_slug>/settings/invites/<int:invitation_id>/manage", settings_views.invite_manage, name="invite_manage"),
-    path("<slug:org_slug>/settings/workspaces", settings_org.org_workspaces, name="settings_org_workspaces"),
-    path("<slug:org_slug>/settings/workspaces/new", workspaces.workspace_create, name="workspace_create"),
+    path("<slug:org_slug>/settings/agent", settings_views.org_agent, name="settings_org_agent"),
+    path("<slug:org_slug>/settings/tokens", settings_views.token_create, name="token_create"),
+    path("<slug:org_slug>/settings/tokens/<int:token_id>/revoke", settings_views.token_revoke, name="token_revoke"),
+    # The page lives at .../shipped-board and the mutation at .../shipped-board/prefs
+    # so the fixed page URL and the mutation never collide.
+    path("<slug:org_slug>/settings/shipped-board", settings_views.org_shipped, name="settings_org_shipped"),
+    path("<slug:org_slug>/settings/shipped-board/prefs", settings_views.shipped_board_prefs, name="shipped_board_prefs"),
     path("<slug:org_slug>/settings/danger", settings_org.org_danger, name="settings_org_danger"),
     path("<slug:org_slug>/settings/delete", settings_org.org_delete, name="org_delete"),
-    # --- workspace settings pages + mutations (Task 4) ---
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/general", settings_views.ws_general, name="settings_ws_general"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/rename", settings_views.workspace_rename, name="workspace_rename"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/agent", settings_views.ws_agent, name="settings_ws_agent"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/tokens", settings_views.token_create, name="token_create"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/tokens/<int:token_id>/revoke", settings_views.token_revoke, name="token_revoke"),
-    # NOTE: shipped-board routing overrides the brief (see task-4 controller notes) to
-    # avoid a path collision between the FIXED page URL (spec §5) and the mutation:
-    # the page lives at .../shipped-board and the mutation at .../shipped-board/prefs.
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/shipped-board", settings_views.ws_shipped, name="settings_ws_shipped"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/shipped-board/prefs", settings_views.shipped_board_prefs, name="shipped_board_prefs"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/danger", settings_views.ws_danger, name="settings_ws_danger"),
-    path("<slug:org_slug>/settings/workspaces/<slug:ws_slug>/delete", settings_views.workspace_delete, name="workspace_delete"),
     # --- account settings pages + mutations (Task 5) ---
     path("<slug:org_slug>/settings/account/profile", settings_account.account_profile, name="settings_account_profile"),
     path("<slug:org_slug>/settings/account/organizations", settings_account.account_orgs, name="settings_account_orgs"),

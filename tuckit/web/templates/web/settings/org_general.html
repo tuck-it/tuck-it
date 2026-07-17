@@ -3,26 +3,43 @@
 {% block settings_title %}Organization · {{ org.name }}{% endblock %}
 {% block settings_content %}
 <div class="settings-title">General</div>
-<section class="group settings-section">
+<section class="group settings-section"
+         x-data="{editing:false, name:'{{ org.name|escapejs }}', saved:'{{ org.name|escapejs }}',
+                  description:'{{ org.description|escapejs }}', savedDescription:'{{ org.description|escapejs }}'}">
   <div class="settings-row">
     <div class="settings-row-text">
       <div class="settings-row-label">Organization name</div>
       <div class="settings-row-desc">Shown across tuckit for every member.</div>
     </div>
     <div class="settings-row-control">
-      <div class="settings-name" x-data="{editing:false, name:'{{ org.name|escapejs }}', saved:'{{ org.name|escapejs }}'}">
+      <div class="settings-name">
         <span class="settings-name-display" x-show="!editing" {% if can_admin %}x-on:click="editing = true"{% endif %}>
           <span x-text="name"></span>{% if can_admin %}{% icon "edit" %}{% endif %}
         </span>
         {% if can_admin %}
         <input name="name" class="title-edit" x-show="editing" x-cloak x-model="name"
                hx-post="{% url 'web:org_rename' org.slug %}" hx-trigger="blur, keydown[key=='Enter']"
-               hx-vals="js:{name: name}" hx-swap="none"
+               hx-vals="js:{name: name, description: description}" hx-swap="none"
                hx-on::after-request="if(event.detail.successful){saved=name}else{name=saved; showToast(event.detail.xhr.responseText,'err')}"
                x-on:keydown.enter="editing=false" x-on:blur="editing=false">
         {% endif %}
       </div>
     </div>
   </div>
+  {% if can_admin %}
+  <div class="settings-row">
+    <div class="settings-row-text">
+      <div class="settings-row-label">Description</div>
+      <div class="settings-row-desc">A short note about this organization, shown to agents and members.</div>
+    </div>
+    <div class="settings-row-control">
+      <textarea name="description" class="spec-edit" rows="3" x-model="description"
+                placeholder="What is this organization for?"
+                hx-post="{% url 'web:org_rename' org.slug %}" hx-trigger="blur"
+                hx-vals="js:{name: name, description: description}" hx-swap="none"
+                hx-on::after-request="if(event.detail.successful){savedDescription=description}else{description=savedDescription; showToast(event.detail.xhr.responseText,'err')}"></textarea>
+    </div>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

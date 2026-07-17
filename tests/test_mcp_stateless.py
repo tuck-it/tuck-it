@@ -52,7 +52,7 @@ def _seed_token():
         org=org, name="MyProduct", slug="myproduct", description="demo product"
     )
     create_slice(create_area(workspace.org, "Backend"), "Auth", status="shipped")
-    _token, raw_token = generate_token(workspace, "stateless-token")
+    _token, raw_token = generate_token(org, "stateless-token")
     return raw_token
 
 

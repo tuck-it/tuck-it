@@ -37,7 +37,7 @@ def test_mcp_streamable_http_round_trip_returns_real_state(asgi_app):
     workspace = Workspace.objects.create(org=org, name="MyProduct", slug="myproduct")
     area = create_area(workspace.org, "Backend")
     create_slice(area, "Auth", status="shipped")
-    _token, raw_token = generate_token(workspace, "e2e-token")
+    _token, raw_token = generate_token(org, "e2e-token")
 
     headers = {**_HEADERS_BASE, "Authorization": f"Bearer {raw_token}"}
 

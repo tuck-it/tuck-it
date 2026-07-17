@@ -28,7 +28,6 @@ def account_orgs(request):
         sole_owner = row["role"] == "owner" and _owner_count(org) <= 1
         row["can_leave"] = not sole_owner and len(orgs) > 1
         row["is_current"] = bool(current) and current.id == org.id
-        row["can_create_ws"] = row["role"] in ("owner", "admin")
     ctx = settings_context(request, active="account_orgs")
     ctx["orgs"] = orgs
     return render(request, "web/settings/account_orgs.html", ctx)

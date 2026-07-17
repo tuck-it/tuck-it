@@ -1,7 +1,11 @@
-import pytest
+import re
 
-from tuckit.core.models import Invitation, Org, OrgMember, User
+import pytest
+from django.urls import NoReverseMatch, reverse
+
+from tuckit.core.models import ApiToken, Invitation, Org, OrgMember, User
 from tuckit.core.services.orgs import create_workspace
+from tuckit.core.services.tokens import generate_token, hash_token, list_tokens
 
 
 def _login(client, user):
@@ -149,17 +153,8 @@ def test_owner_deletes_org_htmx_redirects(org_ctx):
     _login(client, owner)
     resp = client.post(f"/{org.slug}/settings/delete", HTTP_HX_REQUEST="true")
     assert resp.status_code == 204
-    assert resp["HX-Redirect"] == "/"  # full browser navigation, not an in-place swap
+    assert resp["HX-Redirect"] == "/orgs/"  # full browser navigation, not an in-place swap
     assert not OrgModel.objects.filter(id=org.id).exists()
-
-
-@pytest.mark.django_db
-def test_cannot_delete_last_org(org_ctx):
-    client, org, owner, member, ws = org_ctx
-    _login(client, owner)
-    resp = client.post(f"/{org.slug}/settings/delete")
-    assert resp.status_code == 400
-    assert OrgModel.objects.filter(id=org.id).exists()
 
 
 @pytest.mark.django_db
@@ -202,3 +197,176 @@ def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     assert resp.status_code == 200
     inv = Invitation.objects.get(email="new@x.com")
     assert inv.org_id == org_b.id
+
+
+# --- settings IA merge (Task 8): the workspace-settings pages are gone; General,
+# Agent, Shipped board and Danger are all org-scoped now. ---
+
+
+@pytest.mark.django_db
+def test_settings_root_redirects_to_org_general(client_local, org):
+    resp = client_local.get(f"/{org.slug}/settings/")
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == f"/{org.slug}/settings/general"
+
+
+@pytest.mark.django_db
+def test_org_general_edits_description(client_local, org):
+    client_local.post(f"/{org.slug}/settings/rename", {"name": "Renamed", "description": "we ship"})
+    org.refresh_from_db()
+    assert org.name == "Renamed"
+    assert org.description == "we ship"
+
+
+@pytest.mark.django_db
+def test_agent_page_is_org_scoped(client_local, org):
+    assert reverse("web:settings_org_agent", args=[org.slug]) == f"/{org.slug}/settings/agent"
+    assert client_local.get(f"/{org.slug}/settings/agent").status_code == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("name", [
+    "settings_org_workspaces", "workspace_create", "settings_ws_general",
+    "workspace_rename", "settings_ws_agent", "settings_ws_shipped",
+    "settings_ws_danger", "workspace_delete",
+])
+def test_workspace_settings_routes_are_gone(name):
+    with pytest.raises(NoReverseMatch):
+        reverse(f"web:{name}", args=["acme", "acme"])
+
+
+@pytest.mark.django_db
+def test_deleting_your_only_org_lands_on_the_picker(client_local, org):
+    """The 'can't delete the last workspace' guard is gone with the model. Deleting
+    your only ORG must still work and must not strand you on a dead URL."""
+    resp = client_local.post(f"/{org.slug}/settings/delete", {"confirm": org.slug})
+
+    assert Org.objects.count() == 0
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "/orgs/"
+
+
+@pytest.mark.django_db
+def test_deleting_an_org_clears_the_stale_session_key(client_local, org):
+    client_local.get(f"/{org.slug}/")
+    assert client_local.session["active_org_id"] == org.id
+
+    client_local.post(f"/{org.slug}/settings/delete", {"confirm": org.slug})
+
+    assert client_local.session.get("active_org_id") is None
+
+
+# --- agent tokens (moved from workspace to org scope) ---
+
+
+@pytest.mark.django_db
+def test_token_create_shows_raw_once(client_local, org):
+    resp = client_local.post(f"/{org.slug}/settings/tokens", {"name": "Claude Code"}, HTTP_HX_REQUEST="true")
+    body = resp.content.decode()
+    assert resp.status_code == 200
+    assert len(body) > 0  # raw token surfaced in the returned partial
+
+
+@pytest.mark.django_db
+def test_token_create_stores_only_hash_not_raw(client_local, org):
+    resp = client_local.post(f"/{org.slug}/settings/tokens", {"name": "Claude Code"}, HTTP_HX_REQUEST="true")
+    body = resp.content.decode()
+    token = ApiToken.objects.get(org=org, name="Claude Code")
+    # the raw token appears in the one-time partial...
+    match = re.search(r'class="token-value"[^>]*>([^<]+)<', body)
+    assert match, "raw token should be shown once in the create partial"
+    raw = match.group(1)
+    assert hash_token(raw) == token.token_hash
+    # ...but the stored row never holds the raw value itself
+    assert token.token_hash != raw
+
+
+@pytest.mark.django_db
+def test_agent_page_lists_masked_tokens(client_local, org):
+    token, raw = generate_token(org, "Existing")
+    resp = client_local.get(f"/{org.slug}/settings/agent")
+    body = resp.content.decode()
+    assert resp.status_code == 200
+    assert "Existing" in body
+    assert raw not in body  # never re-displayed on the list page
+    assert token.token_hash[:8] in body  # masked/truncated hash shown instead
+
+
+@pytest.mark.django_db
+def test_token_revoke_removes_token(client_local, org):
+    token, _ = generate_token(org, "to-remove")
+    resp = client_local.post(f"/{org.slug}/settings/tokens/{token.id}/revoke", HTTP_HX_REQUEST="true")
+    assert resp.status_code == 204
+    assert not ApiToken.objects.filter(id=token.id).exists()
+
+
+@pytest.mark.django_db
+def test_token_revoke_is_org_scoped(client_local, org):
+    other_org = Org.objects.create(name="Other Org", slug="other-org")
+    token, _ = generate_token(other_org, "cli")
+    resp = client_local.post(f"/{org.slug}/settings/tokens/{token.id}/revoke", HTTP_HX_REQUEST="true")
+    assert resp.status_code == 204
+    assert ApiToken.objects.filter(id=token.id).exists()  # untouched: belongs to another org
+
+
+@pytest.mark.django_db
+def test_member_cannot_create_token(client_local, org):
+    # `org` (via ensure_bootstrap) already has a "local-cli" token; assert the
+    # forbidden request doesn't add a second one rather than that none exist.
+    before = list(list_tokens(org))
+    member = User.objects.create(email="m-tok@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    client_local.force_login(member)
+    resp = client_local.post(f"/{org.slug}/settings/tokens", {"name": "sneaky"})
+    assert resp.status_code == 403
+    assert list(list_tokens(org)) == before
+
+
+@pytest.mark.django_db
+def test_member_cannot_revoke_token(client_local, org):
+    token, _raw = generate_token(org, "existing")
+    before = len(list(list_tokens(org)))
+    member = User.objects.create(email="m-rev@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    client_local.force_login(member)
+    resp = client_local.post(f"/{org.slug}/settings/tokens/{token.id}/revoke")
+    assert resp.status_code == 403
+    assert len(list(list_tokens(org))) == before
+
+
+# --- shipped-board prefs (moved from workspace to org scope) ---
+
+
+@pytest.mark.django_db
+def test_shipped_board_prefs_updates(client_local, org):
+    resp = client_local.post(f"/{org.slug}/settings/shipped-board/prefs", {"mode": "days", "limit": "30"})
+    assert resp.status_code == 204
+    org.refresh_from_db()
+    assert org.shipped_board_mode == "days"
+    assert org.shipped_board_limit == 30
+
+
+@pytest.mark.django_db
+def test_shipped_board_prefs_rejects_bad_mode(client_local, org):
+    resp = client_local.post(f"/{org.slug}/settings/shipped-board/prefs", {"mode": "weeks", "limit": "5"})
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_shipped_board_prefs_rejects_out_of_range(client_local, org):
+    resp = client_local.post(f"/{org.slug}/settings/shipped-board/prefs", {"mode": "count", "limit": "0"})
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_member_cannot_configure_shipped_board(client_local, org):
+    member = User.objects.create(email="m-ship@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    client_local.force_login(member)
+    resp = client_local.post(
+        f"/{org.slug}/settings/shipped-board/prefs", {"mode": "days", "limit": "30"}
+    )
+    assert resp.status_code == 403
+    org.refresh_from_db()
+    assert org.shipped_board_mode == "count"
+    assert org.shipped_board_limit == 8

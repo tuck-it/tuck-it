@@ -58,15 +58,11 @@ def test_navigating_to_inaccessible_workspace_404s(client, two_workspaces):
     assert resp.status_code == 404
 
 
-@pytest.mark.django_db
-def test_create_workspace_in_org(client, two_workspaces):
-    user, a, b = two_workspaces
-    client.force_login(user)
-    resp = client.post(f"/{a.org.slug}/settings/workspaces/new", {"name": "Gamma"})
-    assert resp.status_code == 302
-    assert a.org.workspaces.filter(name="Gamma").exists()
-    gamma = a.org.workspaces.get(name="Gamma")
-    assert resp.headers["Location"] == f"/{a.org.slug}/"
+# test_create_workspace_in_org removed in Task 8: /settings/workspaces/new and
+# the workspace-creation UI are gone along with the rest of the
+# workspace-settings surface (settings IA merge). Workspace creation via
+# create_workspace() itself is still covered at the service layer
+# (tests/test_services_orgs.py).
 
 
 @pytest.mark.django_db

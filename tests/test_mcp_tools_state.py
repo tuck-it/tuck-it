@@ -52,4 +52,4 @@ def _make_ws():
 
 @sync_to_async
 def _make_token(ws):
-    return generate_token(ws, "test")
+    return generate_token(ws.org, "test")

@@ -42,10 +42,7 @@ def connect_key(request):
     org = get_current_org(request)
     if org is None:
         return redirect("web:root")
-    # generate_token still takes a Workspace (it only reads .org off it — the
-    # ApiToken write itself is org-scoped); any workspace in this org will do.
-    ws = org.workspaces.first()
-    _token, raw = generate_token(ws, "Agent (onboarding)")
+    _token, raw = generate_token(org, "Agent (onboarding)")
     return render(request, "web/partials/_get_started_key.html", {
         "mcp_url": request.build_absolute_uri("/mcp"),
         "raw_token": raw,

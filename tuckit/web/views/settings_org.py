@@ -21,9 +21,9 @@ from tuckit.web.views.settings_shell import settings_context
 def org_rename(request):
     org = request.org
     if not is_org_admin(request.user, org):
-        return HttpResponseForbidden("권한이 없습니다")
+        return HttpResponseForbidden("You don't have permission.")
     try:
-        org = rename_org(org, request.POST.get("name", ""))
+        org = rename_org(org, request.POST.get("name", ""), request.POST.get("description"))
     except InvalidValue as exc:
         return HttpResponse(str(exc), status=400)
     return HttpResponse(org.name)
@@ -82,13 +82,13 @@ def org_general(request):
 def org_delete(request):
     org = request.org
     if not is_org_owner(request.user, org):
-        return HttpResponseForbidden("권한이 없습니다")
-    has_other = OrgMember.objects.filter(user=request.user).exclude(org=org).exists()
-    if not has_other:
-        return HttpResponse("마지막 조직은 삭제할 수 없습니다", status=400)
+        return HttpResponseForbidden("You don't have permission.")
     request.session.pop("active_org_id", None)
     org.delete()  # cascades to workspaces/areas/slices/bites via FK on_delete=CASCADE
-    return redirect_response(request, "web:root")
+    # Always land on the org picker: with the model gone there is no guaranteed
+    # "other" org to fall back to, and the picker is a safe destination whether
+    # or not one exists.
+    return redirect_response(request, "web:orgs")
 
 
 def org_members(request):
@@ -101,13 +101,6 @@ def org_members(request):
     ctx.update({"org": org, "members": members, "invitations": invitations,
                 "role_choices": OrgMember.ROLE_CHOICES})
     return render(request, "web/settings/org_members.html", ctx)
-
-
-def org_workspaces(request):
-    org = request.org
-    ctx = settings_context(request, active="org_workspaces")
-    ctx.update({"org": org, "workspaces": list(org.workspaces.order_by("name"))})
-    return render(request, "web/settings/org_workspaces.html", ctx)
 
 
 def org_danger(request):

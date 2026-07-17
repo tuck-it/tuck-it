@@ -27,7 +27,7 @@ def _seed():
     # workspaces of the same org.
     other_org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=other_org, name="O", slug="o")
-    _, raw = generate_token(ws, "t")
+    _, raw = generate_token(org, "t")
     area = create_area(ws.org, "Backend")
     return ws, other, raw, area.id
 
@@ -77,7 +77,7 @@ async def test_cross_workspace_area_rejected():
 
     @sync_to_async
     def other_token():
-        _, raw = generate_token(other, "t2")
+        _, raw = generate_token(other.org, "t2")
         return raw
 
     raw2 = await other_token()
