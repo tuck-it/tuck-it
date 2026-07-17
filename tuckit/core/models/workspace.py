@@ -2,11 +2,9 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 
-from tuckit.core.models.org import Org
+from tuckit.core.models.org import Org, SHIPPED_BOARD_MODE_CHOICES  # noqa: F401
 
 _SLUG_VALIDATOR = RegexValidator(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$", "invalid slug")
-
-SHIPPED_BOARD_MODE_CHOICES = [("count", "Count"), ("days", "Days")]
 
 
 class Workspace(models.Model):
