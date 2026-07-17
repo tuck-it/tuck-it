@@ -1,14 +1,14 @@
 <div class="org-card" data-org-id="{{ row.org.id }}">
   <div class="org-card-head">
-    <a class="org-card-name" href="{% url 'web:org_home' row.org.slug %}">{{ row.org.name }}</a>
+    <a class="org-card-name" href="{% url 'web:home' row.org.slug %}">{{ row.org.name }}</a>
     <span class="role-badge role-badge--{{ row.role }}">{{ row.role }}</span>
     <span class="org-card-meta">{{ row.workspace_count }} workspace{{ row.workspace_count|pluralize }}</span>
     {% if row.is_current %}<span class="org-card-meta">· current</span>{% endif %}
-    <a class="org-card-open" href="{% url 'web:org_home' row.org.slug %}">Org home →</a>
+    <a class="org-card-open" href="{% url 'web:home' row.org.slug %}">Org home →</a>
   </div>
   <div class="org-ws-chips">
     {% for ws in row.workspaces %}
-      <a class="org-ws-chip" href="{% url 'web:home' row.org.slug ws.slug %}">
+      <a class="org-ws-chip" href="{% url 'web:home' row.org.slug %}">
         <span class="nm">{{ ws.name }}</span><span class="go">Open →</span>
       </a>
     {% endfor %}

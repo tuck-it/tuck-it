@@ -1,70 +1,41 @@
 import pytest
-from django.urls import resolve, reverse
-
-from tuckit.core.models import Org, OrgMember, User
-from tuckit.core.services.orgs import create_workspace
-
-
-@pytest.fixture
-def two_orgs(client, db):
-    u = User.objects.create(email="member@a.com")
-    org_a = Org.objects.create(name="Acme", slug="acme")
-    OrgMember.objects.create(user=u, org=org_a, role="owner")
-    ws_a = create_workspace(org_a, "Design")
-    org_b = Org.objects.create(name="Other", slug="other")   # u is NOT a member
-    ws_b = create_workspace(org_b, "Board")
-    client.force_login(u)
-    return client, u, org_a, ws_a, org_b, ws_b
+from django.urls import reverse
 
 
 @pytest.mark.django_db
-def test_home_url_resolves_and_reverses(two_orgs):
-    _client, _u, _org_a, ws_a, *_ = two_orgs
-    assert reverse("web:home", args=["acme", ws_a.slug]) == f"/acme/{ws_a.slug}/"
-    assert resolve(f"/acme/{ws_a.slug}/").view_name == "web:home"
+def test_home_lives_at_org_root(client_local, org):
+    assert reverse("web:home", args=[org.slug]) == f"/{org.slug}/"
+    assert client_local.get(f"/{org.slug}/").status_code == 200
 
 
 @pytest.mark.django_db
-def test_member_can_open_own_workspace(two_orgs):
-    client, u, org_a, ws_a, *_ = two_orgs
-    resp = client.get(f"/acme/{ws_a.slug}/")
+def test_app_routes_have_no_workspace_segment(client_local, org):
+    assert reverse("web:areas", args=[org.slug]) == f"/{org.slug}/areas/"
+    assert client_local.get(f"/{org.slug}/areas/").status_code == 200
+
+
+@pytest.mark.django_db
+def test_login_beats_org_slug_route(client):
+    resp = client.get("/login/")
     assert resp.status_code == 200
 
 
 @pytest.mark.django_db
-def test_app_page_links_are_prefixed(two_orgs):
-    client, u, org_a, ws_a, *_ = two_orgs
-    body = client.get(f"/acme/{ws_a.slug}/").content.decode()
-    # sidebar/home links must carry the /acme/<ws>/ prefix
-    assert f"/acme/{ws_a.slug}/triage/" in body
-    assert f"/acme/{ws_a.slug}/" in body
+def test_org_home_route_is_gone():
+    from django.urls import NoReverseMatch
+
+    with pytest.raises(NoReverseMatch):
+        reverse("web:org_home", args=["acme"])
 
 
 @pytest.mark.django_db
-def test_switcher_renders_workspace_links(two_orgs):
-    client, u, org_a, ws_a, *_ = two_orgs
-    # give the user a second workspace to switch to
-    from tuckit.core.services.orgs import create_workspace
-    ws2 = create_workspace(org_a, "Marketing")
-    body = client.get(f"/acme/{ws_a.slug}/").content.decode()
-    assert f'href="/acme/{ws2.slug}/"' in body
-    assert "web:switch_workspace" not in body  # no leftover tag
+def test_non_member_gets_404(client, django_user_model, org):
+    other = django_user_model.objects.create_user(email="x@y.z", password="pw")
+    client.force_login(other)
+    assert client.get(f"/{org.slug}/").status_code == 404
 
 
 @pytest.mark.django_db
-def test_nonmember_gets_404_not_403(two_orgs):
-    client, u, _a, _wa, org_b, ws_b = two_orgs
-    resp = client.get(f"/other/{ws_b.slug}/")
-    assert resp.status_code == 404  # existence not revealed
-
-
-@pytest.mark.django_db
-def test_unknown_org_404(two_orgs):
-    client, *_ = two_orgs
-    assert client.get("/nope/whatever/").status_code == 404
-
-
-@pytest.mark.django_db
-def test_unknown_workspace_404(two_orgs):
-    client, u, org_a, *_ = two_orgs
-    assert client.get("/acme/ghost/").status_code == 404
+def test_middleware_sets_active_org_id(client_local, org):
+    client_local.get(f"/{org.slug}/")
+    assert client_local.session["active_org_id"] == org.id

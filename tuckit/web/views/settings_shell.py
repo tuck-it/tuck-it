@@ -4,20 +4,11 @@ from tuckit.core.services.orgs import is_org_admin, is_org_owner
 
 
 def _ws_in_org(request, org):
-    """A workspace belonging to `org` for the settings nav / redirects. Prefer the
-    request's tenant workspace (if it's in this org), else the session-active one
-    (if in this org), else the org's first workspace. Never returns a workspace
-    from a different org — that would 404 under /<org>/settings/workspaces/<ws>/."""
+    """A workspace belonging to `org` for the settings nav / redirects — the app's
+    tenant is org-only now (TenantMiddleware no longer resolves a workspace), so
+    this just picks a deterministic one: the org's first workspace."""
     if org is None:
         return None
-    ws = getattr(request, "workspace", None)
-    if ws is not None and ws.org_id == org.id:
-        return ws
-    active_id = request.session.get("active_workspace_id")
-    if active_id:
-        ws = org.workspaces.filter(pk=active_id).first()
-        if ws is not None:
-            return ws
     return org.workspaces.order_by("name").first()
 
 

@@ -11,15 +11,15 @@ from tuckit.core.services.state import (
     cap_shipped,
     snapshot_today,
 )
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_org
 
 
 def home(request):
-    ws = get_current_workspace(request)
-    state = home_state(ws.org) if ws else {}
+    org = get_current_org(request)
+    state = home_state(org) if org else {}
     metrics = []
-    if ws:
-        snap = snapshot_today(ws.org, state)
+    if org:
+        snap = snapshot_today(org, state)
         _defs = [
             ("Building", "building"),
             ("Backlog", "backlog"),
@@ -36,8 +36,8 @@ def home(request):
                 "dir": None if d is None else ("up" if d > 0 else "down" if d < 0 else "flat"),
             })
     shipped_total = shipped_hidden = 0
-    if ws:
-        visible, shipped_total = cap_shipped(ws.org, state.get("shipped", []))
+    if org:
+        visible, shipped_total = cap_shipped(org, state.get("shipped", []))
         shipped_hidden = shipped_total - len(visible)
         state = {**state, "shipped": visible}
     building_ct = len(state.get("building", []))
@@ -45,14 +45,14 @@ def home(request):
     later_ct = len(later_items)
     queued_ct = len(state.get("planned", [])) + later_ct
     return render(request, "web/home.html", {
-        "workspace": ws,
+        "org": org,
         "state": state,
         "building_ct": building_ct,
         "later_items": later_items,
         "later_ct": later_ct,
         "queued_ct": queued_ct,
-        "in_progress": in_progress_state(ws.org) if ws else {"slices": [], "bites": []},
-        "roadmap": roadmap_state(ws.org) if ws else {},
+        "in_progress": in_progress_state(org) if org else {"slices": [], "bites": []},
+        "roadmap": roadmap_state(org) if org else {},
         "shipped_total": shipped_total,
         "shipped_hidden": shipped_hidden,
         "metrics": metrics,
@@ -60,25 +60,25 @@ def home(request):
 
 
 def attention(request):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     return render(request, "web/attention.html", {
-        "items": attention_items(ws.org) if ws else [],
+        "items": attention_items(org) if org else [],
     })
 
 
 def in_progress(request):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     return render(request, "web/in_progress.html", {
-        "state": in_progress_state(ws.org) if ws else {"slices": [], "bites": []},
+        "state": in_progress_state(org) if org else {"slices": [], "bites": []},
     })
 
 
 def roadmap(request):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     status = request.GET.get("status")
-    if ws and status in ROADMAP_STATUS_KEYS:
+    if org and status in ROADMAP_STATUS_KEYS:
         # Focused single-status flat list — the "view all" / archive surface.
-        state = roadmap_state(ws.org)
+        state = roadmap_state(org)
         return render(request, "web/roadmap.html", {
             "filter_status": status,
             "filter_slices": state.get(status, []),
@@ -86,7 +86,7 @@ def roadmap(request):
         })
 
     view = "list" if request.GET.get("view") == "list" else "board"
-    board = roadmap_board_view(ws.org) if ws else {
+    board = roadmap_board_view(org) if org else {
         "state": {}, "groups": [], "shipped_total": 0, "shipped_hidden": 0,
     }
     return render(request, "web/roadmap.html", {
@@ -103,12 +103,12 @@ def roadmap(request):
 
 
 def areas(request):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     cards = []
-    if ws:
+    if org:
         from tuckit.core.services.areas import list_areas
         from tuckit.core.models import Slice
-        for a in list_areas(ws.org):
+        for a in list_areas(org):
             if a.is_triage:
                 continue
             counts = {}
@@ -125,9 +125,9 @@ def areas(request):
 
 @require_POST
 def dismiss_onboarding(request):
-    ws = get_current_workspace(request)
-    if ws is None:
+    org = get_current_org(request)
+    if org is None:
         return redirect("web:root")
-    ws.onboarding_dismissed = True
-    ws.save(update_fields=["onboarding_dismissed"])
-    return redirect("web:home", org_slug=ws.org.slug, ws_slug=ws.slug)
+    org.onboarding_dismissed = True
+    org.save(update_fields=["onboarding_dismissed"])
+    return redirect("web:home", org_slug=org.slug)

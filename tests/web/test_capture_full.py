@@ -9,7 +9,7 @@ from tuckit.core.models import Slice, Workspace
 from tuckit.core.services.areas import create_area, get_or_create_triage
 
 
-P = lambda ws: f"/{ws.org.slug}/{ws.slug}"
+P = lambda ws: f"/{ws.org.slug}"
 
 
 @pytest.mark.django_db

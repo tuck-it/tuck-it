@@ -11,7 +11,7 @@ from tuckit.core.models import Org, Slice, Workspace
 @pytest.mark.django_db
 def test_board_has_swap_target_id(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     create_slice(a, "one", status="building")
     body = client_local.get(f"{p}/areas/{a.slug}/?view=board").content.decode()
@@ -21,7 +21,7 @@ def test_board_has_swap_target_id(client_local, org):
 @pytest.mark.django_db
 def test_board_view_renders_columns(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     create_slice(a, "결제", status="building")
     resp = client_local.get(f"{p}/areas/{a.slug}/?view=board")
@@ -34,7 +34,7 @@ def test_board_column_head_has_dot_and_count(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "제품")
     create_slice(a, "카드 A", status="building")
     body = client_local.get(f"{p}/areas/{a.slug}/?view=board").content.decode()
@@ -44,7 +44,7 @@ def test_board_column_head_has_dot_and_count(client_local, org):
 @pytest.mark.django_db
 def test_move_changes_status(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     s = create_slice(a, "결제", status="planned")
     resp = client_local.post(f"{p}/slices/{s.id}/move", {"status": "building"}, HTTP_HX_REQUEST="true")
@@ -55,7 +55,7 @@ def test_move_changes_status(client_local, org):
 def test_move_reorders_within_column(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "B")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s1 = create_slice(a, "one", status="planned")
     s2 = create_slice(a, "two", status="planned")
     # move s2 before s1
@@ -66,7 +66,7 @@ def test_move_reorders_within_column(client_local, org):
 @pytest.mark.django_db
 def test_move_invalid_status_returns_400_and_unchanged(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     s = create_slice(a, "결제", status="planned")
     resp = client_local.post(f"{p}/slices/{s.id}/move", {"status": "blocked"}, HTTP_HX_REQUEST="true")
@@ -76,7 +76,7 @@ def test_move_invalid_status_returns_400_and_unchanged(client_local, org):
 @pytest.mark.django_db
 def test_move_foreign_neighbor_404s_without_change(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     s = create_slice(a, "결제", status="planned")
     other_org = Org.objects.create(name="Other Org", slug="other-org")
@@ -95,7 +95,7 @@ def test_move_foreign_neighbor_404s_without_change(client_local, org):
 @pytest.mark.django_db
 def test_move_without_hx_returns_204(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "B")
     s = create_slice(a, "movable", status="planned")
     resp = client_local.post(f"{p}/slices/{s.id}/move", {"status": "building"})
@@ -108,7 +108,7 @@ def test_roadmap_tab_defaults_to_cross_area_board(client_local, org):
     """The Board tab (web:roadmap) now defaults to a workspace-wide kanban that
     labels each card with its parent area."""
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     design = create_area(ws.org, "Design")
     core = create_area(ws.org, "Core")
     create_slice(design, "polish empty states", status="building")
@@ -124,7 +124,7 @@ def test_roadmap_tab_defaults_to_cross_area_board(client_local, org):
 @pytest.mark.django_db
 def test_roadmap_tab_list_view_still_available(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     create_slice(a, "list-view slice", status="building")
     body = client_local.get(f"{p}/roadmap/?view=list").content.decode()
@@ -139,7 +139,7 @@ def test_board_caps_shipped_and_links_to_all(client_local, org):
     org.shipped_board_mode = "count"
     org.shipped_board_limit = 1
     org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "shipped two", status="shipped")
@@ -153,7 +153,7 @@ def test_status_filter_shows_all_shipped_flat(client_local, org):
     ws = Workspace.objects.get(org=org)
     org.shipped_board_limit = 1
     org.save(update_fields=["shipped_board_limit", "updated_at"])
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "shipped two", status="shipped")
@@ -166,7 +166,7 @@ def test_status_filter_shows_all_shipped_flat(client_local, org):
 @pytest.mark.django_db
 def test_status_filter_is_generic(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Core")
     create_slice(a, "building thing", status="building")
     body = client_local.get(f"{p}/roadmap/?status=building").content.decode()
@@ -179,7 +179,7 @@ def test_board_no_footer_when_within_limit(client_local, org):
     ws = Workspace.objects.get(org=org)
     org.shipped_board_limit = 8
     org.save(update_fields=["shipped_board_limit", "updated_at"])
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     create_slice(a, "only one", status="shipped")
     body = client_local.get(f"{p}/roadmap/").content.decode()
@@ -209,7 +209,7 @@ def test_board_days_mode_shipped_outside_window_still_counts_as_slice(client_loc
     org.shipped_board_mode = "days"
     org.shipped_board_limit = 7
     org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     s = create_slice(a, "old shipped one", status="shipped")
     s.completed_at = timezone.now() - timedelta(days=90)

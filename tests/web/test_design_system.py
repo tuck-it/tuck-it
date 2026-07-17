@@ -54,7 +54,7 @@ def test_base_css_declares_fonts_texture_and_primitives():
 def test_base_html_links_stylesheets_in_order_and_lang_en(client_local, org):
     from tuckit.core.models import Workspace
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert '<html lang="en"' in body
     i_brand = body.find("tokens.brand.css")
     i_product = body.find("tokens.product.css")

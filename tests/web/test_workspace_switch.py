@@ -17,14 +17,14 @@ def two_workspaces(db):
 
 
 @pytest.mark.django_db
-def test_navigating_to_workspace_sets_active(client, two_workspaces):
-    # Switching is now navigation: visiting a workspace's URL makes it the active
-    # workspace (TenantMiddleware records it in the session).
+def test_navigating_to_org_sets_active(client, two_workspaces):
+    # Visiting an org's URL makes it the active org (TenantMiddleware records it
+    # in the session) — the app's tenant is org-only now.
     user, a, b = two_workspaces
     client.force_login(user)
-    resp = client.get(f"/{b.org.slug}/{b.slug}/")
+    resp = client.get(f"/{b.org.slug}/")
     assert resp.status_code == 200
-    assert client.session["active_workspace_id"] == b.id
+    assert client.session["active_org_id"] == b.org.id
 
 
 @pytest.mark.django_db
@@ -33,9 +33,9 @@ def test_switcher_renders_sibling_workspace_links(client, two_workspaces):
     # workspace is a plain <a href="/<org>/<ws>/">.
     user, a, b = two_workspaces
     client.force_login(user)
-    body = client.get(f"/{a.org.slug}/{a.slug}/").content.decode()
-    assert f'href="/{b.org.slug}/{b.slug}/"' in body
-    assert f'href="/{a.org.slug}/{a.slug}/"' in body
+    body = client.get(f"/{a.org.slug}/").content.decode()
+    assert f'href="/{b.org.slug}/"' in body
+    assert f'href="/{a.org.slug}/"' in body
 
 
 @pytest.mark.django_db
@@ -58,7 +58,7 @@ def test_navigating_to_inaccessible_workspace_404s(client, two_workspaces):
     other_org = Org.objects.create(name="Other", slug="other")
     outsider_ws = create_workspace(other_org, "Foreign")
     client.force_login(user)
-    resp = client.get(f"/{outsider_ws.org.slug}/{outsider_ws.slug}/")
+    resp = client.get(f"/{outsider_ws.org.slug}/")
     assert resp.status_code == 404
 
 
@@ -70,7 +70,7 @@ def test_create_workspace_in_org(client, two_workspaces):
     assert resp.status_code == 302
     assert a.org.workspaces.filter(name="Gamma").exists()
     gamma = a.org.workspaces.get(name="Gamma")
-    assert resp.headers["Location"] == f"/{a.org.slug}/{gamma.slug}/"
+    assert resp.headers["Location"] == f"/{a.org.slug}/"
 
 
 @pytest.mark.django_db
@@ -80,7 +80,7 @@ def test_switcher_links_org_header_to_org_home_and_overview(client, db):
     OrgMember.objects.create(user=user, org=org, role="owner")
     ws = create_workspace(org, "Board")
     client.force_login(user)
-    body = client.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client.get(f"/{org.slug}/").content.decode()
     assert f'href="/{org.slug}/"' in body          # org header → org home
     assert f'href="/{org.slug}/settings/account/organizations"' in body       # footer → overview
 
@@ -92,5 +92,5 @@ def test_switcher_all_orgs_points_to_account_settings(client, db):
     OrgMember.objects.create(user=user, org=org, role="owner")
     ws = create_workspace(org, "Product")
     client.force_login(user)
-    body = client.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client.get(f"/{org.slug}/").content.decode()
     assert f'href="/{org.slug}/settings/account/organizations"' in body

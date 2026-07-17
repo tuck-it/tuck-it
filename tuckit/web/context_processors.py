@@ -1,27 +1,27 @@
 from tuckit.core.services.areas import list_areas
-from tuckit.core.services.orgs import accessible_workspaces
-from tuckit.web.auth import current_workspace_or_fallback
+from tuckit.core.services.orgs import accessible_orgs
+from tuckit.web.auth import current_org_or_fallback
 
 
 def sidebar_areas(request):
-    """Make the workspace's non-inbox areas available to every template so the
+    """Make the org's non-inbox areas available to every template so the
     sidebar's Areas list (and active-nav highlighting) is consistent across
     all pages, not just the ones whose view happens to pass `areas` itself."""
-    ws = current_workspace_or_fallback(request)
-    if not ws:
+    org = current_org_or_fallback(request)
+    if not org:
         return {}
-    return {"areas": [a for a in list_areas(ws.org) if not a.is_triage]}
+    return {"areas": [a for a in list_areas(org) if not a.is_triage]}
 
 
 def triage_count(request):
-    """Expose the workspace's active (non-dropped) triage Slice count to every
+    """Expose the org's active (non-dropped) triage Slice count to every
     template so the sidebar can show a muted count badge next to Triage."""
     from tuckit.core.models import Area, Slice
 
-    ws = current_workspace_or_fallback(request)
-    if not ws:
+    org = current_org_or_fallback(request)
+    if not org:
         return {}
-    triage = Area.objects.filter(org=ws.org, is_triage=True).first()
+    triage = Area.objects.filter(org=org, is_triage=True).first()
     n = Slice.objects.filter(area=triage).exclude(status="dropped").count() if triage else 0
     return {"triage_count": n}
 
@@ -31,10 +31,10 @@ def attention_count(request):
     the sidebar Attention badge."""
     from tuckit.core.services.state import attention_items
 
-    ws = current_workspace_or_fallback(request)
-    if not ws:
+    org = current_org_or_fallback(request)
+    if not org:
         return {}
-    return {"attention_count": len(attention_items(ws.org))}
+    return {"attention_count": len(attention_items(org))}
 
 
 def in_progress_count(request):
@@ -42,40 +42,36 @@ def in_progress_count(request):
     sidebar In Progress badge."""
     from tuckit.core.models import Bite, Slice
 
-    ws = current_workspace_or_fallback(request)
-    if not ws:
+    org = current_org_or_fallback(request)
+    if not org:
         return {}
     n = (
         Slice.objects.filter(
-            area__org=ws.org, area__is_triage=False, status="building"
+            area__org=org, area__is_triage=False, status="building"
         ).count()
         + Bite.objects.filter(
-            plan__slice__area__org=ws.org, plan__slice__area__is_triage=False, status="doing"
+            plan__slice__area__org=org, plan__slice__area__is_triage=False, status="doing"
         ).count()
     )
     return {"in_progress_count": n}
 
 
-def switchable_workspaces(request):
-    """Expose the user's accessible workspaces (across all their orgs) to every
-    template so the sidebar switcher can list them, regardless of whether the
-    current view happens to pass workspace data itself."""
+def switchable_orgs(request):
+    """Expose the user's accessible orgs to every template so the sidebar
+    switcher can list them, regardless of whether the current view happens to
+    pass org data itself."""
     if not request.user.is_authenticated:
-        return {"switchable_workspaces": []}
-    workspaces = sorted(
-        accessible_workspaces(request.user),
-        key=lambda w: (w.org.name, w.name),
-    )
-    return {"switchable_workspaces": workspaces}
+        return {"switchable_orgs": []}
+    return {"switchable_orgs": list(accessible_orgs(request.user))}
 
 
-def current_workspace(request):
-    """Workspace used for sidebar chrome. Prefers the request's tenant workspace; on
-    non-tenant pages (settings/account) falls back to the session/first workspace so the
+def current_org(request):
+    """Org used for sidebar chrome. Prefers the request's tenant org; on
+    non-tenant pages (settings/account) falls back to the session/first org so the
     sidebar switcher and nav still resolve. Access control is NOT done here — it lives in
     TenantMiddleware."""
-    ws = current_workspace_or_fallback(request)
-    return {"current_workspace": ws} if ws else {}
+    org = current_org_or_fallback(request)
+    return {"current_org": org} if org else {}
 
 
 def auth_chrome(request):
@@ -98,16 +94,16 @@ def onboarding(request):
     from tuckit.core.services.onboarding import onboarding_state
     from tuckit.core.models import ActivityEvent
 
-    ws = current_workspace_or_fallback(request)
-    if not ws or ws.onboarding_completed or ws.onboarding_dismissed:
+    org = current_org_or_fallback(request)
+    if not org or org.onboarding_completed or org.onboarding_dismissed:
         return {}
-    state = onboarding_state(ws.org)
-    if state.done and not ws.onboarding_completed:
-        ws.onboarding_completed = True
-        ws.save(update_fields=["onboarding_completed"])
-    show = not ws.onboarding_dismissed and not ws.onboarding_completed and not state.done
+    state = onboarding_state(org)
+    if state.done and not org.onboarding_completed:
+        org.onboarding_completed = True
+        org.save(update_fields=["onboarding_completed"])
+    show = not org.onboarding_dismissed and not org.onboarding_completed and not state.done
     baseline = (
-        ActivityEvent.objects.filter(org=ws.org).order_by("-id")
+        ActivityEvent.objects.filter(org=org).order_by("-id")
         .values_list("id", flat=True).first() or 0
     )
     return {

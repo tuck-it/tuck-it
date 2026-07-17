@@ -7,7 +7,7 @@ from tuckit.core.services.orgs import create_workspace
 def _login(client, user, ws):
     client.force_login(user)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
 
 
@@ -29,7 +29,8 @@ def test_admin_deletes_workspace(admin_two_ws):
     assert resp.status_code == 302
     assert not Workspace.objects.filter(id=ws1.id).exists()
     assert Workspace.objects.filter(id=ws2.id).exists()
-    assert client.session.get("active_workspace_id") is None
+    # Deleting a workspace doesn't affect the org-level session tenant.
+    assert client.session.get("active_org_id") == org.id
 
 
 @pytest.mark.django_db

@@ -14,4 +14,4 @@ def test_self_service_register_lands_on_home(client):
     assert r.status_code == 302
     u = User.objects.get(email="new@example.com")
     ws = Workspace.objects.get(org__members__user=u)
-    assert r.headers["Location"] == f"/{ws.org.slug}/{ws.slug}/"
+    assert r.headers["Location"] == f"/{ws.org.slug}/"

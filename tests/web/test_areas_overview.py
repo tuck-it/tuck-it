@@ -6,7 +6,7 @@ from tuckit.core.services.slices import create_slice
 
 
 def _p(ws):
-    return f"/{ws.org.slug}/{ws.slug}"
+    return f"/{ws.org.slug}"
 
 
 @pytest.mark.django_db
@@ -44,6 +44,5 @@ def test_areas_page_slice_count_excludes_dropped(client_local, org):
 @pytest.mark.django_db
 def test_areas_route_resolves(client_local, org):
     from django.urls import reverse
-    ws = Workspace.objects.get(org=org)
-    url = reverse("web:areas", kwargs={"org_slug": org.slug, "ws_slug": ws.slug})
+    url = reverse("web:areas", kwargs={"org_slug": org.slug})
     assert client_local.get(url).status_code == 200

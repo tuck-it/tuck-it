@@ -21,7 +21,7 @@ def test_invite_over_limit_returns_402(client):
     ws = create_workspace(org, "Board")
     client.force_login(owner)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
 
     resp = client.post(f"/{org.slug}/settings/invites", {"email": "new@x.com", "role": "member"})

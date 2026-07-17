@@ -173,11 +173,11 @@ def test_member_cannot_delete_org(org_ctx):
 
 @pytest.mark.django_db
 def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
-    # Regression: a user who administers TWO orgs has `active_workspace_id` in
-    # session pointing at Org A's workspace. Viewing Org B's settings page must
-    # build invite create/cancel URLs against Org B (the viewed org), never the
-    # session fallback workspace's org (Org A). Otherwise creating/cancelling an
-    # invite on Org B's page silently touches Org A's data.
+    # Regression: a user who administers TWO orgs has `active_org_id` in
+    # session pointing at Org A. Viewing Org B's settings page must build invite
+    # create/cancel URLs against Org B (the viewed org), never the session
+    # fallback org (Org A). Otherwise creating/cancelling an invite on Org B's
+    # page silently touches Org A's data.
     # NOTE: invite management now lives at /<org>/settings/members, not org home
     # (/<org>/), which is browse-only as of the settings-IA refactor.
     client, org_a, owner, member, ws_a = org_ctx
@@ -187,10 +187,10 @@ def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     Invitation.objects.create(org=org_b, email="pending-b@x.com", role="member", token="tok-b")
 
     _login(client, owner)
-    # Establish the session fallback as Org A's workspace.
-    home = client.get(f"/{org_a.slug}/{ws_a.slug}/")
+    # Establish the session fallback as Org A.
+    home = client.get(f"/{org_a.slug}/")
     assert home.status_code == 200
-    assert client.session.get("active_workspace_id") == ws_a.id
+    assert client.session.get("active_org_id") == org_a.id
 
     resp = client.get(f"/{org_b.slug}/settings/members")
     assert resp.status_code == 200

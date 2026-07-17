@@ -19,7 +19,7 @@ def owner_with_area(client, db):
     create_area(ws.org, "Backend")
     client.force_login(owner)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
     return client, org, ws
 
@@ -60,7 +60,7 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
     from tuckit.core.models import ActivityEvent, Workspace
     from tuckit.core.services.areas import delete_area
     ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     p = create_plan(sl, title="Plan")
     create_bite(p, "Add backoff")
@@ -68,11 +68,11 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
         workspace=ws, org=org, actor="agent", verb="created",
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     # First load observes completion → sticky flag set.
     assert "Get started" not in client_local.get(f"{p}/").content.decode()
-    ws.refresh_from_db()
-    assert ws.onboarding_completed is True
+    org.refresh_from_db()
+    assert org.onboarding_completed is True
     # Delete the only Area → has_area now False, but widget must NOT return.
     delete_area(area)
     assert "Get started" not in client_local.get(f"{p}/").content.decode()
@@ -80,30 +80,25 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
 
 @pytest.mark.django_db
 def test_onboarding_context_present_on_non_home_page(client_local, org):
-    from tuckit.core.models import Workspace
-    ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     assert "Get started" in client_local.get(f"{p}/triage/").content.decode()
 
 
 @pytest.mark.django_db
 def test_onboarding_short_circuits_when_completed_or_dismissed(rf, org):
-    """Once a workspace is completed or dismissed, the widget can never show
+    """Once an org is completed or dismissed, the widget can never show
     again, so the processor must bail out before running onboarding_state's
     ~6 queries (or the baseline query) at all."""
     from django.test.utils import CaptureQueriesContext
     from django.db import connection
-    from tuckit.core.models import Workspace
     from tuckit.web.context_processors import onboarding
 
-    ws = Workspace.objects.get(org=org)
-
     for flag in ("onboarding_completed", "onboarding_dismissed"):
-        setattr(ws, flag, True)
-        ws.save(update_fields=[flag])
+        setattr(org, flag, True)
+        org.save(update_fields=[flag])
 
         request = rf.get("/")
-        request.workspace = ws
+        request.org = org
         request.user = type("Anon", (), {"is_authenticated": False})()
 
         with CaptureQueriesContext(connection) as ctx:
@@ -112,5 +107,5 @@ def test_onboarding_short_circuits_when_completed_or_dismissed(rf, org):
         assert result == {}
         assert len(ctx.captured_queries) == 0
 
-        setattr(ws, flag, False)
-        ws.save(update_fields=[flag])
+        setattr(org, flag, False)
+        org.save(update_fields=[flag])

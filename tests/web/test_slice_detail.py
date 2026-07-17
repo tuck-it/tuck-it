@@ -11,7 +11,7 @@ from tuckit.core.services.plans import create_plan
 @pytest.mark.django_db
 def test_slice_full_page_renders_spec_and_bites(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "결제 도입", spec="## 목표\nStripe 붙이기", status="building")
     create_bite(create_plan(s, title="Plan"), "SDK 연동", status="done")
@@ -26,7 +26,7 @@ def test_slice_full_page_renders_spec_and_bites(client_local, org):
 @pytest.mark.django_db
 def test_slice_panel_is_partial(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "X")
     resp = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true")
@@ -38,7 +38,7 @@ def test_slice_panel_is_partial(client_local, org):
 @pytest.mark.django_db
 def test_spec_html_is_sanitized(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Backend")
     s = create_slice(
         a,
@@ -64,7 +64,7 @@ def test_slice_other_workspace_404(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     other_org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=other_org, name="O", slug="o")
     s = create_slice(create_area(other.org, "A"), "secret")
@@ -78,7 +78,7 @@ def test_slice_panel_shows_its_activity_thread(client_local, org):
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "스레드 슬라이스", status="idea")   # logs created (slice)
     set_slice_status(s, "building")                          # logs status_changed (slice)
@@ -117,14 +117,14 @@ def test_panel_header_title_and_status_tabs(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     s = create_slice(a, "다크모드 폴리시", status="building")
 
     # panel context
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="area-chip"' in body
-    assert f'href="/{org.slug}/{ws.slug}/areas/{a.slug}/"' in body   # chip links to area
+    assert f'href="/{org.slug}/areas/{a.slug}/"' in body   # chip links to area
     assert "Design" in body
     assert 'class="props"' in body
     assert 'class="status-menu"' in body
@@ -142,7 +142,7 @@ def test_full_page_hides_panel_only_chrome(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     s = create_slice(a, "전체페이지")
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()   # full page, no panel=1
@@ -158,7 +158,7 @@ def test_bites_progress_and_empty_state(client_local, org):
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     s = create_slice(a, "S")
 
@@ -184,7 +184,7 @@ def test_action_bar_has_copy_and_drop(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s = create_slice(create_area(ws.org, "Design"), "액션", status="building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="action-bar"' in body
@@ -197,7 +197,7 @@ def test_tags_live_in_properties_not_a_context_section(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s = create_slice(create_area(ws.org, "Design"), "태그")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="section-label">Context' not in body   # standalone Context section removed
@@ -211,7 +211,7 @@ def test_activity_timeline_has_nodes(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s = create_slice(create_area(ws.org, "Design"), "타임라인", status="idea")
     set_slice_status(s, "building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -241,7 +241,7 @@ def test_spec_is_boxed_inline_edit(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s = create_slice(create_area(ws.org, "Design"), "spec slice")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="section-label">Spec' in body          # labeled section
@@ -259,7 +259,7 @@ def test_slice_panel_shows_plans_and_add_plan(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "B"); s = create_slice(a, "S")
     p = create_plan(s, title="Backend", body="overview"); create_bite(p, "step one")
-    url = f"/{org.slug}/{ws.slug}"
+    url = f"/{org.slug}"
     body = client_local.get(f"{url}/slices/{s.id}/").content.decode()
     assert "Backend" in body and "overview" in body and "step one" in body
     assert 'class="bites-add' not in body        # no hand-add-bite control
@@ -278,7 +278,7 @@ def test_plan_edit_updates_body_and_constraints(client_local, org):
     a = create_area(ws.org, "B")
     s = create_slice(a, "S")
     plan = create_plan(s, title="Plan")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
 
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
     assert '<div class="section-label">Constraints</div>' in body
@@ -301,7 +301,7 @@ def test_plan_delete_removes_plan_and_its_bites(client_local, org):
     s = create_slice(a, "S")
     plan = create_plan(s, title="Doomed")
     create_bite(plan, "will vanish")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
 
     resp = client_local.post(f"{p}/plans/{plan.id}/delete")
     assert resp.status_code == 200

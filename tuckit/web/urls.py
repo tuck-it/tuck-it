@@ -19,6 +19,9 @@ auth_patterns = [
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("first-org/", onboarding.first_org, name="first_org"),
+    # web:orgs does not exist until Task 7 (the org picker). Placeholder route
+    # so reverse("web:orgs") resolves now; Task 7 replaces both route and view.
+    path("orgs/", onboarding.first_org, name="orgs"),
 ]
 
 # --- internal JSON API (no HTML pages) ---
@@ -69,10 +72,9 @@ root_patterns = [
     path("", routing.root_redirect, name="root"),
 ]
 
-# --- workspace app content (tenant; slugs stripped by TenantMiddleware) ---
-P = "<slug:org_slug>/<slug:ws_slug>/"
+# --- app content (tenant; slug stripped by TenantMiddleware) ---
+P = "<slug:org_slug>/"
 app_patterns = [
-    path(f"{P}", pages.home, name="home"),
     path(f"{P}onboarding/dismiss", pages.dismiss_onboarding, name="onboarding_dismiss"),
     path(f"{P}onboarding/connect-key", onboarding.connect_key, name="onboarding_connect_key"),
     path(f"{P}onboarding/agent-activity", onboarding.agent_check, name="onboarding_agent_check"),
@@ -101,13 +103,13 @@ app_patterns = [
     path(f"{P}bites/<int:bite_id>/body", mutations.bite_body, name="bite_body"),
 ]
 
-# --- org home (tenant; org-only, single segment; MUST be last so literal
-#     single-segment routes like login/ first-org/ always win) ---
-org_patterns = [
-    path("<slug:org_slug>/", settings_org.org_home, name="org_home"),
+# --- org root = Home (single segment; MUST be last so literal single-segment
+#     routes like login/ orgs/ always win) ---
+home_patterns = [
+    path(P, pages.home, name="home"),
 ]
 
 urlpatterns = (
     auth_patterns + api_patterns + settings_patterns
-    + root_patterns + app_patterns + org_patterns
+    + root_patterns + app_patterns + home_patterns
 )

@@ -1,7 +1,7 @@
 {% load web_extras %}
 <div class="ws-grid">
   {% for ws in workspaces %}
-    <a class="ws-card" href="{% url 'web:home' org.slug ws.slug %}">
+    <a class="ws-card" href="{% url 'web:home' org.slug %}">
       <span class="ws-card-name">{{ ws.name }}</span>
       <span class="ws-card-open">Open →</span>
     </a>

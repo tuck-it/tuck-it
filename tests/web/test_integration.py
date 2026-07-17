@@ -9,7 +9,7 @@ def test_all_pages_reachable(client_local, org):
     from tuckit.core.services.slices import create_slice
 
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "결제 도입", status="building")
     for url in [f"{p}/", f"{p}/triage/", f"{p}/areas/{a.slug}/", f"{p}/areas/{a.slug}/?view=board",

@@ -15,6 +15,10 @@ def accessible_workspaces(user):
     )
 
 
+def accessible_orgs(user):
+    return Org.objects.filter(members__user=user).order_by("name")
+
+
 def user_can_access_workspace(user, workspace) -> bool:
     return OrgMember.objects.filter(user=user, org_id=workspace.org_id).exists()
 

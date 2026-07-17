@@ -7,7 +7,7 @@ from tuckit.core.services.orgs import create_org
 def _login(client, user, ws):
     client.force_login(user)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
 
 
@@ -46,9 +46,9 @@ def test_create_org_from_account(acct_ctx):
     resp = client.post(f"/{org_a.slug}/settings/account/orgs", {"name": "Gamma"})
     assert resp.status_code in (204, 302)          # navigates to home
     assert OrgMember.objects.filter(user=user, org__name="Gamma", role="owner").exists()
-    # active workspace switched to the new org's workspace
-    new_ws = Workspace.objects.get(org__name="Gamma")
-    assert client.session.get("active_workspace_id") == new_ws.id
+    # active org switched to the newly created one
+    new_org = OrgMember.objects.get(user=user, org__name="Gamma").org
+    assert client.session.get("active_org_id") == new_org.id
 
 
 @pytest.mark.django_db
@@ -67,7 +67,7 @@ def test_leave_org_from_account(acct_ctx):
 
 
 @pytest.mark.django_db
-def test_leave_current_org_clears_active_workspace(acct_ctx):
+def test_leave_current_org_clears_active_org(acct_ctx):
     client, user, org_a, ws_a, org_b, ws_b = acct_ctx
     # Same fixture reality as above: `user` is the sole owner of org_a, so a
     # co-owner is needed for the leave itself to be allowed — this test's
@@ -75,10 +75,10 @@ def test_leave_current_org_clears_active_workspace(acct_ctx):
     # leave, not to re-verify the sole-owner guard (covered separately).
     co_owner = User.objects.create(email="d@d.com")
     OrgMember.objects.create(user=co_owner, org=org_a, role="owner")
-    _login(client, user, ws_a)                     # active = Alpha's ws
+    _login(client, user, ws_a)                     # active = Alpha
     client.post(f"/{org_a.slug}/settings/account/orgs/{org_a.id}/leave")
     assert not OrgMember.objects.filter(user=user, org=org_a).exists()
-    assert client.session.get("active_workspace_id") != ws_a.id
+    assert client.session.get("active_org_id") != org_a.id
 
 
 @pytest.mark.django_db
@@ -111,7 +111,7 @@ def test_account_page_open_links_target_other_orgs(acct_ctx):
     client, user, org_a, ws_a, org_b, ws_b = acct_ctx
     _login(client, user, ws_a)
     body = client.get(f"/{org_a.slug}/settings/account/organizations").content.decode()
-    assert f'href="/{org_b.slug}/{ws_b.slug}/"' in body
+    assert f'href="/{org_b.slug}/"' in body
     assert "web:account_org_open" not in body  # no leftover POST-switch tag
 
 
@@ -121,8 +121,8 @@ def test_account_page_lists_workspaces_not_just_counts(acct_ctx):
     _login(client, user, ws_a)
     body = client.get(f"/{org_a.slug}/settings/account/organizations").content.decode()
     # each workspace is individually linked (open)
-    assert f'href="/{org_a.slug}/{ws_a.slug}/"' in body
-    assert f'href="/{org_b.slug}/{ws_b.slug}/"' in body
+    assert f'href="/{org_a.slug}/"' in body
+    assert f'href="/{org_b.slug}/"' in body
     # org home reachable from the overview
     assert f'href="/{org_a.slug}/"' in body
 

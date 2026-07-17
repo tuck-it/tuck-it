@@ -13,7 +13,7 @@ def test_root_redirects_workspaceless_user_to_first_org(client):
     client.force_login(u)
     r = client.get("/")
     assert r.status_code == 302
-    assert r.headers["Location"] == "/first-org/"
+    assert r.headers["Location"] == "/orgs/"
 
 
 @pytest.mark.django_db
@@ -21,9 +21,10 @@ def test_no_redirect_loop_for_workspaceless_user(client):
     u = User.objects.create(email="lonely3@example.com")
     client.force_login(u)
     r = client.get("/", follow=True)
-    # terminates on a real page (no loop) — the first-org page
+    # terminates on a real page (no loop) — the org-picker placeholder (Task 7
+    # replaces both this route and view; today it's still first_org's form)
     assert r.status_code == 200
-    assert r.request["PATH_INFO"] == "/first-org/"
+    assert r.request["PATH_INFO"] == "/orgs/"
     assert len(r.redirect_chain) == 1
 
 
@@ -43,7 +44,7 @@ def test_first_org_post_creates_org_and_lands_on_home(client):
     assert r.status_code == 302
     assert OrgMember.objects.filter(user=u, role="owner").exists()
     ws = Workspace.objects.get(org__members__user=u)
-    assert r.headers["Location"] == f"/{ws.org.slug}/{ws.slug}/"
+    assert r.headers["Location"] == f"/{ws.org.slug}/"
 
 
 @pytest.mark.django_db

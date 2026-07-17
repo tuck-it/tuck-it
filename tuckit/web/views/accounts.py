@@ -13,7 +13,7 @@ def register_view(request):
         raise Http404
     if request.method == "POST":
         try:
-            user, org, ws = register(
+            user, org, _ws = register(
                 email=request.POST.get("email", ""),
                 org_name=request.POST.get("org_name", ""),
                 slug=request.POST.get("slug", ""),
@@ -22,7 +22,7 @@ def register_view(request):
         except InvalidValue as exc:
             return render(request, "registration/register.html", {"error": str(exc), "values": request.POST})
         login(request, user)
-        return redirect("web:home", org_slug=org.slug, ws_slug=ws.slug)
+        return redirect("web:home", org_slug=org.slug)
     return render(request, "registration/register.html", {"values": {}})
 
 

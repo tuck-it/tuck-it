@@ -6,7 +6,7 @@ from tuckit.core.models import Workspace
 @pytest.mark.django_db
 def test_home_returns_200_and_shell(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
     assert resp.status_code == 200
     body = resp.content.decode()
@@ -15,13 +15,12 @@ def test_home_returns_200_and_shell(client_local, org):
 
 
 @pytest.mark.django_db
-def test_current_workspace_resolves(client_local, org):
-    from tuckit.web.auth import get_current_workspace
+def test_current_org_resolves(client_local, org):
+    from tuckit.web.auth import get_current_org
 
-    ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
-    assert get_current_workspace(resp.wsgi_request).id == ws.id
+    assert get_current_org(resp.wsgi_request).id == org.id
 
 
 @pytest.mark.django_db
@@ -30,7 +29,7 @@ def test_sidebar_shows_icons_and_triage_count(client_local, org):
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
     create_slice(get_or_create_triage(ws.org), "미분류 1")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert "<svg" in body                 # line icons present
     assert 'class="nav-count"' in body    # triage count element rendered
@@ -39,7 +38,7 @@ def test_sidebar_shows_icons_and_triage_count(client_local, org):
 @pytest.mark.django_db
 def test_sidebar_grouped_with_english_labels_and_capture(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="nav-group"' in body        # grouped, not a flat list
     assert 'class="capture-btn"' in body       # Capture promoted to its own button
@@ -69,7 +68,7 @@ def test_lens_count_context_processors(client_local, org):
     # the /in-progress/ page, which excludes triage). Guards the badge/page drift.
     triage_slice = create_slice(get_or_create_triage(ws.org), "captured", status="building")
     create_bite(create_plan(triage_slice, title="Plan"), "triage doing bite", status="doing")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
     assert resp.context["attention_count"] == 1              # the stalled building slice
     assert resp.context["in_progress_count"] == 2             # building slice + doing bite (triage excluded)
@@ -81,7 +80,7 @@ def test_sidebar_inbox_count_and_no_lens_tabs(client_local, org):
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
     create_slice(get_or_create_triage(ws.org), "미분류", status="idea")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert ">Inbox<" in body
     assert 'id="triage-count"' in body                       # inbox count badge kept

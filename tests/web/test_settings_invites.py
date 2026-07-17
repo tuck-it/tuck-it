@@ -15,7 +15,7 @@ def owner_client(client, db):
     ws = create_workspace(org, "Board")
     client.force_login(owner)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
     return client, org
 
@@ -51,7 +51,7 @@ def test_member_cannot_invite(client, db):
     ws = create_workspace(org, "Board")
     client.force_login(member)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
     resp = client.post(f"/{org.slug}/settings/invites", {"email": "new@x.com", "role": "member"})
     assert resp.status_code == 403
@@ -69,7 +69,7 @@ def test_member_cannot_cancel_invite(client, db):
     ws = create_workspace(org, "Board")
     client.force_login(member)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = ws.org_id
     session.save()
 
     resp = client.post(f"/{org.slug}/settings/invites/{inv.id}/cancel")

@@ -26,7 +26,7 @@ def test_page_with_slice_param_autoloads_panel(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     s = create_slice(create_area(ws.org, "Design"), "복원")
     body = client_local.get(f"{p}/?slice={s.id}").content.decode()   # home is /{org}/{ws}/
     assert 'hx-trigger="load"' in body
@@ -36,7 +36,7 @@ def test_page_with_slice_param_autoloads_panel(client_local, org):
 @pytest.mark.django_db
 def test_page_without_slice_param_does_not_autoload(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'id="panel"' in body
     assert 'hx-trigger="load"' not in body
@@ -45,7 +45,7 @@ def test_page_without_slice_param_does_not_autoload(client_local, org):
 @pytest.mark.django_db
 def test_page_with_nonnumeric_slice_param_does_not_crash_or_autoload(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     resp = client_local.get(f"{p}/?slice=abc")     # malformed id must not reverse() -> 500
     assert resp.status_code == 200
     assert 'hx-trigger="load"' not in resp.content.decode()
@@ -62,7 +62,7 @@ def test_ascii_int_filter_rejects_unicode_and_nonnumeric():
 @pytest.mark.django_db
 def test_page_with_unicode_digit_slice_param_does_not_crash_or_autoload(client_local, org):
     ws = Workspace.objects.get(org=org)
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     resp = client_local.get(f"{p}/", {"slice": "²"})   # passes str.isdigit but not the <int> route
     assert resp.status_code == 200
     assert 'hx-trigger="load"' not in resp.content.decode()

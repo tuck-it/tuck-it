@@ -4,12 +4,11 @@ from django.http import Http404, HttpResponse
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice
 from tuckit.core.services.slices import set_slice_status, reorder_slice
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_org
 
 
 def slice_move(request, slice_id):
-    ws = get_current_workspace(request)
-    org = ws.org
+    org = get_current_org(request)
     try:
         slice_ = get_slice(org, slice_id)
     except NotFound:

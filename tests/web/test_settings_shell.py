@@ -22,7 +22,7 @@ def test_org_general_renders_in_settings_shell(ctx):
     body = resp.content.decode()
     assert 'class="settings-nav"' in body          # swapped sidebar, not product sidebar
     assert 'class="sidebar"' not in body           # product sidebar absent
-    assert f'href="/{org.slug}/{ws.slug}/"' in body  # Back to app → current workspace
+    assert f'href="/{org.slug}/"' in body  # Back to app → current workspace
     assert "Acme" in body
     assert 'class="crumbbar"' not in body          # app breadcrumb suppressed in settings shell
 

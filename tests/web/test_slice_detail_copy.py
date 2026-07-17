@@ -12,7 +12,7 @@ def test_slice_detail_labels_field_spec_not_description(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "labelled slice", spec="some detail")
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
     assert '<div class="section-label">Spec</div>' in body
     assert '<div class="section-label">Description</div>' not in body
@@ -23,7 +23,7 @@ def test_slice_detail_uses_english_copy(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "empty slice")  # no spec, no bites → empty states show
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
     # leftover Korean UI copy is gone
     assert "설명을 추가하려면" not in body

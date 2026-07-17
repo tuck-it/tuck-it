@@ -8,7 +8,7 @@ from tuckit.core.services.plans import create_plan
 
 
 def _p(ws):
-    return f"/{ws.org.slug}/{ws.slug}"
+    return f"/{ws.org.slug}"
 
 
 @pytest.mark.django_db
@@ -52,7 +52,7 @@ def test_widget_bite_step_links_to_real_slice(client_local, org):
     ws = Workspace.objects.get(org=org)
     area = create_area(ws.org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="idea")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert f"/slices/{sl.id}/?focus=bite" in body
 
 
@@ -77,8 +77,8 @@ def test_dismiss_hides_widget(client_local, org):
     p = _p(ws)
     r = client_local.post(f"{p}/onboarding/dismiss")
     assert r.status_code in (200, 204, 302)
-    ws.refresh_from_db()
-    assert ws.onboarding_dismissed is True
+    org.refresh_from_db()
+    assert org.onboarding_dismissed is True
     assert 'id="onboarding-widget"' not in client_local.get(f"{p}/").content.decode()
 
 

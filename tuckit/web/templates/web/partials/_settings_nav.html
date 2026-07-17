@@ -1,6 +1,6 @@
 {% load web_extras %}
 <aside class="settings-nav">
-  <a class="settings-back" href="{% if nav_ws %}{% url 'web:home' nav_org.slug nav_ws.slug %}{% else %}{% url 'web:org_home' nav_org.slug %}{% endif %}">{% icon "chevron" "icon settings-back-chev" %}<span>Back to app</span></a>
+  <a class="settings-back" href="{% url 'web:home' nav_org.slug %}">{% icon "chevron" "icon settings-back-chev" %}<span>Back to app</span></a>
 
   <div class="settings-grp">Account</div>
   <a class="settings-item{% if settings_active == 'account_profile' %} on{% endif %}" href="{% url 'web:settings_account_profile' nav_org.slug %}">Profile</a>

@@ -1,10 +1,4 @@
-{% if request.workspace %}
-<nav class="crumbbar" aria-label="Breadcrumb">
-  <a href="{% url 'web:org_home' request.workspace.org.slug %}">{{ request.workspace.org.name }}</a>
-  <span class="crumb-sep">/</span>
-  <span class="crumb-here">{{ request.workspace.name }}</span>
-</nav>
-{% elif request.org %}
+{% if request.org %}
 <nav class="crumbbar" aria-label="Breadcrumb">
   <a href="{% url 'web:settings_account_orgs' request.org.slug %}">My orgs</a>
   <span class="crumb-sep">/</span>

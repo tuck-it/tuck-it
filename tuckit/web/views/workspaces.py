@@ -14,8 +14,7 @@ def workspace_create(request):
     if not is_org_admin(request.user, org):
         return HttpResponseForbidden("권한이 없습니다")
     try:
-        ws = create_workspace(org, request.POST.get("name") or "Workspace")
+        create_workspace(org, request.POST.get("name") or "Workspace")
     except InvalidValue as exc:
         return HttpResponse(str(exc), status=400)
-    request.session["active_workspace_id"] = ws.id
-    return redirect("web:home", org_slug=org.slug, ws_slug=ws.slug)
+    return redirect("web:home", org_slug=org.slug)

@@ -10,7 +10,7 @@ def test_home_lists_building_and_attention(client_local, org):
     ws = Workspace.objects.get(org=org)
     backend = create_area(ws.org, "Backend")
     create_slice(backend, "Payments work", status="building")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "Payments work" in body
     assert "<span>focus</span>" in body   # building slices now live in the Focus column
 
@@ -20,7 +20,7 @@ def test_home_sidebar_excludes_triage_area(client_local, org):
     from tuckit.core.services.areas import create_area
     ws = Workspace.objects.get(org=org)
     create_area(ws.org, "Backend")
-    resp = client_local.get(f"/{org.slug}/{ws.slug}/")
+    resp = client_local.get(f"/{org.slug}/")
     body = resp.content.decode()
     assert "/areas/backend/" in body
     assert "/areas/triage/" not in body
@@ -33,7 +33,7 @@ def test_tags_render_with_hash_span(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "제품")
     create_slice(a, "태그 있는 슬라이스", status="building", tags=["billing"])
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="tag-hash"' in body
 
 
@@ -48,7 +48,7 @@ def test_home_attention_shows_reason_label(client_local, org):
     a = create_area(ws.org, "제품")
     s = create_slice(a, "정체된 작업", status="building")
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "9d idle" in body
     assert 'class="panel"' in body           # rows are in a unified panel
 
@@ -64,7 +64,7 @@ def test_home_stale_building_slice_not_duplicated_in_now(client_local, org):
     a = create_area(ws.org, "제품")
     s = create_slice(a, "정체된 빌딩 슬라이스", status="building")
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "9d idle" in body                       # confirms it landed in Needs you/Attention
     assert body.count("정체된 빌딩 슬라이스") == 1   # must not also repeat in the Now group
 
@@ -72,7 +72,7 @@ def test_home_stale_building_slice_not_duplicated_in_now(client_local, org):
 @pytest.mark.django_db
 def test_home_all_clear_when_no_attention(client_local, org):
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "Nothing needs your attention right now." in body       # confident done signal
     assert "all-clear" in body
 
@@ -85,16 +85,16 @@ def test_home_omits_roadmap_strip_and_recent_activity(client_local, org):
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "빌딩", status="planned")
     set_slice_status(s, "building")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="roadmap-strip"' not in body        # moved off Home
     assert "Recent activity" not in body              # moved off Home
-    assert f'href="/{org.slug}/{ws.slug}/roadmap/"' in body                 # Board still reachable via sidebar
+    assert f'href="/{org.slug}/roadmap/"' in body                 # Board still reachable via sidebar
 
 
 @pytest.mark.django_db
 def test_home_has_heading_and_capture(client_local, org):
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="page-head"' in body
     assert "<span>needs_you</span>" in body
     assert "<span>focus</span>" in body and "<span>doing</span>" in body and "<span>next</span>" in body
@@ -112,7 +112,7 @@ def test_home_shows_doing_bites_and_planned_in_next(client_local, org):
     s = create_slice(a, "Building slice", status="building")
     create_bite(create_plan(s, title="Plan"), "Active bite", status="doing")
     create_slice(a, "Planned next", status="planned")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "Active bite" in body           # doing bite in the Doing column
     assert "Planned next" in body          # planned slice in the Next column
     assert "<span>next</span>" in body
@@ -126,7 +126,7 @@ def test_home_now_row_shows_spec_summary(client_local, org):
     a = create_area(ws.org, "Backend")
     create_slice(a, "결제 도입", status="building",
                  spec="---\nname: billing\n---\n# 한 줄 요약 캡션\n본문 이어짐")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="row-desc"' in body      # one-line caption slot rendered
     assert "한 줄 요약 캡션" in body        # first meaningful spec line, markdown stripped
 
@@ -141,7 +141,7 @@ def test_home_active_headers_present(client_local, org):
     a = create_area(ws.org, "Backend")
     s = create_slice(a, "Building slice", status="building")
     create_bite(create_plan(s, title="Plan"), "Doing bite", status="doing")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     # needs_you / Overview / recently_shipped are titled section boxes; the
     # Focus/Doing/Next columns live inside the Overview box.
     assert 'class="home-section"' in body
@@ -152,7 +152,7 @@ def test_home_active_headers_present(client_local, org):
 @pytest.mark.django_db
 def test_home_columns_have_subtitles(client_local, org):
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "slices you're building" in body   # Focus
     assert "sub-tasks in progress" in body     # Doing
     assert "queued slices" in body             # Next
@@ -167,7 +167,7 @@ def test_home_focus_column_previews_five_then_view_all(client_local, org):
     a = create_area(ws.org, "Backend")
     for i in range(1, 7):
         create_slice(a, f"buildslice{i}", status="building")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "buildslice1" in body                  # first preview item shown
     assert "buildslice6" not in body              # 6th is beyond the 5-item preview
     assert "View all (6)" in body                 # overflow link with true total
@@ -177,7 +177,7 @@ def test_home_focus_column_previews_five_then_view_all(client_local, org):
 @pytest.mark.django_db
 def test_home_sections_are_titled_boxes(client_local, org):
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     # Three titled boxes: needs_you, Overview (the columns), recently_shipped.
     assert body.count('class="home-section"') >= 3
     assert "<span>Overview</span>" in body
@@ -197,7 +197,7 @@ def test_home_building_row_shows_progress_bar(client_local, org):
     p = create_plan(s, title="Plan")
     create_bite(p, "완료된 것", status="done")
     create_bite(p, "남은 것", status="todo")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="row-prog-track"' in body   # thin bar on the building row
     assert "width:50%" in body                # 1 of 2 bites done
     assert "1/2" in body
@@ -209,7 +209,7 @@ def test_slice_row_has_status_dot_and_arrow(client_local, org):
     from tuckit.core.services.slices import create_slice
     ws = Workspace.objects.get(org=org)
     create_slice(create_area(ws.org, "Backend"), "row look", status="building")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="status-dot' in body     # status indicator kept
     assert 'class="row-arrow"' in body     # quiet trailing affordance
 
@@ -221,7 +221,7 @@ def test_home_shows_summary_cards(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "Backend")
     create_slice(a, "Building one", status="building")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="stat-cards"' in body
     assert "Building" in body and "Backlog" in body
     assert "Shipped this week" in body and "Needs attention" in body
@@ -230,7 +230,7 @@ def test_home_shows_summary_cards(client_local, org):
 @pytest.mark.django_db
 def test_home_header_has_subtitle_not_count(client_local, org):
     ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert "Today's progress and what to focus on next" in body
 
 
@@ -241,7 +241,7 @@ def test_home_recently_shipped_strip_shows_items(client_local, org):
     ws = Workspace.objects.get(org=org)
     a = create_area(ws.org, "Design")
     create_slice(a, "Shipped feature", status="shipped")
-    body = client_local.get(f"/{org.slug}/{ws.slug}/").content.decode()
+    body = client_local.get(f"/{org.slug}/").content.decode()
     assert 'class="shipped-strip"' in body
     assert "Shipped feature" in body
     assert "<span>recently_shipped</span>" in body
@@ -255,7 +255,7 @@ def test_home_recently_shipped_caps_and_links(client_local, org):
     org.shipped_board_mode = "count"
     org.shipped_board_limit = 1
     org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
-    p = f"/{org.slug}/{ws.slug}"
+    p = f"/{org.slug}"
     a = create_area(ws.org, "Design")
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "shipped two", status="shipped")

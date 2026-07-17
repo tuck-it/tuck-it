@@ -18,7 +18,7 @@ def test_cannot_open_slice_from_another_org(client):
 
     client.force_login(user_a)
     session = client.session
-    session["active_workspace_id"] = ws_a.id
+    session["active_org_id"] = ws_a.org_id
     session.save()
 
     resp = client.get(f"/slices/{foreign.id}/")
