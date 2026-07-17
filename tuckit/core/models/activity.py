@@ -17,6 +17,7 @@ class ActivityEvent(models.Model):
     TARGET_CHOICES = [("slice", "Slice"), ("bite", "Bite"), ("area", "Area")]
 
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="activity")
+    org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="activity")
     actor = models.CharField(max_length=10, choices=ACTOR_CHOICES)
     verb = models.CharField(max_length=20, choices=VERB_CHOICES)
     target_type = models.CharField(max_length=10, choices=TARGET_CHOICES)
@@ -28,7 +29,10 @@ class ActivityEvent(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        indexes = [models.Index(fields=["workspace", "-created_at"])]
+        indexes = [
+            models.Index(fields=["workspace", "-created_at"]),
+            models.Index(fields=["org", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"{self.actor} {self.verb} {self.target_type}:{self.target_id}"

@@ -17,9 +17,9 @@ def test_stat_snapshot_unique_per_workspace_per_day(db):
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="P", slug="p")
     d = date(2026, 7, 14)
-    WorkspaceStatSnapshot.objects.create(workspace=ws, date=d, building_ct=3)
+    WorkspaceStatSnapshot.objects.create(workspace=ws, org=org, date=d, building_ct=3)
     with pytest.raises(IntegrityError):
-        WorkspaceStatSnapshot.objects.create(workspace=ws, date=d, building_ct=9)
+        WorkspaceStatSnapshot.objects.create(workspace=ws, org=org, date=d, building_ct=9)
 
 
 @pytest.mark.django_db

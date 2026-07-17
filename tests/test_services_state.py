@@ -314,7 +314,7 @@ def test_snapshot_today_delta_vs_prior_day(workspace):
     # simulate yesterday's snapshot: 3 building
     yesterday = _tz.localdate() - _td(days=1)
     WorkspaceStatSnapshot.objects.create(
-        workspace=workspace, date=yesterday, building_ct=3, backlog_ct=0,
+        workspace=workspace, org=workspace.org, date=yesterday, building_ct=3, backlog_ct=0,
         shipped_week_ct=0, attention_ct=0,
     )
     out = snapshot_today(workspace, home_state(workspace))

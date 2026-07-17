@@ -58,7 +58,7 @@ def test_widget_hidden_when_all_done(client_local, workspace):
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
     ActivityEvent.objects.create(
-        workspace=workspace, actor="agent", verb="created",
+        workspace=workspace, org=workspace.org, actor="agent", verb="created",
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
     body = client_local.get(f"{_p(workspace)}/").content.decode()
@@ -93,7 +93,7 @@ def test_step4_shows_poller_when_key_exists(client_local, workspace):
     area = create_area(workspace, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
-    ApiToken.objects.create(workspace=workspace, name="a", token_hash="x")
+    ApiToken.objects.create(workspace=workspace, org=workspace.org, name="a", token_hash="x")
     body = client_local.get(f"{_p(workspace)}/").content.decode()
     assert 'id="gs-listen"' in body
     assert "/onboarding/agent-activity" in body

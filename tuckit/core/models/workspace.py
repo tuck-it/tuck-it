@@ -35,6 +35,7 @@ class Workspace(models.Model):
 
 class ApiToken(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="tokens")
+    org = models.ForeignKey(Org, on_delete=models.CASCADE, related_name="tokens")
     name = models.CharField(max_length=200)
     token_hash = models.CharField(max_length=64, unique=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
@@ -50,6 +51,7 @@ class WorkspaceStatSnapshot(models.Model):
     workspace = models.ForeignKey(
         Workspace, on_delete=models.CASCADE, related_name="stat_snapshots"
     )
+    org = models.ForeignKey(Org, on_delete=models.CASCADE, related_name="stat_snapshots")
     date = models.DateField()
     building_ct = models.IntegerField(default=0)
     backlog_ct = models.IntegerField(default=0)
@@ -60,6 +62,9 @@ class WorkspaceStatSnapshot(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["workspace", "date"], name="uniq_ws_snapshot_per_day"
+            ),
+            models.UniqueConstraint(
+                fields=["org", "date"], name="uniq_org_snapshot_per_day"
             ),
         ]
 

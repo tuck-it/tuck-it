@@ -13,6 +13,7 @@ def record_activity(workspace, *, actor, verb, target, from_value="", to_value="
         raise ValueError(f"unsupported activity target: {type(target).__name__}") from None
     ActivityEvent.objects.create(
         workspace=workspace,
+        org=workspace.org,
         actor=actor,
         verb=verb,
         target_type=target_type,

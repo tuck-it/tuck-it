@@ -64,7 +64,7 @@ def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, workspa
     p = create_plan(sl, title="Plan")
     create_bite(p, "Add backoff")
     ActivityEvent.objects.create(
-        workspace=workspace, actor="agent", verb="created",
+        workspace=workspace, org=workspace.org, actor="agent", verb="created",
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
     p = f"/{workspace.org.slug}/{workspace.slug}"

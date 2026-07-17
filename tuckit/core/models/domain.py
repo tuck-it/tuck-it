@@ -5,10 +5,11 @@ from tuckit.core.models.workspace import Workspace
 
 class Tag(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="tags")
+    org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="tags")
     name = models.CharField(max_length=100)
 
     class Meta:
-        unique_together = [("workspace", "name")]
+        unique_together = [("workspace", "name"), ("org", "name")]
 
     def __str__(self):
         return f"#{self.name}"
@@ -16,6 +17,7 @@ class Tag(models.Model):
 
 class Area(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="areas")
+    org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="areas")
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, default="")
@@ -26,7 +28,7 @@ class Area(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = [("workspace", "slug")]
+        unique_together = [("workspace", "slug"), ("org", "slug")]
         ordering = ["rank"]
 
     def __str__(self):

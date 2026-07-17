@@ -13,7 +13,7 @@ def hash_token(raw: str) -> str:
 def generate_token(workspace: Workspace, name: str) -> tuple[ApiToken, str]:
     raw = secrets.token_urlsafe(32)
     token = ApiToken.objects.create(
-        workspace=workspace, name=name, token_hash=hash_token(raw)
+        workspace=workspace, org=workspace.org, name=name, token_hash=hash_token(raw)
     )
     return token, raw
 

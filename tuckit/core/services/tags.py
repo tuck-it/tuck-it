@@ -6,7 +6,7 @@ from tuckit.core.models import Tag, Workspace
 def get_or_create_tags(workspace: Workspace, names: list[str]) -> list[Tag]:
     tags = []
     for name in names:
-        tag, _ = Tag.objects.get_or_create(workspace=workspace, name=name)
+        tag, _ = Tag.objects.get_or_create(workspace=workspace, org=workspace.org, name=name)
         tags.append(tag)
     return tags
 

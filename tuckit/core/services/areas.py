@@ -19,7 +19,14 @@ def _unique_slug(workspace: Workspace, name: str) -> str:
     base = slugify(name) or "area"
     slug = base
     i = 2
-    while Area.objects.filter(workspace=workspace, slug=slug).exists():
+    # Area is now unique on (workspace, slug) AND (org, slug) — dual FK, both
+    # constraints live — so a candidate must clear both scopes. Org can have
+    # multiple workspaces, each seeding its own Triage, so a workspace-only
+    # check alone is no longer sufficient.
+    while (
+        Area.objects.filter(workspace=workspace, slug=slug).exists()
+        or Area.objects.filter(org=workspace.org, slug=slug).exists()
+    ):
         slug = f"{base}-{i}"
         i += 1
     return slug
@@ -29,7 +36,7 @@ def create_area(workspace: Workspace, name: str, description: str = "", slug: st
     slug = slug or _unique_slug(workspace, name)
     rank = rank_for(Area, {"workspace": workspace})
     return Area.objects.create(
-        workspace=workspace, name=name, description=description, slug=slug, rank=rank
+        workspace=workspace, org=workspace.org, name=name, description=description, slug=slug, rank=rank
     )
 
 
@@ -41,6 +48,7 @@ def get_or_create_triage(workspace: Workspace) -> Area:
     rank = rank_for(Area, {"workspace": workspace}, before=first)
     return Area.objects.create(
         workspace=workspace,
+        org=workspace.org,
         name=TRIAGE_NAME,
         slug=_unique_slug(workspace, TRIAGE_NAME),
         is_triage=True,

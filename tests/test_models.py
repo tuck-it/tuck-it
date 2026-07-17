@@ -35,6 +35,6 @@ def test_membership_is_unique_per_user_org():
 def test_api_token_hash_unique():
     org = Org.objects.create(name="Acme", slug="acme")
     ws = Workspace.objects.create(org=org, name="A", slug="a")
-    ApiToken.objects.create(workspace=ws, name="t1", token_hash="abc")
+    ApiToken.objects.create(workspace=ws, org=org, name="t1", token_hash="abc")
     with pytest.raises(IntegrityError):
-        ApiToken.objects.create(workspace=ws, name="t2", token_hash="abc")
+        ApiToken.objects.create(workspace=ws, org=org, name="t2", token_hash="abc")

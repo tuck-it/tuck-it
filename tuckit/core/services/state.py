@@ -137,6 +137,7 @@ def snapshot_today(workspace: Workspace, state: dict) -> dict:
 
     WorkspaceStatSnapshot.objects.update_or_create(
         workspace=workspace,
+        org=workspace.org,
         date=today,
         defaults={
             "building_ct": building_ct,
