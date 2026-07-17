@@ -65,3 +65,10 @@ def test_invites_reserved_for_workspace_but_fine_for_org():
 def test_first_org_is_reserved():
     with pytest.raises(InvalidValue):
         validate_slug("first-org", kind="org")
+
+
+def test_orgs_is_reserved():
+    # /orgs/ is a permanent single-segment route (the org picker); an org
+    # with this slug would be unreachable at its own /<slug>/ home.
+    with pytest.raises(InvalidValue):
+        validate_slug("orgs", kind="org")

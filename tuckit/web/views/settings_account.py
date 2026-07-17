@@ -63,6 +63,6 @@ def org_leave(request, org_id):
     # org just left may be the same org as the URL's org_slug — reversing back
     # into that org's settings would 404 under TenantMiddleware once org
     # membership is gone. web:root re-resolves a safe destination (remaining
-    # org, or first-org) via the same membership-checked fallback the
+    # org, or the org picker) via the same membership-checked fallback the
     # switcher uses.
     return redirect_response(request, "web:root")

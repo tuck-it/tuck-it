@@ -18,10 +18,7 @@ auth_patterns = [
     path("register/", login_not_required(accounts.register_view), name="register"),
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
-    path("first-org/", onboarding.first_org, name="first_org"),
-    # web:orgs does not exist until Task 7 (the org picker). Placeholder route
-    # so reverse("web:orgs") resolves now; Task 7 replaces both route and view.
-    path("orgs/", onboarding.first_org, name="orgs"),
+    path("orgs/", onboarding.orgs, name="orgs"),
 ]
 
 # --- internal JSON API (no HTML pages) ---

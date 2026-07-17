@@ -7,25 +7,27 @@ from tuckit.core.models import ActivityEvent
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.orgs import accessible_orgs, create_org
 from tuckit.core.services.tokens import generate_token
-from tuckit.web.auth import get_current_org, landing_route
+from tuckit.web.auth import get_current_org
 
 
-def first_org(request):
-    """Standalone page for a logged-in user with no accessible org (e.g. a
-    createsuperuser account): create a first org so they get one, instead
-    of getting stuck at the app root. Login-protected by middleware."""
-    if accessible_orgs(request.user).exists():
-        # Already set up — defer to the single landing decision (→ Home).
-        name, kwargs = landing_route(request)
-        return redirect(name, **kwargs)
+def orgs(request):
+    """Every org the user belongs to, plus create. The empty state IS the create
+    form — a user with no orgs and a user adding their second one use one screen.
+    Absorbs the old standalone first-org page (e.g. for a createsuperuser account
+    that would otherwise get stuck at the app root). Login-protected by middleware."""
     if request.method == "POST":
         try:
-            org, ws = create_org(request.user, name=request.POST.get("name", ""))
+            # TODO(task-10): create_org returns just Org once Workspace is dropped.
+            org, _ws = create_org(request.user, name=request.POST.get("name", ""), slug=request.POST.get("slug", ""))
         except InvalidValue as exc:
-            return render(request, "web/first_org.html", {"error": str(exc), "values": request.POST})
+            return render(request, "web/orgs.html", {
+                "orgs": accessible_orgs(request.user),
+                "error": str(exc),
+                "values": request.POST,
+            })
         request.session["active_org_id"] = org.id
         return redirect("web:home", org_slug=org.slug)
-    return render(request, "web/first_org.html", {"values": {}})
+    return render(request, "web/orgs.html", {"orgs": accessible_orgs(request.user)})
 
 
 def _agent_baseline(org) -> int:
