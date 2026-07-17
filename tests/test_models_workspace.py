@@ -23,5 +23,5 @@ def test_stat_snapshot_unique_per_workspace_per_day(db):
 
 
 @pytest.mark.django_db
-def test_onboarding_completed_defaults_false(workspace):
-    assert workspace.onboarding_completed is False
+def test_onboarding_completed_defaults_false(org):
+    assert org.onboarding_completed is False

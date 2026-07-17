@@ -64,38 +64,41 @@ def test_member_cannot_delete_workspace(admin_two_ws):
 
 
 @pytest.mark.django_db
-def test_workspace_page_renders(client_local, workspace):
+def test_workspace_page_renders(client_local, org):
     from tuckit.core.services.tokens import generate_token
-    generate_token(workspace, "Existing")
-    sp = f"/{workspace.org.slug}/settings/workspaces/{workspace.slug}"
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    generate_token(ws, "Existing")
+    sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.get(f"{sp}/agent")
     assert resp.status_code == 200
     body = resp.content.decode()
     assert "Existing" in body            # token listed
     assert "/mcp" in body                # agent snippet
     general = client_local.get(f"{sp}/general").content.decode()
-    assert workspace.name in general     # rename field
+    assert ws.name in general     # rename field
 
 
 @pytest.mark.django_db
-def test_workspace_rename_to_duplicate_name_rejected(client_local, workspace):
-    other = create_workspace(workspace.org, "Design")
-    workspace.name = "Board"
-    workspace.save(update_fields=["name"])
-    sp = f"/{workspace.org.slug}/settings/workspaces/{workspace.slug}"
+def test_workspace_rename_to_duplicate_name_rejected(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    other = create_workspace(org, "Design")
+    ws.name = "Board"
+    ws.save(update_fields=["name"])
+    sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.post(f"{sp}/rename", {"name": "design"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 400
-    workspace.refresh_from_db()
-    assert workspace.name == "Board"
+    ws.refresh_from_db()
+    assert ws.name == "Board"
 
 
 @pytest.mark.django_db
-def test_workspace_rename_to_unique_name_succeeds(client_local, workspace):
-    sp = f"/{workspace.org.slug}/settings/workspaces/{workspace.slug}"
+def test_workspace_rename_to_unique_name_succeeds(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    sp = f"/{org.slug}/settings/workspaces/{ws.slug}"
     resp = client_local.post(f"{sp}/rename", {"name": "Totally Fresh Name"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
-    workspace.refresh_from_db()
-    assert workspace.name == "Totally Fresh Name"
+    ws.refresh_from_db()
+    assert ws.name == "Totally Fresh Name"
 
 
 @pytest.mark.django_db

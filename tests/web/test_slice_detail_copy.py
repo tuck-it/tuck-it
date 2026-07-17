@@ -2,25 +2,28 @@
 spec field "Spec" and uses English UI copy — no leftover Korean."""
 import pytest
 
+from tuckit.core.models import Workspace
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 
 
 @pytest.mark.django_db
-def test_slice_detail_labels_field_spec_not_description(client_local, workspace):
-    a = create_area(workspace, "Backend")
+def test_slice_detail_labels_field_spec_not_description(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    a = create_area(ws, "Backend")
     s = create_slice(a, "labelled slice", spec="some detail")
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+    p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
     assert '<div class="section-label">Spec</div>' in body
     assert '<div class="section-label">Description</div>' not in body
 
 
 @pytest.mark.django_db
-def test_slice_detail_uses_english_copy(client_local, workspace):
-    a = create_area(workspace, "Backend")
+def test_slice_detail_uses_english_copy(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    a = create_area(ws, "Backend")
     s = create_slice(a, "empty slice")  # no spec, no bites → empty states show
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+    p = f"/{org.slug}/{ws.slug}"
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
     # leftover Korean UI copy is gone
     assert "설명을 추가하려면" not in body

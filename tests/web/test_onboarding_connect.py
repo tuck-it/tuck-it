@@ -1,14 +1,15 @@
 import pytest
 
-from tuckit.core.models import ActivityEvent, ApiToken
+from tuckit.core.models import ActivityEvent, ApiToken, Workspace
 
 
 @pytest.mark.django_db
-def test_connect_key_creates_token_and_shows_snippet(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+def test_connect_key_creates_token_and_shows_snippet(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    p = f"/{org.slug}/{ws.slug}"
     r = client_local.post(f"{p}/onboarding/connect-key")
     assert r.status_code == 200
-    assert ApiToken.objects.filter(workspace=workspace, name="Agent (onboarding)").exists()
+    assert ApiToken.objects.filter(org=org, name="Agent (onboarding)").exists()
     body = r.content.decode()
     assert "MCP endpoint" in body
     assert "claude mcp add" in body        # Claude Code snippet
@@ -16,20 +17,22 @@ def test_connect_key_creates_token_and_shows_snippet(client_local, workspace):
 
 
 @pytest.mark.django_db
-def test_agent_check_waiting_returns_poller(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+def test_agent_check_waiting_returns_poller(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    p = f"/{org.slug}/{ws.slug}"
     r = client_local.get(f"{p}/onboarding/agent-activity?since=0")
     assert r.status_code == 200
     assert 'id="gs-listen"' in r.content.decode()   # keeps polling, not 204
 
 
 @pytest.mark.django_db
-def test_agent_check_celebrates_on_agent_event(client_local, workspace):
+def test_agent_check_celebrates_on_agent_event(client_local, org):
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
     ActivityEvent.objects.create(
-        workspace=workspace, org=workspace.org, actor="agent", verb="created",
+        workspace=ws, org=org, actor="agent", verb="created",
         target_type="slice", target_id=1, target_label="Retry webhooks",
     )
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+    p = f"/{org.slug}/{ws.slug}"
     r = client_local.get(f"{p}/onboarding/agent-activity?since=0")
     assert r.status_code == 200
     body = r.content.decode()

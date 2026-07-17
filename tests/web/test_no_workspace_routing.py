@@ -47,10 +47,10 @@ def test_first_org_post_creates_org_and_lands_on_home(client):
 
 
 @pytest.mark.django_db
-def test_first_org_redirects_to_home_when_user_already_has_workspace(client, workspace):
-    # workspace fixture creates local@tuckit.local with a workspace
+def test_first_org_redirects_to_home_when_user_already_has_workspace(client, org):
+    # org fixture creates local@tuckit.local with an org (and workspace, until Task 12)
     u = User.objects.get(email="local@tuckit.local")
     client.force_login(u)
     r = client.get("/first-org/")
     assert r.status_code == 302
-    assert r.headers["Location"].startswith(f"/{workspace.org.slug}/")
+    assert r.headers["Location"].startswith(f"/{org.slug}/")

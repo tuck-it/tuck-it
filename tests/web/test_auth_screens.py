@@ -6,7 +6,7 @@ from tuckit.core.services.invitations import create_invitation
 
 
 @pytest.mark.django_db
-def test_login_screen_uses_design_system(client, workspace):
+def test_login_screen_uses_design_system(client, org):
     body = client.get("/login/").content.decode()
     # standalone page, English, not the app shell
     assert '<html lang="en"' in body

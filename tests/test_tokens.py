@@ -6,32 +6,32 @@ from tuckit.core.services.tokens import generate_token, hash_token, list_tokens,
 
 
 @pytest.fixture
-def workspace(db):
+def ws(db):
     org = Org.objects.create(name="Acme", slug="acme")
     return Workspace.objects.create(org=org, name="P", slug="p")
 
 
 @pytest.mark.django_db
-def test_generate_token_stores_only_hash(workspace):
-    token, raw = generate_token(workspace, "cli")
+def test_generate_token_stores_only_hash(ws):
+    token, raw = generate_token(ws, "cli")
     assert raw and len(raw) > 20
     assert token.token_hash == hash_token(raw)
     assert token.token_hash != raw
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_owner_and_stamps_use(workspace):
-    _, raw = generate_token(workspace, "cli")
+def test_resolve_workspace_returns_owner_and_stamps_use(ws):
+    _, raw = generate_token(ws, "cli")
     resolved = resolve_workspace(raw)
-    assert resolved == workspace
+    assert resolved == ws
     from tuckit.core.models import ApiToken
 
-    assert ApiToken.objects.get(workspace=workspace).last_used_at is not None
+    assert ApiToken.objects.get(workspace=ws).last_used_at is not None
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_none_for_bad_token(workspace):
-    generate_token(workspace, "cli")
+def test_resolve_workspace_returns_none_for_bad_token(ws):
+    generate_token(ws, "cli")
     assert resolve_workspace("not-a-real-token") is None
 
 
@@ -46,11 +46,11 @@ def test_list_and_revoke_tokens():
 
 
 @pytest.mark.django_db
-def test_revoke_token_is_workspace_scoped(workspace):
+def test_revoke_token_is_workspace_scoped(ws):
     org = Org.objects.create(name="Other Org", slug="other-org")
     other = Workspace.objects.create(org=org, name="Other", slug="other")
     token, _ = generate_token(other, "cli")
-    revoke_token(workspace, token.id)
+    revoke_token(ws, token.id)
     assert list(list_tokens(other)) == [token]
 
 

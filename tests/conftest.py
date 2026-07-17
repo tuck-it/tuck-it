@@ -6,9 +6,12 @@ from tuckit.core.services.orgs import create_workspace
 
 
 @pytest.fixture
-def workspace(db):
+def org(db):
     org = Org.objects.create(name="Test Org", slug="test-org")
-    return create_workspace(org, "Test Workspace", slug="test-workspace")
+    # Workspace still exists until Task 12; create it so workspace-scoped code paths
+    # that have not migrated yet keep working.
+    create_workspace(org, "Test Workspace", slug="test-workspace")
+    return org
 
 
 @pytest.fixture

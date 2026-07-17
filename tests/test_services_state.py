@@ -21,14 +21,14 @@ from tuckit.core.services.state import (
 
 
 @pytest.fixture
-def workspace(db):
+def ws(db):
     org = Org.objects.create(name="Acme", slug="acme")
     return Workspace.objects.create(org=org, name="MyProduct", slug="myproduct", description="A demo product")
 
 
 @pytest.mark.django_db
-def test_project_state_buckets_by_status(workspace):
-    area = create_area(workspace, "Backend")
+def test_project_state_buckets_by_status(ws):
+    area = create_area(ws, "Backend")
     create_slice(area, "Auth", status="shipped")
     building = create_slice(area, "Payments", status="building")
     building_plan = create_plan(building, title="Plan")
@@ -37,7 +37,7 @@ def test_project_state_buckets_by_status(workspace):
     create_slice(area, "Notifications", status="planned")
     create_slice(area, "Someday idea", status="idea", tags=["someday"])
 
-    state = get_project_state(workspace)
+    state = get_project_state(ws)
     assert state["product"]["description"] == "A demo product"
     a = state["areas"][0]
     assert [s["title"] for s in a["shipped"]] == ["Auth"]
@@ -48,18 +48,18 @@ def test_project_state_buckets_by_status(workspace):
 
 
 @pytest.mark.django_db
-def test_project_state_can_scope_to_one_area(workspace):
-    a1 = create_area(workspace, "Backend")
-    create_area(workspace, "Frontend")
+def test_project_state_can_scope_to_one_area(ws):
+    a1 = create_area(ws, "Backend")
+    create_area(ws, "Frontend")
     create_slice(a1, "Auth", status="shipped")
-    state = get_project_state(workspace, area=a1)
+    state = get_project_state(ws, area=a1)
     assert len(state["areas"]) == 1
     assert state["areas"][0]["slug"] == a1.slug
 
 
 @pytest.mark.django_db
-def test_render_slice_markdown_includes_spec_and_bites(workspace):
-    area = create_area(workspace, "Backend")
+def test_render_slice_markdown_includes_spec_and_bites(ws):
+    area = create_area(ws, "Backend")
     s = create_slice(area, "Auth", spec="Support OAuth login.", status="building", tags=["feature"])
     p = create_plan(s, title="Plan")
     create_bite(p, "JWT", status="done")
@@ -74,8 +74,8 @@ def test_render_slice_markdown_includes_spec_and_bites(workspace):
 
 
 @pytest.mark.django_db
-def test_render_slice_markdown_includes_bite_body(workspace):
-    area = create_area(workspace, "Backend")
+def test_render_slice_markdown_includes_bite_body(ws):
+    area = create_area(ws, "Backend")
     s = create_slice(area, "Auth")
     p = create_plan(s, title="Plan")
     create_bite(p, "JWT", body="use RS256 keys")
@@ -85,11 +85,11 @@ def test_render_slice_markdown_includes_bite_body(workspace):
 
 
 @pytest.mark.django_db
-def test_someday_slice_is_exclusive_to_someday_bucket(workspace):
-    area = create_area(workspace, "Backend")
+def test_someday_slice_is_exclusive_to_someday_bucket(ws):
+    area = create_area(ws, "Backend")
     create_slice(area, "Planned someday", status="planned", tags=["someday"])
     create_slice(area, "Plain planned", status="planned")
-    state = get_project_state(workspace)
+    state = get_project_state(ws)
     a = state["areas"][0]
     assert [s["title"] for s in a["someday"]] == ["Planned someday"]
     # the #someday slice must NOT also appear in roadmap:
@@ -97,15 +97,15 @@ def test_someday_slice_is_exclusive_to_someday_bucket(workspace):
 
 
 @pytest.mark.django_db
-def test_counts_and_dropped_bite_excluded(workspace):
-    area = create_area(workspace, "Backend")
+def test_counts_and_dropped_bite_excluded(ws):
+    area = create_area(ws, "Backend")
     shipped = create_slice(area, "Auth", status="shipped")
     building = create_slice(area, "Payments", status="building")
     building_plan = create_plan(building, title="Plan")
     create_bite(building_plan, "Open", status="doing")
     create_bite(building_plan, "Done", status="done")
     create_bite(building_plan, "Dropped", status="dropped")
-    state = get_project_state(workspace)
+    state = get_project_state(ws)
     a = state["areas"][0]
     # only the 'doing' bite is open; done + dropped excluded:
     assert [b["title"] for b in a["building"][0]["open_bites"]] == ["Open"]
@@ -151,7 +151,8 @@ def test_home_state_buckets_across_areas_someday_excluded():
 def test_attention_items_include_reason_and_days():
     from tuckit.core.management.commands.bootstrap import ensure_bootstrap
 
-    ws, _ = ensure_bootstrap()
+    org, _ = ensure_bootstrap()
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
     inbox = get_or_create_triage(ws)
     s = create_slice(inbox, "오래된 캡처", status="idea")
     old = timezone.now() - timedelta(days=11)
@@ -216,7 +217,8 @@ def test_roadmap_and_in_progress_sort_by_area_name():
 def test_home_state_excludes_attention_from_building():
     from tuckit.core.management.commands.bootstrap import ensure_bootstrap
 
-    ws, _ = ensure_bootstrap()
+    org, _ = ensure_bootstrap()
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
     a = create_area(ws, "제품")
     s = create_slice(a, "정체된 작업", status="building")
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
@@ -227,104 +229,104 @@ def test_home_state_excludes_attention_from_building():
 
 
 @pytest.mark.django_db
-def test_cap_shipped_count_mode(workspace):
-    workspace.shipped_board_mode = "count"
-    workspace.shipped_board_limit = 2
-    a = create_area(workspace, "A")
+def test_cap_shipped_count_mode(ws):
+    ws.shipped_board_mode = "count"
+    ws.shipped_board_limit = 2
+    a = create_area(ws, "A")
     for i in range(5):
         create_slice(a, f"s{i}", status="shipped")
-    shipped = roadmap_state(workspace)["shipped"]
-    visible, total = cap_shipped(workspace, shipped)
+    shipped = roadmap_state(ws)["shipped"]
+    visible, total = cap_shipped(ws, shipped)
     assert total == 5
     assert len(visible) == 2
 
 
 @pytest.mark.django_db
-def test_cap_shipped_days_mode_excludes_old(workspace):
-    workspace.shipped_board_mode = "days"
-    workspace.shipped_board_limit = 30
-    a = create_area(workspace, "A")
+def test_cap_shipped_days_mode_excludes_old(ws):
+    ws.shipped_board_mode = "days"
+    ws.shipped_board_limit = 30
+    a = create_area(ws, "A")
     recent = create_slice(a, "recent", status="shipped")
     old = create_slice(a, "old", status="shipped")
     old.completed_at = timezone.now() - timedelta(days=90)
     old.save(update_fields=["completed_at"])
-    shipped = roadmap_state(workspace)["shipped"]
-    visible, total = cap_shipped(workspace, shipped)
+    shipped = roadmap_state(ws)["shipped"]
+    visible, total = cap_shipped(ws, shipped)
     assert total == 2
     titles = {s.title for s in visible}
     assert "recent" in titles and "old" not in titles
 
 
 @pytest.mark.django_db
-def test_shipped_sorted_newest_first(workspace):
-    a = create_area(workspace, "A")
+def test_shipped_sorted_newest_first(ws):
+    a = create_area(ws, "A")
     first = create_slice(a, "first", status="shipped")
     second = create_slice(a, "second", status="shipped")
     first.completed_at = timezone.now() - timedelta(days=5)
     first.save(update_fields=["completed_at"])
-    shipped = roadmap_state(workspace)["shipped"]
+    shipped = roadmap_state(ws)["shipped"]
     assert [s.title for s in shipped][:2] == ["second", "first"]
 
 
 @pytest.mark.django_db
-def test_roadmap_board_view_reports_overflow(workspace):
-    workspace.shipped_board_mode = "count"
-    workspace.shipped_board_limit = 1
-    a = create_area(workspace, "A")
+def test_roadmap_board_view_reports_overflow(ws):
+    ws.shipped_board_mode = "count"
+    ws.shipped_board_limit = 1
+    a = create_area(ws, "A")
     create_slice(a, "s1", status="shipped")
     create_slice(a, "s2", status="shipped")
-    view = roadmap_board_view(workspace)
+    view = roadmap_board_view(ws)
     assert view["shipped_total"] == 2
     assert view["shipped_hidden"] == 1
     shipped_group = dict(view["groups"])["shipped"]
     assert len(shipped_group) == 1
 
 
-def test_snapshot_today_first_day_has_no_deltas(workspace):
+def test_snapshot_today_first_day_has_no_deltas(ws):
     from tuckit.core.services.state import snapshot_today
     from tuckit.core.models import WorkspaceStatSnapshot
-    area = create_area(workspace, "Backend")
+    area = create_area(ws, "Backend")
     create_slice(area, "A", status="building")
     create_slice(area, "B", status="planned")
-    out = snapshot_today(workspace, home_state(workspace))
+    out = snapshot_today(ws, home_state(ws))
     assert out["building"] == {"value": 1, "delta": None}
     assert out["backlog"]["value"] == 1
     assert out["backlog"]["delta"] is None
     # exactly one row was written for today
-    assert WorkspaceStatSnapshot.objects.filter(workspace=workspace).count() == 1
+    assert WorkspaceStatSnapshot.objects.filter(workspace=ws).count() == 1
 
 
-def test_snapshot_today_is_idempotent_per_day(workspace):
+def test_snapshot_today_is_idempotent_per_day(ws):
     from tuckit.core.services.state import snapshot_today
     from tuckit.core.models import WorkspaceStatSnapshot
-    area = create_area(workspace, "Backend")
+    area = create_area(ws, "Backend")
     create_slice(area, "A", status="building")
-    snapshot_today(workspace, home_state(workspace))
-    snapshot_today(workspace, home_state(workspace))
-    assert WorkspaceStatSnapshot.objects.filter(workspace=workspace).count() == 1
+    snapshot_today(ws, home_state(ws))
+    snapshot_today(ws, home_state(ws))
+    assert WorkspaceStatSnapshot.objects.filter(workspace=ws).count() == 1
 
 
-def test_snapshot_today_delta_vs_prior_day(workspace):
+def test_snapshot_today_delta_vs_prior_day(ws):
     from datetime import timedelta as _td
     from django.utils import timezone as _tz
     from tuckit.core.services.state import snapshot_today
     from tuckit.core.models import WorkspaceStatSnapshot
-    area = create_area(workspace, "Backend")
+    area = create_area(ws, "Backend")
     create_slice(area, "A", status="building")
     # simulate yesterday's snapshot: 3 building
     yesterday = _tz.localdate() - _td(days=1)
     WorkspaceStatSnapshot.objects.create(
-        workspace=workspace, org=workspace.org, date=yesterday, building_ct=3, backlog_ct=0,
+        workspace=ws, org=ws.org, date=yesterday, building_ct=3, backlog_ct=0,
         shipped_week_ct=0, attention_ct=0,
     )
-    out = snapshot_today(workspace, home_state(workspace))
+    out = snapshot_today(ws, home_state(ws))
     assert out["building"] == {"value": 1, "delta": -2}  # 1 today vs 3 yesterday
 
 
 @pytest.mark.django_db
-def test_render_slice_markdown_includes_plan_and_constraints(workspace):
+def test_render_slice_markdown_includes_plan_and_constraints(ws):
     from tuckit.core.services.plans import create_plan
-    area = create_area(workspace, "Backend")
+    area = create_area(ws, "Backend")
     s = create_slice(area, "Auth", spec="design")
     create_plan(s, body="Goal: ship auth", constraints="no billing")
     md = render_slice_markdown(s)
@@ -333,9 +335,9 @@ def test_render_slice_markdown_includes_plan_and_constraints(workspace):
 
 
 @pytest.mark.django_db
-def test_render_slice_markdown_renders_every_plan(workspace):
+def test_render_slice_markdown_renders_every_plan(ws):
     from tuckit.core.services.plans import create_plan
-    area = create_area(workspace, "Backend")
+    area = create_area(ws, "Backend")
     s = create_slice(area, "Auth", spec="design")
     p1 = create_plan(s, title="Backend plan", body="Backend goal", constraints="no billing")
     p2 = create_plan(s, title="Frontend plan", body="Frontend goal")

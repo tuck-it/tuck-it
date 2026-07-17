@@ -56,48 +56,54 @@ def test_auth_chrome_defaults(rf):
     assert ctx["registration_open"] is False
     assert ctx["marketing_url"] == ""
 @pytest.mark.django_db
-def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, workspace):
-    from tuckit.core.models import ActivityEvent
+def test_onboarding_hidden_stays_hidden_after_area_deleted(client_local, org):
+    from tuckit.core.models import ActivityEvent, Workspace
     from tuckit.core.services.areas import delete_area
-    area = create_area(workspace, "Backend")
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    area = create_area(ws, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     p = create_plan(sl, title="Plan")
     create_bite(p, "Add backoff")
     ActivityEvent.objects.create(
-        workspace=workspace, org=workspace.org, actor="agent", verb="created",
+        workspace=ws, org=org, actor="agent", verb="created",
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+    p = f"/{org.slug}/{ws.slug}"
     # First load observes completion → sticky flag set.
     assert "Get started" not in client_local.get(f"{p}/").content.decode()
-    workspace.refresh_from_db()
-    assert workspace.onboarding_completed is True
+    ws.refresh_from_db()
+    assert ws.onboarding_completed is True
     # Delete the only Area → has_area now False, but widget must NOT return.
     delete_area(area)
     assert "Get started" not in client_local.get(f"{p}/").content.decode()
 
 
 @pytest.mark.django_db
-def test_onboarding_context_present_on_non_home_page(client_local, workspace):
-    p = f"/{workspace.org.slug}/{workspace.slug}"
+def test_onboarding_context_present_on_non_home_page(client_local, org):
+    from tuckit.core.models import Workspace
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    p = f"/{org.slug}/{ws.slug}"
     assert "Get started" in client_local.get(f"{p}/triage/").content.decode()
 
 
 @pytest.mark.django_db
-def test_onboarding_short_circuits_when_completed_or_dismissed(rf, workspace):
+def test_onboarding_short_circuits_when_completed_or_dismissed(rf, org):
     """Once a workspace is completed or dismissed, the widget can never show
     again, so the processor must bail out before running onboarding_state's
     ~6 queries (or the baseline query) at all."""
     from django.test.utils import CaptureQueriesContext
     from django.db import connection
+    from tuckit.core.models import Workspace
     from tuckit.web.context_processors import onboarding
 
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+
     for flag in ("onboarding_completed", "onboarding_dismissed"):
-        setattr(workspace, flag, True)
-        workspace.save(update_fields=[flag])
+        setattr(ws, flag, True)
+        ws.save(update_fields=[flag])
 
         request = rf.get("/")
-        request.workspace = workspace
+        request.workspace = ws
         request.user = type("Anon", (), {"is_authenticated": False})()
 
         with CaptureQueriesContext(connection) as ctx:
@@ -106,5 +112,5 @@ def test_onboarding_short_circuits_when_completed_or_dismissed(rf, workspace):
         assert result == {}
         assert len(ctx.captured_queries) == 0
 
-        setattr(workspace, flag, False)
-        workspace.save(update_fields=[flag])
+        setattr(ws, flag, False)
+        ws.save(update_fields=[flag])

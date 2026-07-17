@@ -7,40 +7,40 @@ from tuckit.core.services.slices import create_slice
 
 
 @pytest.fixture
-def workspace(db):
+def ws(db):
     org = Org.objects.create(name="Acme", slug="acme")
     return Workspace.objects.create(org=org, name="P", slug="p")
 
 
 @pytest.mark.django_db
-def test_create_area_autoslug_and_rank(workspace):
-    a = create_area(workspace, "Back End")
+def test_create_area_autoslug_and_rank(ws):
+    a = create_area(ws, "Back End")
     assert a.slug == "back-end"
     assert a.rank
 
 
 @pytest.mark.django_db
-def test_areas_are_ordered_by_creation_rank(workspace):
-    a = create_area(workspace, "First")
-    b = create_area(workspace, "Second")
-    assert list(list_areas(workspace)) == [a, b]
+def test_areas_are_ordered_by_creation_rank(ws):
+    a = create_area(ws, "First")
+    b = create_area(ws, "Second")
+    assert list(list_areas(ws)) == [a, b]
     assert a.rank < b.rank
 
 
 @pytest.mark.django_db
-def test_list_areas_excludes_archived_by_default(workspace):
-    a = create_area(workspace, "Kept")
-    archived = create_area(workspace, "Gone")
+def test_list_areas_excludes_archived_by_default(ws):
+    a = create_area(ws, "Kept")
+    archived = create_area(ws, "Gone")
     archived.archived = True
     archived.save()
-    assert list(list_areas(workspace)) == [a]
-    assert archived in list_areas(workspace, include_archived=True)
+    assert list(list_areas(ws)) == [a]
+    assert archived in list_areas(ws, include_archived=True)
 
 
 @pytest.mark.django_db
-def test_duplicate_name_gets_unique_slug(workspace):
-    a = create_area(workspace, "Backend")
-    b = create_area(workspace, "Backend")
+def test_duplicate_name_gets_unique_slug(ws):
+    a = create_area(ws, "Backend")
+    b = create_area(ws, "Backend")
     assert a.slug != b.slug
 
 
@@ -67,8 +67,8 @@ def test_triage_sorts_before_existing_areas():
 
 
 @pytest.mark.django_db
-def test_rename_area_changes_name_but_keeps_slug(workspace):
-    a = create_area(workspace, "Back End")
+def test_rename_area_changes_name_but_keeps_slug(ws):
+    a = create_area(ws, "Back End")
     original_slug = a.slug
     renamed = rename_area(a, "Platform")
     a.refresh_from_db()
@@ -78,16 +78,16 @@ def test_rename_area_changes_name_but_keeps_slug(workspace):
 
 
 @pytest.mark.django_db
-def test_rename_area_trims_whitespace(workspace):
-    a = create_area(workspace, "X")
+def test_rename_area_trims_whitespace(ws):
+    a = create_area(ws, "X")
     rename_area(a, "  Trimmed  ")
     a.refresh_from_db()
     assert a.name == "Trimmed"
 
 
 @pytest.mark.django_db
-def test_rename_area_rejects_blank(workspace):
-    a = create_area(workspace, "Keep")
+def test_rename_area_rejects_blank(ws):
+    a = create_area(ws, "Keep")
     with pytest.raises(InvalidValue):
         rename_area(a, "   ")
     a.refresh_from_db()
@@ -95,40 +95,40 @@ def test_rename_area_rejects_blank(workspace):
 
 
 @pytest.mark.django_db
-def test_delete_area_removes_it_and_cascades_slices(workspace):
-    a = create_area(workspace, "Doomed")
+def test_delete_area_removes_it_and_cascades_slices(ws):
+    a = create_area(ws, "Doomed")
     create_slice(a, "child idea", status="idea", source="human")
     delete_area(a)
-    assert not Area.objects.filter(workspace=workspace, name="Doomed").exists()
+    assert not Area.objects.filter(workspace=ws, name="Doomed").exists()
     from tuckit.core.models import Slice
     assert not Slice.objects.filter(area_id=a.id).exists()
 
 
 @pytest.mark.django_db
-def test_delete_area_refuses_triage(workspace):
-    triage = get_or_create_triage(workspace)
+def test_delete_area_refuses_triage(ws):
+    triage = get_or_create_triage(ws)
     with pytest.raises(InvalidValue):
         delete_area(triage)
     assert Area.objects.filter(id=triage.id).exists()
 
 
 @pytest.mark.django_db
-def test_reorder_area_moves_before_sibling(workspace):
-    a = create_area(workspace, "A")
-    b = create_area(workspace, "B")
-    c = create_area(workspace, "C")
+def test_reorder_area_moves_before_sibling(ws):
+    a = create_area(ws, "A")
+    b = create_area(ws, "B")
+    c = create_area(ws, "C")
     # move c before a  ->  C, A, B
     reorder_area(c, before=a)
-    ordered = list(list_areas(workspace))
+    ordered = list(list_areas(ws))
     assert [x.id for x in ordered] == [c.id, a.id, b.id]
 
 
 @pytest.mark.django_db
-def test_reorder_area_moves_after_sibling(workspace):
-    a = create_area(workspace, "A")
-    b = create_area(workspace, "B")
-    c = create_area(workspace, "C")
+def test_reorder_area_moves_after_sibling(ws):
+    a = create_area(ws, "A")
+    b = create_area(ws, "B")
+    c = create_area(ws, "C")
     # move a after b  ->  B, A, C
     reorder_area(a, after=b)
-    ordered = list(list_areas(workspace))
+    ordered = list(list_areas(ws))
     assert [x.id for x in ordered] == [b.id, a.id, c.id]

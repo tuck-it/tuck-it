@@ -4,6 +4,8 @@ import pytest
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
 
+from tuckit.core.models import Workspace
+
 
 @pytest.mark.django_db(transaction=True)
 def test_backfill_creates_org_and_migrates_membership():
@@ -40,14 +42,15 @@ def test_backfill_creates_org_and_migrates_membership():
 
 
 @pytest.mark.django_db
-def test_dismissed_workspace_backfilled_completed(workspace):
+def test_dismissed_workspace_backfilled_completed(org):
     from django.apps import apps
-    workspace.onboarding_dismissed = True
-    workspace.onboarding_completed = False
-    workspace.save(update_fields=["onboarding_dismissed", "onboarding_completed"])
+    ws = Workspace.objects.get(org=org)  # TODO(task-5): pass org directly
+    ws.onboarding_dismissed = True
+    ws.onboarding_completed = False
+    ws.save(update_fields=["onboarding_dismissed", "onboarding_completed"])
     mod = importlib.import_module(
         "tuckit.core.migrations.0012_workspace_onboarding_completed"
     )
     mod.backfill_completed(apps, None)
-    workspace.refresh_from_db()
-    assert workspace.onboarding_completed is True
+    ws.refresh_from_db()
+    assert ws.onboarding_completed is True
