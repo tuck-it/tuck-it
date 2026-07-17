@@ -1,12 +1,12 @@
 import pytest
 
-from tuckit.core.models import Area, Org, OrgMember, User, Workspace
+from tuckit.core.models import Area, OrgMember, User
 from tuckit.core.services.accounts import register
 from tuckit.core.services.exceptions import InvalidValue
 
 
 @pytest.mark.django_db
-def test_register_creates_user_and_org_no_workspace():
+def test_register_creates_user_and_org():
     user, org = register(
         email="a@b.com", org_name="Space", slug="space", password="pw123456"
     )
@@ -16,7 +16,6 @@ def test_register_creates_user_and_org_no_workspace():
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
     assert Area.objects.filter(org=org, is_triage=True).count() == 1
     assert Area.objects.filter(org=org, is_triage=False).count() == 0
-    assert Workspace.objects.filter(org=org).count() == 0
 
 
 @pytest.mark.django_db

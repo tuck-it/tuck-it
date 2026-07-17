@@ -2,14 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from tuckit.core.models import Workspace
 
 APP_CSS = Path(__file__).resolve().parents[2] / "tuckit" / "web" / "static" / "web" / "app.css"
 
 
 @pytest.mark.django_db
 def test_sidebar_uses_tuckit_wordmark(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert ">tuckit<" in body
@@ -18,7 +16,6 @@ def test_sidebar_uses_tuckit_wordmark(client_local, org):
 
 @pytest.mark.django_db
 def test_page_head_present_with_title(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="page-head"' in body
@@ -27,7 +24,6 @@ def test_page_head_present_with_title(client_local, org):
 
 @pytest.mark.django_db
 def test_mobile_topbar_and_menu_present(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="topbar-mobile"' in body
@@ -57,7 +53,6 @@ def test_switchable_orgs_sorted_by_name(client_local, org):
 
 @pytest.mark.django_db
 def test_switcher_is_custom_popover_not_native_select(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="ws-switch"' in body            # custom trigger button
@@ -69,7 +64,6 @@ def test_switcher_is_custom_popover_not_native_select(client_local, org):
 
 @pytest.mark.django_db
 def test_nav_is_home_inbox_board_only(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     i_home = body.find(">Home<")
@@ -90,7 +84,6 @@ def test_nav_is_home_inbox_board_only(client_local, org):
 
 @pytest.mark.django_db
 def test_bottom_utility_row_replaces_bordered_theme_button(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="util-row"' in body                 # compact icon row present
@@ -101,7 +94,6 @@ def test_bottom_utility_row_replaces_bordered_theme_button(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_button_still_rendered(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="capture-btn"' in body

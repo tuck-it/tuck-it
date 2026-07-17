@@ -1,36 +1,35 @@
 import pytest
-from tuckit.core.models import ActivityEvent, Org, Workspace
+from tuckit.core.models import ActivityEvent, Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.bites import create_bite, set_bite_status, update_bite
 from tuckit.core.services.plans import create_plan
 
 
-def _ws(slug="w"):
-    org = Org.objects.create(name="Acme", slug=f"acme-{slug}")
-    return Workspace.objects.create(org=org, name="W", slug=slug)
+def _org(slug="w"):
+    return Org.objects.create(name="Acme", slug=f"acme-{slug}")
 
 
-def _slice(ws):
-    return create_slice(create_area(ws.org, "Backend"), "S", status="building")
+def _slice(org):
+    return create_slice(create_area(org, "Backend"), "S", status="building")
 
 
-def _plan(ws):
-    return create_plan(_slice(ws), title="Plan")
+def _plan(org):
+    return create_plan(_slice(org), title="Plan")
 
 
 @pytest.mark.django_db
 def test_create_bite_records_created():
-    ws = _ws()
-    create_bite(_plan(ws), "구현", status="todo", source="agent")
+    org = _org()
+    create_bite(_plan(org), "구현", status="todo", source="agent")
     e = ActivityEvent.objects.get(verb="created", target_type="bite")
     assert e.actor == "agent" and e.target_label == "구현"
 
 
 @pytest.mark.django_db
 def test_set_bite_status_records_transition_with_actor():
-    ws = _ws("w2")
-    b = create_bite(_plan(ws), "구현", status="todo")
+    org = _org("w2")
+    b = create_bite(_plan(org), "구현", status="todo")
     ActivityEvent.objects.all().delete()
     set_bite_status(b, "doing", actor="human")
     e = ActivityEvent.objects.get()
@@ -40,8 +39,8 @@ def test_set_bite_status_records_transition_with_actor():
 
 @pytest.mark.django_db
 def test_bite_status_noop_records_nothing():
-    ws = _ws("w3")
-    b = create_bite(_plan(ws), "구현", status="doing")
+    org = _org("w3")
+    b = create_bite(_plan(org), "구현", status="doing")
     ActivityEvent.objects.all().delete()
     set_bite_status(b, "doing")
     assert ActivityEvent.objects.count() == 0
@@ -50,8 +49,8 @@ def test_bite_status_noop_records_nothing():
 @pytest.mark.django_db
 def test_agent_status_change_records_agent_actor():
     from tuckit.core.services.slices import set_slice_status
-    ws = _ws("w4")
-    s = _slice(ws)
+    org = _org("w4")
+    s = _slice(org)
     ActivityEvent.objects.all().delete()
     set_slice_status(s, "shipped", actor="agent")   # how MCP calls it
     assert ActivityEvent.objects.get().actor == "agent"

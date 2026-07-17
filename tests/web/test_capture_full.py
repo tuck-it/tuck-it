@@ -5,19 +5,18 @@ complete slice and redirects the user into it. Bites are no longer authored
 from capture — they live under a Slice's Plan section."""
 import pytest
 
-from tuckit.core.models import Slice, Workspace
+from tuckit.core.models import Slice
 from tuckit.core.services.areas import create_area, get_or_create_triage
 
 
-P = lambda ws: f"/{ws.org.slug}"
+P = lambda org: f"/{org.slug}"
 
 
 @pytest.mark.django_db
 def test_capture_title_only_stays_quick(client_local, org):
     """Title-only keeps today's behavior: Inbox/idea, 200 toast bundle, no redirect."""
-    ws = Workspace.objects.get(org=org)
-    get_or_create_triage(ws.org)
-    resp = client_local.post(f"{P(ws)}/capture", {"title": "quick one"}, HTTP_HX_REQUEST="true")
+    get_or_create_triage(org)
+    resp = client_local.post(f"{P(org)}/capture", {"title": "quick one"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     assert "HX-Redirect" not in resp
     s = Slice.objects.get(title="quick one")
@@ -26,8 +25,7 @@ def test_capture_title_only_stays_quick(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_rich_creates_full_slice_and_redirects(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    resp = client_local.post(f"{P(ws)}/capture", {
+    resp = client_local.post(f"{P(org)}/capture", {
         "title": "결제 연동",
         "spec": "Paddle webhook 처리",
         "status": "planned",
@@ -43,10 +41,9 @@ def test_capture_rich_creates_full_slice_and_redirects(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_rich_into_explicit_area(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    backend = create_area(ws.org, "Backend")
+    backend = create_area(org, "Backend")
     resp = client_local.post(
-        f"{P(ws)}/capture", {"title": "in area", "area_id": backend.id}, HTTP_HX_REQUEST="true"
+        f"{P(org)}/capture", {"title": "in area", "area_id": backend.id}, HTTP_HX_REQUEST="true"
     )
     assert resp.status_code == 204
     s = Slice.objects.get(title="in area")
@@ -57,9 +54,8 @@ def test_capture_rich_into_explicit_area(client_local, org):
 @pytest.mark.django_db
 def test_capture_status_change_alone_is_rich(client_local, org):
     """Bumping the status off the default (idea) is enough to count as authoring."""
-    ws = Workspace.objects.get(org=org)
     resp = client_local.post(
-        f"{P(ws)}/capture", {"title": "planned thing", "status": "building"}, HTTP_HX_REQUEST="true"
+        f"{P(org)}/capture", {"title": "planned thing", "status": "building"}, HTTP_HX_REQUEST="true"
     )
     assert resp.status_code == 204
     assert "HX-Redirect" in resp
@@ -68,9 +64,8 @@ def test_capture_status_change_alone_is_rich(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_requires_title(client_local, org):
-    ws = Workspace.objects.get(org=org)
     resp = client_local.post(
-        f"{P(ws)}/capture", {"title": "   ", "spec": "orphan"}, HTTP_HX_REQUEST="true"
+        f"{P(org)}/capture", {"title": "   ", "spec": "orphan"}, HTTP_HX_REQUEST="true"
     )
     assert resp.status_code == 400
     assert not Slice.objects.filter(spec="orphan").exists()
@@ -78,9 +73,8 @@ def test_capture_requires_title(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_invalid_status_400_creates_nothing(client_local, org):
-    ws = Workspace.objects.get(org=org)
     resp = client_local.post(
-        f"{P(ws)}/capture", {"title": "bad status", "status": "blocked"}, HTTP_HX_REQUEST="true"
+        f"{P(org)}/capture", {"title": "bad status", "status": "blocked"}, HTTP_HX_REQUEST="true"
     )
     assert resp.status_code == 400
     assert not Slice.objects.filter(title="bad status").exists()
@@ -88,9 +82,8 @@ def test_capture_invalid_status_400_creates_nothing(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_modal_renders_full_form(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    create_area(ws.org, "Backend")
-    body = client_local.get(f"{P(ws)}/triage/").content.decode()
+    create_area(org, "Backend")
+    body = client_local.get(f"{P(org)}/triage/").content.decode()
     # required title + the optional authoring controls
     assert 'name="title"' in body
     assert 'name="area_id"' in body

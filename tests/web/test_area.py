@@ -1,14 +1,12 @@
 import pytest
-from tuckit.core.models import Workspace
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 
 
 @pytest.mark.django_db
 def test_area_view_groups_by_status(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     create_slice(a, "결제 도입", status="building")
     create_slice(a, "로그인 XSS", status="planned")
     resp = client_local.get(f"{p}/areas/{a.slug}/")
@@ -19,20 +17,17 @@ def test_area_view_groups_by_status(client_local, org):
 
 @pytest.mark.django_db
 def test_area_view_other_workspace_404(client_local, org):
-    from tuckit.core.models import Org, Workspace
+    from tuckit.core.models import Org
     from tuckit.core.services.areas import create_area
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     other_org = Org.objects.create(name="Other Org", slug="other-org")
-    other = Workspace.objects.create(org=other_org, name="O", slug="o")
-    a = create_area(other.org, "Secret")
+    a = create_area(other_org, "Secret")
     assert client_local.get(f"{p}/areas/{a.slug}/").status_code == 404
 
 
 @pytest.mark.django_db
 def test_area_header_uses_page_head_and_description(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     p = f"/{org.slug}"
     a.description = "Payments and auth."
     a.save()
@@ -45,9 +40,8 @@ def test_area_header_uses_page_head_and_description(client_local, org):
 
 @pytest.mark.django_db
 def test_area_header_omits_description_when_blank(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
-    a = create_area(ws.org, "Backend")  # description defaults to ""
+    a = create_area(org, "Backend")  # description defaults to ""
     body = client_local.get(f"{p}/areas/{a.slug}/").content.decode()
     assert 'class="page-head"' in body
     assert 'class="area-desc"' not in body
@@ -55,8 +49,7 @@ def test_area_header_omits_description_when_blank(client_local, org):
 
 @pytest.mark.django_db
 def test_area_list_collapses_shipped_and_dropped(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     create_slice(a, "building one", status="building")
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "dropped one", status="dropped")
@@ -76,9 +69,8 @@ def test_area_list_collapses_shipped_and_dropped(client_local, org):
 
 @pytest.mark.django_db
 def test_area_list_empty_copy_is_english(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
-    a = create_area(ws.org, "Empty")
+    a = create_area(org, "Empty")
     body = client_local.get(f"{p}/areas/{a.slug}/").content.decode()
     assert "No slices yet." in body
     assert "아직 Slice가 없어요" not in body
@@ -87,9 +79,8 @@ def test_area_list_empty_copy_is_english(client_local, org):
 @pytest.mark.django_db
 def test_add_slice_creates_idea_slice_in_area(client_local, org):
     from tuckit.core.models import Slice
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     resp = client_local.post(f"{p}/areas/{a.slug}/slices", {"title": "new idea"},
                              HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
@@ -103,9 +94,8 @@ def test_add_slice_creates_idea_slice_in_area(client_local, org):
 @pytest.mark.django_db
 def test_add_slice_ignores_blank_title(client_local, org):
     from tuckit.core.models import Slice
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     resp = client_local.post(f"{p}/areas/{a.slug}/slices", {"title": "   "},
                              HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
@@ -115,8 +105,7 @@ def test_add_slice_ignores_blank_title(client_local, org):
 
 @pytest.mark.django_db
 def test_area_page_autoopens_slice_add_on_focus_hint(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/areas/{area.slug}/?focus=slice").content.decode()
     assert "ob-focus-slice" in body
@@ -124,12 +113,10 @@ def test_area_page_autoopens_slice_add_on_focus_hint(client_local, org):
 
 @pytest.mark.django_db
 def test_add_slice_other_workspace_404(client_local, org):
-    from tuckit.core.models import Org, Workspace
-    ws = Workspace.objects.get(org=org)
+    from tuckit.core.models import Org
     p = f"/{org.slug}"
     other_org = Org.objects.create(name="Other Org", slug="other-org")
-    other = Workspace.objects.create(org=other_org, name="O", slug="o")
-    a = create_area(other.org, "Secret")
+    a = create_area(other_org, "Secret")
     resp = client_local.post(f"{p}/areas/{a.slug}/slices", {"title": "x"},
                              HTTP_HX_REQUEST="true")
     assert resp.status_code == 404

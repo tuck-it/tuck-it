@@ -17,11 +17,10 @@ from tuckit.core.models import (
     Invitation,
     Org,
     OrgMember,
+    OrgStatSnapshot,
     Slice,
     Tag,
     User,
-    Workspace,
-    WorkspaceStatSnapshot,
 )
 
 CORE_MODELS = [
@@ -29,9 +28,8 @@ CORE_MODELS = [
     Org,
     OrgMember,
     Invitation,
-    Workspace,
     ApiToken,
-    WorkspaceStatSnapshot,
+    OrgStatSnapshot,
     Tag,
     Area,
     Slice,

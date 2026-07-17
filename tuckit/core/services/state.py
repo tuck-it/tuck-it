@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from tuckit.core.models import Area, Bite, Org, Slice, WorkspaceStatSnapshot
+from tuckit.core.models import Area, Bite, Org, Slice, OrgStatSnapshot
 from tuckit.core.services.bites import list_bites, slice_bites
 from tuckit.core.services.plans import list_plans
 from tuckit.core.services.slices import list_slices
@@ -126,11 +126,8 @@ def snapshot_today(org: Org, state: dict) -> dict:
     scheduler. delta is None on the first day (no prior row) so the UI shows
     a value with no movement line.
 
-    Org-scoped (workspace= is no longer written — WorkspaceStatSnapshot.workspace
-    is nullable now, see task-5-report.md Option B fix). The DB uniqueness is
-    still (workspace, date), not (org, date) (Task 12 moves it), but since new
-    rows always have workspace=None that constraint no longer disambiguates
-    anything for us — the org+date lookup below is the real key going forward."""
+    Org-scoped: OrgStatSnapshot is keyed by (org, date) via
+    uniq_org_snapshot_per_day."""
     today = timezone.localdate()
     building_ct = len(state["building"])
     backlog_ct = len(state["planned"]) + len(state["ideas"]) + len(state["someday"])
@@ -140,7 +137,7 @@ def snapshot_today(org: Org, state: dict) -> dict:
     )
     attention_ct = len(state["attention"])
 
-    WorkspaceStatSnapshot.objects.update_or_create(
+    OrgStatSnapshot.objects.update_or_create(
         org=org,
         date=today,
         defaults={
@@ -151,7 +148,7 @@ def snapshot_today(org: Org, state: dict) -> dict:
         },
     )
     prior = (
-        WorkspaceStatSnapshot.objects
+        OrgStatSnapshot.objects
         .filter(org=org, date__lt=today)
         .order_by("-date")
         .first()

@@ -10,7 +10,7 @@ from tuckit.core.mcp.server import (
     set_slice_status,
     update_slice,
 )
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.exceptions import InvalidValue, NotFound
 from tuckit.core.services.tokens import generate_token
@@ -20,22 +20,18 @@ from tests.test_mcp_tools_state import make_ctx
 @sync_to_async
 def _seed():
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="P", slug="p")
-    # A different org, not just a different workspace: Org is now the tenant
-    # boundary (Task 5 moves resolve.get_area/etc to org-scoped lookups), so
-    # cross-tenant rejection must be tested across orgs, not sibling
-    # workspaces of the same org.
+    # Org is the tenant boundary (resolve.get_area/etc are org-scoped), so
+    # cross-tenant rejection must be tested across orgs.
     other_org = Org.objects.create(name="Other Org", slug="other-org")
-    other = Workspace.objects.create(org=other_org, name="O", slug="o")
     _, raw = generate_token(org, "t")
-    area = create_area(ws.org, "Backend")
-    return ws, other, raw, area.id
+    area = create_area(org, "Backend")
+    return org, other_org, raw, area.id
 
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_create_list_and_render_slice():
-    _ws, _other, raw, area_id = await _seed()
+    _org, _other_org, raw, area_id = await _seed()
     ctx = make_ctx(raw)
     s = await create_slice(ctx, area_id, "Auth", spec="OAuth login.", status="building", tags=["feature"])
     assert s["status"] == "building"
@@ -48,7 +44,7 @@ async def test_create_list_and_render_slice():
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_status_and_reorder():
-    _ws, _other, raw, area_id = await _seed()
+    _org, _other_org, raw, area_id = await _seed()
     ctx = make_ctx(raw)
     a = await create_slice(ctx, area_id, "A")
     b = await create_slice(ctx, area_id, "B")
@@ -64,7 +60,7 @@ async def test_status_and_reorder():
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_bad_status_rejected():
-    _ws, _other, raw, area_id = await _seed()
+    _org, _other_org, raw, area_id = await _seed()
     ctx = make_ctx(raw)
     with pytest.raises(InvalidValue):
         await create_slice(ctx, area_id, "X", status="blocked")
@@ -72,14 +68,14 @@ async def test_bad_status_rejected():
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-async def test_cross_workspace_area_rejected():
-    _ws, other, _raw, area_id = await _seed()
+async def test_cross_org_area_rejected():
+    _org, other_org, _raw, area_id = await _seed()
 
     @sync_to_async
     def other_token():
-        _, raw = generate_token(other.org, "t2")
+        _, raw = generate_token(other_org, "t2")
         return raw
 
     raw2 = await other_token()
     with pytest.raises(NotFound):
-        await create_slice(make_ctx(raw2), area_id, "X")  # area belongs to ws, not other
+        await create_slice(make_ctx(raw2), area_id, "X")  # area belongs to org, not other_org

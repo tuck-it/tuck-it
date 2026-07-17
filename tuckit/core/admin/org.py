@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tuckit.core.models import Invitation, Org, OrgMember, Workspace
+from tuckit.core.models import Invitation, Org, OrgMember
 
 
 class OrgMemberInline(admin.TabularInline):
@@ -10,20 +10,12 @@ class OrgMemberInline(admin.TabularInline):
     readonly_fields = ("created_at",)
 
 
-class WorkspaceInline(admin.TabularInline):
-    model = Workspace
-    extra = 0
-    show_change_link = True
-    fields = ("name", "slug", "created_at")
-    readonly_fields = ("created_at",)
-
-
 @admin.register(Org)
 class OrgAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "created_at")
     search_fields = ("name", "slug")
     readonly_fields = ("created_at",)
-    inlines = [OrgMemberInline, WorkspaceInline]
+    inlines = [OrgMemberInline]
 
 
 @admin.register(OrgMember)

@@ -1,7 +1,7 @@
 import pytest
 from django.test import override_settings
 
-from tuckit.core.models import Area, Org, User, Workspace
+from tuckit.core.models import Area, Org, User
 
 
 @pytest.mark.django_db
@@ -19,11 +19,11 @@ def test_self_service_register_lands_on_home(client):
 
 @pytest.mark.django_db
 @override_settings(REGISTRATION_OPEN=True)
-def test_self_service_register_creates_exactly_one_org_and_triage_no_workspace(client):
+def test_self_service_register_creates_exactly_one_org_and_triage(client):
     """Regression for the original bug: signup used to create an Org AND an
     auto-named Workspace, redirecting to /<org_slug>/<workspace_slug>/ instead
-    of the flat /<org_slug>/ the app now serves. Assert the fix: one Org, one
-    Triage Area, and zero Workspace rows for the new user."""
+    of the flat /<org_slug>/ the app now serves. Assert the fix: one Org and
+    one Triage Area for the new user (the Workspace model is gone entirely)."""
     r = client.post("/register/", {
         "email": "logical@example.com", "org_name": "Logical Org",
         "slug": "logical-org", "password": "pw12345678",
@@ -36,4 +36,3 @@ def test_self_service_register_creates_exactly_one_org_and_triage_no_workspace(c
     org = orgs.get()
     assert org.slug == "logical-org"
     assert Area.objects.filter(org=org, is_triage=True).count() == 1
-    assert Workspace.objects.filter(org=org).count() == 0

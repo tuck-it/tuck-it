@@ -1,26 +1,13 @@
 from django.db import transaction
 
-from tuckit.core.models import Org, OrgMember, Workspace
+from tuckit.core.models import Org, OrgMember
 from tuckit.core.services.areas import get_or_create_triage
 from tuckit.core.services.exceptions import InvalidValue
-from tuckit.core.services.slugs import RESERVED_ORG_SLUGS, RESERVED_WORKSPACE_SLUGS, validate_slug
-
-
-def accessible_workspaces(user):
-    org_ids = OrgMember.objects.filter(user=user).values_list("org_id", flat=True)
-    return (
-        Workspace.objects.filter(org_id__in=list(org_ids))
-        .select_related("org")
-        .order_by("org__name", "name")
-    )
+from tuckit.core.services.slugs import RESERVED_ORG_SLUGS, validate_slug
 
 
 def accessible_orgs(user):
     return Org.objects.filter(members__user=user).order_by("name")
-
-
-def user_can_access_workspace(user, workspace) -> bool:
-    return OrgMember.objects.filter(user=user, org_id=workspace.org_id).exists()
 
 
 def is_org_admin(user, org) -> bool:
@@ -29,35 +16,6 @@ def is_org_admin(user, org) -> bool:
 
 def seat_count(org) -> int:
     return OrgMember.objects.filter(org=org).count()
-
-
-def _unique_ws_slug(org: Org, name: str) -> str:
-    from django.utils.text import slugify
-
-    base = slugify(name)[:32].strip("-") or "workspace"
-    if len(base) < 2:
-        base = (base + "workspace")[:32]
-    if base in RESERVED_WORKSPACE_SLUGS:
-        base = f"{base}-ws"
-    candidate = base
-    i = 2
-    while Workspace.objects.filter(org=org, slug=candidate).exists():
-        suffix = f"-{i}"
-        candidate = base[: 32 - len(suffix)].rstrip("-") + suffix
-        i += 1
-    return candidate
-
-
-def create_workspace(org: Org, name: str, slug: str | None = None) -> Workspace:
-    name = " ".join((name or "").split())
-    if not name:
-        raise InvalidValue("워크스페이스 이름을 입력하세요")
-    if Workspace.objects.filter(org=org, name__iexact=name).exists():
-        raise InvalidValue(f"이미 같은 이름의 워크스페이스가 있습니다: {name}")
-    slug = validate_slug(slug, kind="workspace") if slug else _unique_ws_slug(org, name)
-    ws = Workspace.objects.create(org=org, name=name, slug=slug)
-    get_or_create_triage(org)
-    return ws
 
 
 def _unique_org_slug(name: str) -> str:
@@ -84,7 +42,7 @@ def create_org(user, *, name: str, slug: str | None = None) -> Org:
     name = (name or "").strip()
     if not name:
         raise InvalidValue("Enter an organization name.")
-    slug = validate_slug(slug, kind="org") if slug else _unique_org_slug(name)
+    slug = validate_slug(slug) if slug else _unique_org_slug(name)
     if Org.objects.filter(slug=slug).exists():
         raise InvalidValue(f"That organization slug is already taken: {slug}")
     org = Org.objects.create(name=name, slug=slug)
@@ -114,17 +72,6 @@ def rename_org(org: Org, name: str, description: str | None = None) -> Org:
     return org
 
 
-def rename_workspace(ws: Workspace, name: str) -> Workspace:
-    name = " ".join((name or "").split())
-    if not name:
-        raise InvalidValue("워크스페이스 이름을 입력하세요")
-    if Workspace.objects.filter(org=ws.org, name__iexact=name).exclude(pk=ws.pk).exists():
-        raise InvalidValue(f"이미 같은 이름의 워크스페이스가 있습니다: {name}")
-    ws.name = name
-    ws.save(update_fields=["name", "updated_at"])
-    return ws
-
-
 def list_org_members(org: Org):
     return OrgMember.objects.filter(org=org).select_related("user").order_by("created_at")
 
@@ -149,24 +96,15 @@ def remove_member(org: Org, *, member: OrgMember) -> None:
     member.delete()
 
 
-def delete_workspace(workspace: Workspace) -> None:
-    if Workspace.objects.filter(org=workspace.org).count() <= 1:
-        raise InvalidValue("조직의 마지막 워크스페이스는 삭제할 수 없습니다")
-    workspace.delete()
-
-
 def list_user_orgs(user) -> list[dict]:
     rows = []
     memberships = (
         OrgMember.objects.filter(user=user).select_related("org").order_by("org__name")
     )
     for m in memberships:
-        workspaces = list(Workspace.objects.filter(org=m.org).order_by("name"))
         rows.append({
             "org": m.org,
             "role": m.role,
-            "workspace_count": len(workspaces),
-            "workspaces": workspaces,
         })
     return rows
 

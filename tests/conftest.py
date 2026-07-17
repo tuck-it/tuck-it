@@ -2,15 +2,13 @@ import sys
 import pytest
 
 from tuckit.core.models import Org
-from tuckit.core.services.orgs import create_workspace
+from tuckit.core.services.areas import get_or_create_triage
 
 
 @pytest.fixture
 def org(db):
     org = Org.objects.create(name="Test Org", slug="test-org")
-    # Workspace still exists until Task 12; create it so workspace-scoped code paths
-    # that have not migrated yet keep working.
-    create_workspace(org, "Test Workspace", slug="test-workspace")
+    get_or_create_triage(org)
     return org
 
 

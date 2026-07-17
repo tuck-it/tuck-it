@@ -1,6 +1,6 @@
 import pytest
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import (
     create_slice,
@@ -15,8 +15,7 @@ from tuckit.core.services.slices import (
 @pytest.fixture
 def area(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="P", slug="p")
-    return create_area(ws.org, "Backend")
+    return create_area(org, "Backend")
 
 
 @pytest.mark.django_db
@@ -91,8 +90,7 @@ def test_create_slice_before_inserts_between(area):
 @pytest.mark.django_db
 def test_slice_tags_never_leak_across_orgs(area):
     other_org = Org.objects.create(name="Other Org", slug="other-org")
-    other_ws = Workspace.objects.create(org=other_org, name="Other", slug="other")
-    other_area = create_area(other_ws.org, "Backend")
+    other_area = create_area(other_org, "Backend")
     s1 = create_slice(area, "One", tags=["bug"])
     s2 = create_slice(other_area, "Two", tags=["bug"])
     tag1 = s1.tags.get()
@@ -105,9 +103,8 @@ def test_slice_tags_never_leak_across_orgs(area):
 @pytest.mark.django_db
 def test_set_slice_area_moves_and_reranks():
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="W", slug="w")
-    inbox = create_area(ws.org, "Inbox")
-    backend = create_area(ws.org, "Backend")
+    inbox = create_area(org, "Inbox")
+    backend = create_area(org, "Backend")
     s = create_slice(inbox, "captured thing")
     set_slice_area(s, backend)
     s.refresh_from_db()

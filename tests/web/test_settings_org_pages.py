@@ -1,7 +1,6 @@
 import pytest
 
 from tuckit.core.models import Invitation, Org, OrgMember, User
-from tuckit.core.services.orgs import create_workspace
 
 
 @pytest.fixture
@@ -11,14 +10,13 @@ def ctx(client, db):
     OrgMember.objects.create(user=owner, org=org, role="owner")
     member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
-    ws = create_workspace(org, "Product")
     client.force_login(owner)
-    return client, org, owner, member, ws
+    return client, org, owner, member
 
 
 @pytest.mark.django_db
 def test_members_page_lists_members_and_invite_form(ctx):
-    client, org, owner, member, ws = ctx
+    client, org, owner, member = ctx
     Invitation.objects.create(org=org, email="p@x.com", role="member", token="t1")
     body = client.get(f"/{org.slug}/settings/members").content.decode()
     assert "o@a.com" in body and "m@a.com" in body
@@ -29,7 +27,7 @@ def test_members_page_lists_members_and_invite_form(ctx):
 
 @pytest.mark.django_db
 def test_danger_page_owner_only(ctx):
-    client, org, owner, member, ws = ctx
+    client, org, owner, member = ctx
     assert client.get(f"/{org.slug}/settings/danger").status_code == 200
     client.force_login(member)
     body = client.get(f"/{org.slug}/settings/danger").content.decode()
@@ -38,7 +36,7 @@ def test_danger_page_owner_only(ctx):
 
 @pytest.mark.django_db
 def test_member_role_mutation_at_new_path(ctx):
-    client, org, owner, member, ws = ctx
+    client, org, owner, member = ctx
     om = OrgMember.objects.get(org=org, user=member)
     resp = client.post(f"/{org.slug}/settings/members/{om.id}/role", {"role": "admin"})
     assert resp.status_code == 200

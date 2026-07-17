@@ -3,7 +3,6 @@ from django.test import override_settings
 
 from tuckit.core.entitlements import Entitlements
 from tuckit.core.models import Org, OrgMember, User
-from tuckit.core.services.orgs import create_workspace
 
 
 def _limit_1(org):
@@ -18,10 +17,9 @@ def test_invite_over_limit_returns_402(client):
     owner.set_password("tuckit-seed-pw-9x2")
     owner.save()
     OrgMember.objects.create(user=owner, org=org, role="owner")  # 1 member == limit 1
-    ws = create_workspace(org, "Board")
     client.force_login(owner)
     session = client.session
-    session["active_org_id"] = ws.org_id
+    session["active_org_id"] = org.id
     session.save()
 
     resp = client.post(f"/{org.slug}/settings/invites", {"email": "new@x.com", "role": "member"})

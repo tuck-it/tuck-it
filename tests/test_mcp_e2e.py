@@ -19,7 +19,7 @@ import json
 import pytest
 from starlette.testclient import TestClient
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.tokens import generate_token
@@ -32,10 +32,9 @@ _HEADERS_BASE = {
 
 @pytest.mark.django_db(transaction=True)
 def test_mcp_streamable_http_round_trip_returns_real_state(asgi_app):
-    # Seed a real org/workspace/area/slice and a real hashed API token.
+    # Seed a real org/area/slice and a real hashed API token.
     org = Org.objects.create(name="Acme", slug="acme", description="demo product")
-    workspace = Workspace.objects.create(org=org, name="MyProduct", slug="myproduct")
-    area = create_area(workspace.org, "Backend")
+    area = create_area(org, "Backend")
     create_slice(area, "Auth", status="shipped")
     _token, raw_token = generate_token(org, "e2e-token")
 

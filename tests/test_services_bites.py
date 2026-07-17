@@ -1,6 +1,6 @@
 import pytest
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.bites import (
     bite_progress,
@@ -17,8 +17,7 @@ from tuckit.core.services.slices import create_slice
 @pytest.fixture
 def slice_(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="P", slug="p")
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     return create_slice(area, "Auth")
 
 
@@ -66,8 +65,7 @@ def test_reorder_bite_to_front(plan_):
 @pytest.mark.django_db
 def test_bite_progress_counts_done_over_non_dropped():
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="W", slug="w")
-    area = create_area(ws.org, "A")
+    area = create_area(org, "A")
     s = create_slice(area, "S")
     p = create_plan(s, title="Plan")
     create_bite(p, "a", status="done")

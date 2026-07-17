@@ -1,20 +1,18 @@
 import pytest
 
-from tuckit.core.models import Workspace
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.bites import create_bite
 from tuckit.core.services.plans import create_plan
 
 
-def _p(ws):
-    return f"/{ws.org.slug}"
+def _p(org):
+    return f"/{org.slug}"
 
 
 @pytest.mark.django_db
 def test_widget_shows_four_steps_on_fresh_home(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    body = client_local.get(f"{_p(org)}/").content.decode()
     assert 'id="onboarding-widget"' in body
     assert "Create your first Area" in body
     assert "Add your first Slice" in body
@@ -30,17 +28,15 @@ def test_widget_shows_four_steps_on_fresh_home(client_local, org):
 @pytest.mark.django_db
 def test_widget_area_step_posts_to_real_endpoint(client_local, org):
     # Area is created inline in the widget via the REAL area_create endpoint.
-    ws = Workspace.objects.get(org=org)
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    body = client_local.get(f"{_p(org)}/").content.decode()
     assert "/areas/new" in body  # web:area_create target
     assert "/onboarding/area" not in body  # bespoke endpoint retired
 
 
 @pytest.mark.django_db
 def test_widget_slice_step_links_to_real_area_page(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    create_area(ws.org, "Backend")
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    create_area(org, "Backend")
+    body = client_local.get(f"{_p(org)}/").content.decode()
     # Slice step deep-links into the real Area page with a focus hint.
     assert "focus=slice" in body
 
@@ -49,8 +45,7 @@ def test_widget_slice_step_links_to_real_area_page(client_local, org):
 def test_widget_bite_step_links_to_real_slice(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="idea")
     body = client_local.get(f"/{org.slug}/").content.decode()
     assert f"/slices/{sl.id}/?focus=bite" in body
@@ -59,22 +54,20 @@ def test_widget_bite_step_links_to_real_slice(client_local, org):
 @pytest.mark.django_db
 def test_widget_hidden_when_all_done(client_local, org):
     from tuckit.core.models import ActivityEvent
-    ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
     ActivityEvent.objects.create(
-        workspace=ws, org=org, actor="agent", verb="created",
+        org=org, actor="agent", verb="created",
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    body = client_local.get(f"{_p(org)}/").content.decode()
     assert 'id="onboarding-widget"' not in body
 
 
 @pytest.mark.django_db
 def test_dismiss_hides_widget(client_local, org):
-    ws = Workspace.objects.get(org=org)
-    p = _p(ws)
+    p = _p(org)
     r = client_local.post(f"{p}/onboarding/dismiss")
     assert r.status_code in (200, 204, 302)
     org.refresh_from_db()
@@ -86,11 +79,10 @@ def test_dismiss_hides_widget(client_local, org):
 def test_step4_shows_generate_key_when_no_key(client_local, org):
     # Reach step 4 (onboarding.current == 4) by completing area/slice/bite first —
     # the widget only renders the connect UI once current == 4.
-    ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    body = client_local.get(f"{_p(org)}/").content.decode()
     assert "/onboarding/connect-key" in body
     assert "/welcome/" not in body
 
@@ -98,11 +90,10 @@ def test_step4_shows_generate_key_when_no_key(client_local, org):
 @pytest.mark.django_db
 def test_step4_shows_poller_when_key_exists(client_local, org):
     from tuckit.core.models import ApiToken
-    ws = Workspace.objects.get(org=org)
-    area = create_area(ws.org, "Backend")
+    area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
-    ApiToken.objects.create(workspace=ws, org=org, name="a", token_hash="x")
-    body = client_local.get(f"{_p(ws)}/").content.decode()
+    ApiToken.objects.create(org=org, name="a", token_hash="x")
+    body = client_local.get(f"{_p(org)}/").content.decode()
     assert 'id="gs-listen"' in body
     assert "/onboarding/agent-activity" in body

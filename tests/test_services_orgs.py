@@ -1,10 +1,10 @@
 import pytest
 
-from tuckit.core.models import Area, Org, OrgMember, User, Workspace
+from tuckit.core.models import Area, Org, OrgMember, User
 from tuckit.core.services.orgs import (
-    accessible_workspaces, user_can_access_workspace, is_org_admin, seat_count, create_workspace,
-    is_org_owner, rename_org, list_org_members, change_member_role, remove_member, delete_workspace,
-    create_org, list_user_orgs, leave_org, _unique_org_slug, _unique_ws_slug,
+    is_org_admin, seat_count,
+    is_org_owner, rename_org, list_org_members, change_member_role, remove_member,
+    create_org, list_user_orgs, leave_org, _unique_org_slug,
 )
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.slugs import validate_slug
@@ -19,37 +19,13 @@ def org_with_owner(db):
 
 
 @pytest.mark.django_db
-def test_create_workspace_sets_up_inbox_only(org_with_owner):
-    org, _ = org_with_owner
-    ws = create_workspace(org, "Board")
-    assert ws.org == org
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
-    assert Area.objects.filter(org=org, is_triage=False).count() == 0
-
-
-@pytest.mark.django_db
-def test_create_workspace_unique_slug_within_org(org_with_owner):
-    org, _ = org_with_owner
-    # different names that slugify to the same base ("board") -> slug must dedupe
-    a = create_workspace(org, "Board!")
-    b = create_workspace(org, "Board?")
-    assert a.name != b.name
-    assert a.slug != b.slug
-
-
-@pytest.mark.django_db
 def test_access_helpers(org_with_owner):
     org, user = org_with_owner
-    ws = create_workspace(org, "Board")
-    assert user_can_access_workspace(user, ws) is True
     assert is_org_admin(user, org) is True
     assert seat_count(org) == 1
 
     outsider = User.objects.create(email="x@x.com")
-    assert user_can_access_workspace(outsider, ws) is False
     assert is_org_admin(outsider, org) is False
-    assert list(accessible_workspaces(user)) == [ws]
-    assert list(accessible_workspaces(outsider)) == []
 
 
 @pytest.fixture
@@ -130,43 +106,13 @@ def test_cannot_remove_owner(org_owner_admin_member):
 
 
 @pytest.mark.django_db
-def test_delete_workspace_removes_it_and_cascades(org_with_owner):
-    """Areas are org-scoped now (workspace=None on create — see task-5-report.md
-    Option B fix): get_or_create_triage(org) is idempotent per org, so "Doomed"'s
-    seed call finds "Keep"'s existing triage rather than creating its own, and
-    no Area carries a `workspace` FK for delete_workspace to cascade through
-    anymore. This test now only asserts the workspace row itself is removed
-    (and its org-scoped areas are untouched); delete_workspace is dropped
-    entirely in Task 10."""
-    org, _ = org_with_owner
-    keep = create_workspace(org, "Keep")
-    doomed = create_workspace(org, "Doomed")
-    area_ids = list(Area.objects.filter(org=org).values_list("id", flat=True))
-    assert area_ids  # create_workspace seeds the org's inbox
-    delete_workspace(doomed)
-    assert not Workspace.objects.filter(id=doomed.id).exists()
-    assert Area.objects.filter(id__in=area_ids).exists()  # org-scoped, not cascaded
-    assert Workspace.objects.filter(id=keep.id).exists()
-
-
-@pytest.mark.django_db
-def test_cannot_delete_last_workspace_in_org(org_with_owner):
-    org, _ = org_with_owner
-    only = create_workspace(org, "Only")
-    with pytest.raises(InvalidValue):
-        delete_workspace(only)
-    assert Workspace.objects.filter(id=only.id).exists()
-
-
-@pytest.mark.django_db
-def test_create_org_makes_org_owner_and_seeds_triage_no_workspace():
+def test_create_org_makes_org_owner_and_seeds_triage():
     user = User.objects.create(email="u@u.com")
     org = create_org(user, name="Acme Labs")
     assert org.slug == "acme-labs"                       # auto slug from name
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
     assert Area.objects.filter(org=org, is_triage=True).count() == 1
     assert Area.objects.filter(org=org, is_triage=False).count() == 0
-    assert Workspace.objects.filter(org=org).count() == 0
 
 
 @pytest.mark.django_db
@@ -211,36 +157,15 @@ def test_create_org_runs_signup_hook():
 
 
 @pytest.mark.django_db
-def test_list_user_orgs_returns_role_and_workspace_count():
+def test_list_user_orgs_returns_role():
     user = User.objects.create(email="u@u.com")
     org_a = create_org(user, name="Alpha")
-    org_b = create_org(user, name="Beta")
-    # create_org no longer auto-creates a workspace; build the counts explicitly.
-    Workspace.objects.create(org=org_a, name="Main", slug="main")  # Alpha: 1 ws
-    Workspace.objects.create(org=org_b, name="Main", slug="main")  # Beta: 1 ws
-    Workspace.objects.create(org=org_b, name="Extra", slug="extra")  # Beta: 2 ws
+    create_org(user, name="Beta")
     rows = list_user_orgs(user)
     by_name = {r["org"].name: r for r in rows}
     assert by_name["Alpha"]["role"] == "owner"
-    assert by_name["Alpha"]["workspace_count"] == 1
-    assert by_name["Beta"]["workspace_count"] == 2
+    assert by_name["Alpha"]["org"] == org_a
     assert [r["org"].name for r in rows] == ["Alpha", "Beta"]  # ordered by name
-
-
-@pytest.mark.django_db
-def test_list_user_orgs_includes_workspaces():
-    from tuckit.core.models import User
-    from tuckit.core.services.orgs import create_org, create_workspace, list_user_orgs
-
-    user = User.objects.create(email="w@w.com")
-    org = create_org(user, name="Acme")
-    first_ws = create_workspace(org, "General")
-    second_ws = create_workspace(org, "Marketing")
-
-    rows = list_user_orgs(user)
-    assert len(rows) == 1
-    names = [w.name for w in rows[0]["workspaces"]]
-    assert names == sorted([first_ws.name, second_ws.name])
 
 
 @pytest.mark.django_db
@@ -312,15 +237,7 @@ def test_auto_org_slug_avoids_reserved():
 def test_auto_org_slug_meets_min_length():
     # slugify("A") == "a" (1 char) -> below the 2-char floor unless padded
     slug = _unique_org_slug("A")
-    validate_slug(slug, kind="org")  # must not raise
-    assert len(slug) >= 2
-
-
-@pytest.mark.django_db
-def test_auto_ws_slug_meets_min_length(org_with_owner):
-    org, _ = org_with_owner
-    slug = _unique_ws_slug(org, "A")
-    validate_slug(slug, kind="workspace")  # must not raise
+    validate_slug(slug)  # must not raise
     assert len(slug) >= 2
 
 
@@ -330,15 +247,7 @@ def test_auto_org_slug_no_trailing_hyphen_after_truncation():
     # would cut right after that hyphen, leaving a trailing "-" that fails validate_slug.
     name = "a" * 31 + "-bcdef"
     slug = _unique_org_slug(name)
-    validate_slug(slug, kind="org")  # must not raise
-
-
-@pytest.mark.django_db
-def test_auto_ws_slug_no_trailing_hyphen_after_truncation(org_with_owner):
-    org, _ = org_with_owner
-    name = "a" * 31 + "-bcdef"
-    slug = _unique_ws_slug(org, name)
-    validate_slug(slug, kind="workspace")  # must not raise
+    validate_slug(slug)  # must not raise
 
 
 @pytest.mark.django_db
@@ -350,11 +259,3 @@ def test_org_name_not_globally_unique():
     # same name, different slug -> allowed
     create_org(u2, name="Acme", slug="acme-two")
     assert Org.objects.filter(name="Acme").count() == 2
-
-
-@pytest.mark.django_db
-def test_workspace_name_unique_per_org():
-    org = Org.objects.create(name="Org", slug="org-x")
-    create_workspace(org, "Design")
-    with pytest.raises(InvalidValue):
-        create_workspace(org, "design")  # case-insensitive duplicate

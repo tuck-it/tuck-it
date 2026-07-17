@@ -4,7 +4,6 @@ import pytest
 from django.urls import NoReverseMatch, reverse
 
 from tuckit.core.models import ApiToken, Invitation, Org, OrgMember, User
-from tuckit.core.services.orgs import create_workspace
 from tuckit.core.services.tokens import generate_token, hash_token, list_tokens
 
 
@@ -19,28 +18,26 @@ def org_ctx(client, db):
     OrgMember.objects.create(user=owner, org=org, role="owner")
     member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
-    ws = create_workspace(org, "Board")
-    return client, org, owner, member, ws
+    return client, org, owner, member
 
 
 @pytest.mark.django_db
-def test_org_page_lists_workspaces(org_ctx):
+def test_org_page_renders_for_owner(org_ctx):
     # Org home (/<org>/) is browse-only; members live at /<org>/settings/members
     # (see test_settings_org_pages.py::test_members_page_lists_members_and_invite_form).
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, owner)
     resp = client.get(f"/{org.slug}/")
     assert resp.status_code == 200
     body = resp.content.decode()
     assert "Acme" in body
-    assert "Board" in body
 
 
 @pytest.mark.django_db
 def test_org_only_settings_branch_works_for_member(org_ctx):
-    # Proves the org-only route sets request.org with request.workspace None and
-    # still renders the sidebar chrome via the current_workspace fallback.
-    client, org, owner, member, ws = org_ctx
+    # Proves the org-only route sets request.org and still renders the
+    # sidebar chrome via the current_org fallback.
+    client, org, owner, member = org_ctx
     _login(client, member)
     resp = client.get(f"/{org.slug}/")
     assert resp.status_code == 200
@@ -55,7 +52,7 @@ def test_org_page_requires_login(client, db):
 
 @pytest.mark.django_db
 def test_nonmember_gets_404_on_other_org_home(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     other = Org.objects.create(name="Other", slug="other")
     stranger = User.objects.create(email="stranger@x.com")
     OrgMember.objects.create(user=stranger, org=other, role="owner")
@@ -66,7 +63,7 @@ def test_nonmember_gets_404_on_other_org_home(org_ctx):
 
 @pytest.mark.django_db
 def test_owner_renames_org(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, owner)
     resp = client.post(f"/{org.slug}/settings/rename", {"name": "Beta"})
     assert resp.status_code == 200
@@ -76,7 +73,7 @@ def test_owner_renames_org(org_ctx):
 
 @pytest.mark.django_db
 def test_member_cannot_rename_org(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, member)
     resp = client.post(f"/{org.slug}/settings/rename", {"name": "Beta"})
     assert resp.status_code == 403
@@ -86,7 +83,7 @@ def test_member_cannot_rename_org(org_ctx):
 
 @pytest.mark.django_db
 def test_owner_changes_member_role(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, owner)
     om = OrgMember.objects.get(org=org, user=member)
     resp = client.post(f"/{org.slug}/settings/members/{om.id}/role", {"role": "admin"})
@@ -97,7 +94,7 @@ def test_owner_changes_member_role(org_ctx):
 
 @pytest.mark.django_db
 def test_admin_cannot_change_role(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     # promote member to admin first (as owner), then act as that admin
     OrgMember.objects.filter(org=org, user=member).update(role="admin")
     _login(client, member)
@@ -108,7 +105,7 @@ def test_admin_cannot_change_role(org_ctx):
 
 @pytest.mark.django_db
 def test_admin_removes_member(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, owner)
     om = OrgMember.objects.get(org=org, user=member)
     resp = client.post(f"/{org.slug}/settings/members/{om.id}/remove")
@@ -118,7 +115,7 @@ def test_admin_removes_member(org_ctx):
 
 @pytest.mark.django_db
 def test_cannot_remove_member_of_other_org(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     other = Org.objects.create(name="Other", slug="other")
     stranger = User.objects.create(email="s@s.com")
     om_other = OrgMember.objects.create(user=stranger, org=other, role="member")
@@ -133,11 +130,10 @@ from tuckit.core.models import Org as OrgModel  # alias to avoid fixture shadow
 
 @pytest.mark.django_db
 def test_owner_deletes_org_when_has_another(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     # owner also belongs to a second org, so deleting the first is allowed
     other = OrgModel.objects.create(name="Personal", slug="personal")
     OrgMember.objects.create(user=owner, org=other, role="owner")
-    create_workspace(other, "Home")
     _login(client, owner)
     resp = client.post(f"/{org.slug}/settings/delete")
     assert resp.status_code == 302
@@ -146,10 +142,9 @@ def test_owner_deletes_org_when_has_another(org_ctx):
 
 @pytest.mark.django_db
 def test_owner_deletes_org_htmx_redirects(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     other = OrgModel.objects.create(name="Personal", slug="personal")
     OrgMember.objects.create(user=owner, org=other, role="owner")
-    create_workspace(other, "Home")
     _login(client, owner)
     resp = client.post(f"/{org.slug}/settings/delete", HTTP_HX_REQUEST="true")
     assert resp.status_code == 204
@@ -159,7 +154,7 @@ def test_owner_deletes_org_htmx_redirects(org_ctx):
 
 @pytest.mark.django_db
 def test_member_cannot_delete_org(org_ctx):
-    client, org, owner, member, ws = org_ctx
+    client, org, owner, member = org_ctx
     _login(client, member)
     resp = client.post(f"/{org.slug}/settings/delete")
     assert resp.status_code == 403
@@ -175,10 +170,9 @@ def test_invite_urls_use_viewed_org_not_session_fallback(org_ctx):
     # page silently touches Org A's data.
     # NOTE: invite management now lives at /<org>/settings/members, not org home
     # (/<org>/), which is browse-only as of the settings-IA refactor.
-    client, org_a, owner, member, ws_a = org_ctx
+    client, org_a, owner, member = org_ctx
     org_b = Org.objects.create(name="Beta", slug="orgb")
     OrgMember.objects.create(user=owner, org=org_b, role="owner")
-    ws_b = create_workspace(org_b, "Board B")
     Invitation.objects.create(org=org_b, email="pending-b@x.com", role="member", token="tok-b")
 
     _login(client, owner)

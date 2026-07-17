@@ -1,7 +1,5 @@
 from django.db import models
 
-from tuckit.core.models.workspace import Workspace
-
 
 class ActivityEvent(models.Model):
     ACTOR_CHOICES = [("human", "Human"), ("agent", "Agent")]
@@ -16,7 +14,6 @@ class ActivityEvent(models.Model):
     ]
     TARGET_CHOICES = [("slice", "Slice"), ("bite", "Bite"), ("area", "Area")]
 
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="activity", null=True, blank=True)
     org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="activity")
     actor = models.CharField(max_length=10, choices=ACTOR_CHOICES)
     verb = models.CharField(max_length=20, choices=VERB_CHOICES)
@@ -30,7 +27,6 @@ class ActivityEvent(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["workspace", "-created_at"]),
             models.Index(fields=["org", "-created_at"]),
         ]
 

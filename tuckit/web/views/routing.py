@@ -1,29 +1,16 @@
 from django.http import JsonResponse
 
-from tuckit.core.models import Org, OrgMember, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.exceptions import InvalidValue
-from tuckit.core.services.slugs import normalize_slug, validate_slug
+from tuckit.core.services.slugs import validate_slug
 
 
 def check_slug(request):
-    kind = request.GET.get("kind", "org")
-    if kind not in ("org", "workspace"):
-        return JsonResponse({"available": False, "error": "Unknown kind."})
     try:
-        slug = validate_slug(request.GET.get("slug", ""), kind=kind)
+        slug = validate_slug(request.GET.get("slug", ""))
     except InvalidValue as exc:
         return JsonResponse({"available": False, "error": str(exc)})
-    if kind == "org":
-        taken = Org.objects.filter(slug=slug).exists()
-    else:
-        org = Org.objects.filter(slug=normalize_slug(request.GET.get("org", ""))).first()
-        if (
-            org is None
-            or not request.user.is_authenticated
-            or not OrgMember.objects.filter(user=request.user, org=org).exists()
-        ):
-            return JsonResponse({"available": False, "error": "Organization not found."})
-        taken = Workspace.objects.filter(org=org, slug=slug).exists()
+    taken = Org.objects.filter(slug=slug).exists()
     if taken:
         return JsonResponse({"available": False, "error": "Already taken."})
     return JsonResponse({"available": True, "error": None})

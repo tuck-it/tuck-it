@@ -1,11 +1,9 @@
 import pytest
 
-from tuckit.core.models import Workspace
 
 
 @pytest.mark.django_db
 def test_home_returns_200_and_shell(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
     assert resp.status_code == 200
@@ -27,8 +25,7 @@ def test_current_org_resolves(client_local, org):
 def test_sidebar_shows_icons_and_triage_count(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)
-    create_slice(get_or_create_triage(ws.org), "미분류 1")
+    create_slice(get_or_create_triage(org), "미분류 1")
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert "<svg" in body                 # line icons present
@@ -37,7 +34,6 @@ def test_sidebar_shows_icons_and_triage_count(client_local, org):
 
 @pytest.mark.django_db
 def test_sidebar_grouped_with_english_labels_and_capture(client_local, org):
-    ws = Workspace.objects.get(org=org)
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert 'class="nav-group"' in body        # grouped, not a flat list
@@ -59,14 +55,13 @@ def test_lens_count_context_processors(client_local, org):
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
     from tuckit.core.services.areas import get_or_create_triage
-    ws = Workspace.objects.get(org=org)
-    a = create_area(ws.org, "Backend")
+    a = create_area(org, "Backend")
     s = create_slice(a, "정체", status="building")           # building -> in_progress
     create_bite(create_plan(s, title="Plan"), "doing bite", status="doing")             # doing bite -> in_progress
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))  # -> attention
     # A doing bite in a Triage-area slice must NOT be counted (badge must match
     # the /in-progress/ page, which excludes triage). Guards the badge/page drift.
-    triage_slice = create_slice(get_or_create_triage(ws.org), "captured", status="building")
+    triage_slice = create_slice(get_or_create_triage(org), "captured", status="building")
     create_bite(create_plan(triage_slice, title="Plan"), "triage doing bite", status="doing")
     p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
@@ -78,8 +73,7 @@ def test_lens_count_context_processors(client_local, org):
 def test_sidebar_inbox_count_and_no_lens_tabs(client_local, org):
     from tuckit.core.services.areas import get_or_create_triage
     from tuckit.core.services.slices import create_slice
-    ws = Workspace.objects.get(org=org)
-    create_slice(get_or_create_triage(ws.org), "미분류", status="idea")
+    create_slice(get_or_create_triage(org), "미분류", status="idea")
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert ">Inbox<" in body

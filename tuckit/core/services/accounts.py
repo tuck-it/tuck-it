@@ -12,7 +12,7 @@ from tuckit.core.services.slugs import validate_slug
 def register(*, email, org_name, slug, password) -> tuple[User, Org]:
     if User.objects.filter(email=email).exists():
         raise InvalidValue(f"A user with this email already exists: {email}")
-    slug = validate_slug(slug, kind="org")  # raises on bad/reserved format
+    slug = validate_slug(slug)  # raises on bad/reserved format
     if Org.objects.filter(slug=slug).exists():
         raise InvalidValue(f"That organization URL is already taken: {slug}")
     if not password:
