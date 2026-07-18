@@ -86,6 +86,7 @@ app_patterns = [
     path(f"{P}slices/<int:slice_id>/edit", mutations.slice_edit, name="slice_edit"),
     path(f"{P}slices/<int:slice_id>/plans", mutations.plan_create, name="plan_create"),
     path(f"{P}slices/<int:slice_id>/tags", mutations.slice_tags, name="slice_tags"),
+    path(f"{P}slices/<int:slice_id>/reassign", mutations.slice_reassign, name="slice_reassign"),
     path(f"{P}slices/<int:slice_id>/move", board.slice_move, name="slice_move"),
     path(f"{P}slices/<int:slice_id>/triage", capture.triage, name="slice_triage"),
     path(f"{P}plans/<int:plan_id>/edit", mutations.plan_edit, name="plan_edit"),

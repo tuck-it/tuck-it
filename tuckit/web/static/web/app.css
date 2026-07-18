@@ -1771,6 +1771,10 @@ html.sidebar-collapsed .side-resize { display: none; }
 .status-opt { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; font-size: 12px; color: var(--ink); background: none; border: none; border-radius: var(--radius-small); cursor: pointer; text-align: left; text-transform: capitalize; }
 .status-opt:hover { background: var(--paper-deep); }
 .status-opt--on { font-weight: 600; }
+.area-opt { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; font-size: 12px; color: var(--ink); background: none; border: none; border-radius: var(--radius-small); cursor: pointer; text-align: left; }
+.area-opt:hover { background: var(--paper-deep); }
+.area-opt--on { font-weight: 600; }
+.area-pill { text-transform: none; }
 .status-check { margin-left: auto; color: var(--blue); }
 
 /* Get started — expandable concept steps (four-step onboarding checklist) */
