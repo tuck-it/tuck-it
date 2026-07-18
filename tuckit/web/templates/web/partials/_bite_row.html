@@ -5,13 +5,11 @@
             hx-post="{% wurl 'web:bite_toggle' bite.id %}" hx-target="closest .bite" hx-swap="outerHTML"
             aria-label="Toggle done">{% if bite.status == 'done' %}{% icon "check" "icon icon-check" %}{% endif %}</button>
     <span class="bite-title" x-show="!editTitle" x-on:click="open=!open">{{ bite.title }}</span>
-    <form x-show="editTitle" x-cloak class="bite-title-edit" hx-post="{% wurl 'web:bite_edit' bite.id %}"
-          hx-target="closest .bite" hx-swap="outerHTML">
-      <input name="title" value="{{ bite.title }}" x-ref="titleInput" class="title-edit"
-             x-on:keydown.escape.stop="editTitle=false"
-             x-on:keydown.enter.prevent="$el.form.requestSubmit()"
-             x-on:blur="$el.value !== $el.defaultValue ? $el.form.requestSubmit() : (editTitle=false)">
-    </form>
+    <input x-show="editTitle" x-cloak name="title" value="{{ bite.title }}" x-ref="titleInput" class="title-edit"
+           hx-post="{% wurl 'web:bite_edit' bite.id %}{{ panel_qs }}" hx-trigger="blur, keydown[key=='Enter']"
+           hx-target="closest .panel-inner" hx-swap="outerHTML"
+           x-on:keydown.escape.stop="editTitle=false">
+
     {% if bite.body %}{% icon "note" "icon bite-note" %}{% endif %}
     <span class="bite-status muted">{{ bite.status }}</span>
     <button class="bite-chev" type="button" x-on:click="open=!open" :class="open && 'bite-chev--open'">

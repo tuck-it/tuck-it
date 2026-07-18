@@ -130,7 +130,7 @@ def bite_edit(request, bite_id):
         raise Http404
     if "title" in request.POST:
         update_bite(bite, title=request.POST["title"])
-    return render(request, "web/partials/_bite_row.html", {"bite": bite})
+    return _panel(request, bite.plan.slice)
 
 
 def bite_delete(request, bite_id):
