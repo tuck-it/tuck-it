@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
-from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, rename_area, delete_area, reorder_area
+from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, update_area, delete_area, reorder_area
 from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices, grouped_slices
 from tuckit.core.services.resolve import get_area, get_slice, get_area_by_slug
 from tuckit.web.auth import get_current_org
@@ -117,7 +117,7 @@ def area_rename(request, area_id):
     except NotFound:
         raise Http404
     try:
-        rename_area(area, request.POST.get("name", ""))
+        update_area(area, name=request.POST.get("name", ""))
     except InvalidValue as e:
         return HttpResponse(str(e), status=400)
     # If the user is renaming the area they're currently viewing, keep its
