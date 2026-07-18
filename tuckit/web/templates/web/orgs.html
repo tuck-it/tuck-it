@@ -62,6 +62,13 @@
         </script>
         <button type="submit" class="button button-primary">Create organization</button>
       </form>
+      <div class="auth-alt">
+        Signed in as <strong>{{ user.email }}</strong> &middot;
+        <form method="post" action="{% url 'web:logout' %}" class="logout-inline">
+          {% csrf_token %}
+          <button type="submit">Log out</button>
+        </form>
+      </div>
     </div>
   </main>
 </body>

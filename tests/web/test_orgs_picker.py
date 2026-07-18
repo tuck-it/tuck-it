@@ -29,6 +29,21 @@ def test_picker_empty_state_is_the_create_form(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_picker_shows_signed_in_identity_and_logout(client, django_user_model):
+    # A logged-in user with zero orgs lands here; the page must make it obvious
+    # they ARE signed in (and let them switch accounts), or it reads like a
+    # dead-end signup form.
+    user = django_user_model.objects.create_user(email="who@x.z", password="pw")
+    client.force_login(user)
+
+    resp = client.get("/orgs/")
+
+    body = resp.content.decode()
+    assert "who@x.z" in body                 # identity is shown
+    assert 'action="/logout/"' in body       # a logout control is present
+
+
+@pytest.mark.django_db
 def test_creating_an_org_lands_on_its_home(client, django_user_model):
     user = django_user_model.objects.create_user(email="new@x.z", password="pw")
     client.force_login(user)
