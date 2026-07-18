@@ -9,7 +9,7 @@ from tuckit.core.mcp.server import (
     set_bite_status,
     update_bite,
 )
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.plans import create_plan
 from tuckit.core.services.slices import create_slice
@@ -20,9 +20,8 @@ from tests.test_mcp_tools_state import make_ctx
 @sync_to_async
 def _seed():
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="P", slug="p")
-    _, raw = generate_token(ws, "t")
-    area = create_area(ws, "Backend")
+    _, raw = generate_token(org, "t")
+    area = create_area(org, "Backend")
     s = create_slice(area, "Auth")
     p = create_plan(s, title="Plan")
     return raw, p.id

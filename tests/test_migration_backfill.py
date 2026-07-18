@@ -39,15 +39,35 @@ def test_backfill_creates_org_and_migrates_membership():
     executor.migrate(executor.loader.graph.leaf_nodes())
 
 
-@pytest.mark.django_db
-def test_dismissed_workspace_backfilled_completed(workspace):
-    from django.apps import apps
-    workspace.onboarding_dismissed = True
-    workspace.onboarding_completed = False
-    workspace.save(update_fields=["onboarding_dismissed", "onboarding_completed"])
+@pytest.mark.django_db(transaction=True)
+def test_dismissed_workspace_backfilled_completed():
+    """Workspace no longer exists in the current app registry (deleted in
+    Task 12), so this exercises the frozen 0012 migration function against
+    the historical model state as of that migration, the same way
+    test_backfill_creates_org_and_migrates_membership does above."""
+    executor = MigrationExecutor(connection)
+    executor.migrate([("core", "0012_workspace_onboarding_completed")])
+    executor.loader.build_graph()
+    historical_apps = executor.loader.project_state(
+        [("core", "0012_workspace_onboarding_completed")]
+    ).apps
+
+    Org = historical_apps.get_model("core", "Org")
+    Workspace = historical_apps.get_model("core", "Workspace")
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    ws = Workspace.objects.create(
+        org=org, name="P", slug="p",
+        onboarding_dismissed=True, onboarding_completed=False,
+    )
+
     mod = importlib.import_module(
         "tuckit.core.migrations.0012_workspace_onboarding_completed"
     )
-    mod.backfill_completed(apps, None)
-    workspace.refresh_from_db()
-    assert workspace.onboarding_completed is True
+    mod.backfill_completed(historical_apps, None)
+    ws.refresh_from_db()
+    assert ws.onboarding_completed is True
+
+    # Leave the DB migrated forward for the rest of the suite.
+    executor = MigrationExecutor(connection)
+    executor.migrate(executor.loader.graph.leaf_nodes())

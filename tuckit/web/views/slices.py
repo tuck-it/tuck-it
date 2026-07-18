@@ -4,14 +4,14 @@ from django.shortcuts import render
 from tuckit.core.services.exceptions import NotFound
 from tuckit.core.services.resolve import get_area_by_slug, get_slice
 from tuckit.core.services.slices import grouped_slices
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_org
 from tuckit.web.panel import slice_panel_context
 
 
 def area_view(request, slug):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        area = get_area_by_slug(ws, slug)
+        area = get_area_by_slug(org, slug)
     except NotFound:
         raise Http404
     groups = grouped_slices(area)
@@ -26,9 +26,9 @@ def area_view(request, slug):
 
 
 def slice_detail(request, slice_id):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        slice_ = get_slice(ws, slice_id)
+        slice_ = get_slice(org, slice_id)
     except NotFound:
         raise Http404
     is_panel = request.GET.get("panel") == "1" and bool(request.headers.get("HX-Request"))

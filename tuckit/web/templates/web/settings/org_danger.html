@@ -4,7 +4,7 @@
 {% if can_owner %}
 <div class="settings-title danger">Danger zone</div>
 <section class="group settings-section settings-section--danger">
-  <form hx-post="{% url 'web:org_delete' org.slug %}" hx-confirm="The organization and all its workspaces will be deleted. Continue?">
+  <form hx-post="{% url 'web:org_delete' org.slug %}" hx-confirm="The organization and everything in it will be deleted. Continue?">
     <button type="submit" class="btn danger">Delete organization</button>
   </form>
 </section>

@@ -1,5 +1,5 @@
 class NotFound(Exception):
-    """Raised when an id does not exist or is not visible to the given workspace."""
+    """Raised when an id does not exist or is not visible to the given org."""
 
 
 class InvalidValue(Exception):

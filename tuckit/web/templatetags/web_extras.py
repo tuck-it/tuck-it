@@ -12,12 +12,12 @@ register = template.Library()
 
 @register.simple_tag(name="wurl", takes_context=True)
 def wurl_tag(context, name, *args, **kwargs):
-    """Reverse a workspace-scoped route for the current org/workspace. Fills the
-    <org_slug>/<ws_slug> prefix from `current_workspace` so app templates don't repeat it."""
-    ws = context.get("current_workspace")
-    if ws is None:
+    """Reverse an org-scoped route for the current org. Fills the <org_slug> prefix
+    from `current_org` so app templates don't repeat it."""
+    org = context.get("current_org")
+    if org is None:
         return "#"
-    return reverse(name, args=[ws.org.slug, ws.slug, *args], kwargs=kwargs)
+    return reverse(name, args=[org.slug, *args], kwargs=kwargs)
 
 
 @register.simple_tag(name="slice_push_url", takes_context=True)

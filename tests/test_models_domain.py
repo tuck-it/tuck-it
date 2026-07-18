@@ -1,25 +1,19 @@
 import pytest
 from django.db import IntegrityError
 
-from tuckit.core.models import Area, Bite, Org, Plan, Slice, Tag, Workspace
-
-
-@pytest.fixture
-def workspace(db):
-    org = Org.objects.create(name="Acme", slug="acme")
-    return Workspace.objects.create(org=org, name="P", slug="p")
+from tuckit.core.models import Area, Bite, Plan, Slice, Tag
 
 
 @pytest.mark.django_db
-def test_area_slug_unique_per_workspace(workspace):
-    Area.objects.create(workspace=workspace, name="Backend", slug="backend", rank="a0")
+def test_area_slug_unique_per_org(org):
+    Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
     with pytest.raises(IntegrityError):
-        Area.objects.create(workspace=workspace, name="Backend2", slug="backend", rank="a1")
+        Area.objects.create(org=org, name="Backend2", slug="backend", rank="a1")
 
 
 @pytest.mark.django_db
-def test_slice_defaults(workspace):
-    area = Area.objects.create(workspace=workspace, name="Backend", slug="backend", rank="a0")
+def test_slice_defaults(org):
+    area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
     s = Slice.objects.create(area=area, title="Auth", rank="a0")
     assert s.status == "idea"
     assert s.spec == ""
@@ -28,24 +22,24 @@ def test_slice_defaults(workspace):
 
 
 @pytest.mark.django_db
-def test_slice_tags_are_workspace_tags(workspace):
-    area = Area.objects.create(workspace=workspace, name="Backend", slug="backend", rank="a0")
+def test_slice_tags_are_org_tags(org):
+    area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
     s = Slice.objects.create(area=area, title="Auth", rank="a0")
-    tag = Tag.objects.create(workspace=workspace, name="bug")
+    tag = Tag.objects.create(org=org, name="bug")
     s.tags.add(tag)
     assert list(s.tags.all()) == [tag]
 
 
 @pytest.mark.django_db
-def test_tag_unique_per_workspace(workspace):
-    Tag.objects.create(workspace=workspace, name="bug")
+def test_tag_unique_per_org(org):
+    Tag.objects.create(org=org, name="bug")
     with pytest.raises(IntegrityError):
-        Tag.objects.create(workspace=workspace, name="bug")
+        Tag.objects.create(org=org, name="bug")
 
 
 @pytest.mark.django_db
-def test_bite_requires_plan(workspace):
-    area = Area.objects.create(workspace=workspace, name="Backend", slug="backend", rank="a0")
+def test_bite_requires_plan(org):
+    area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
     s = Slice.objects.create(area=area, title="Auth", rank="a0")
     p = Plan.objects.create(slice=s, title="Plan")
     b = Bite.objects.create(plan=p, title="JWT", rank="a0")

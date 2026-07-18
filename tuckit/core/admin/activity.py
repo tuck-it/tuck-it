@@ -11,7 +11,7 @@ class ActivityEventAdmin(admin.ModelAdmin):
     list_filter = ("verb", "actor", "target_type")
     search_fields = ("target_label",)
     readonly_fields = (
-        "workspace",
+        "org",
         "actor",
         "verb",
         "target_type",

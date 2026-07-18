@@ -4,7 +4,7 @@
   <header class="page-head">
     <div class="page-head-l">
       <h1 class="page-title">Home</h1>
-      {% if workspace %}<span class="page-count">Today's progress and what to focus on next</span>{% endif %}
+      {% if org %}<span class="page-count">Today's progress and what to focus on next</span>{% endif %}
     </div>
     <button class="button button-small" type="button"
             x-on:click="cap = true; $nextTick(() => $refs.captureInput && $refs.captureInput.focus())">

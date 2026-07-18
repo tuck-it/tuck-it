@@ -2,8 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from tuckit.core.models import Area, Bite, Slice, Workspace, WorkspaceStatSnapshot
-from tuckit.core.services.areas import list_areas
+from tuckit.core.models import Area, Bite, Org, Slice, OrgStatSnapshot
 from tuckit.core.services.bites import list_bites, slice_bites
 from tuckit.core.services.plans import list_plans
 from tuckit.core.services.slices import list_slices
@@ -56,10 +55,10 @@ def _area_state(area: Area) -> dict:
     }
 
 
-def get_project_state(workspace: Workspace, area: Area | None = None) -> dict:
-    areas = [area] if area is not None else list(list_areas(workspace))
+def get_project_state(org: Org, area: Area | None = None) -> dict:
+    areas = [area] if area is not None else list(Area.objects.filter(org=org, archived=False))
     return {
-        "product": {"name": workspace.name, "description": workspace.description},
+        "org": {"name": org.name, "description": org.description},
         "areas": [_area_state(a) for a in areas],
     }
 
@@ -87,14 +86,14 @@ def render_slice_markdown(slice_: Slice) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def home_state(workspace: Workspace) -> dict:
+def home_state(org: Org) -> dict:
     slices = list(
-        Slice.objects.filter(area__workspace=workspace)
+        Slice.objects.filter(area__org=org)
         .select_related("area").prefetch_related("tags")
     )
     someday = [s for s in slices if "someday" in _tag_names(s) and s.status != "shipped"]
     someday_ids = {s.id for s in someday}
-    attention = attention_items(workspace)
+    attention = attention_items(org)
     attention_ids = {it["slice"].id for it in attention}
     hidden_ids = someday_ids | attention_ids
 
@@ -118,14 +117,17 @@ def home_state(workspace: Workspace) -> dict:
     }
 
 
-def snapshot_today(workspace: Workspace, state: dict) -> dict:
-    """Upsert today's count row for `workspace` and return each metric's value
+def snapshot_today(org: Org, state: dict) -> dict:
+    """Upsert today's count row for `org` and return each metric's value
     plus its delta vs the most recent prior-day snapshot. Counts are derived
     from the passed-in home_state so they match the Home buckets exactly
     (e.g. stalled building slices count only toward Needs attention, not
     Building). Lazy — called on Home load, so history accrues without a
     scheduler. delta is None on the first day (no prior row) so the UI shows
-    a value with no movement line."""
+    a value with no movement line.
+
+    Org-scoped: OrgStatSnapshot is keyed by (org, date) via
+    uniq_org_snapshot_per_day."""
     today = timezone.localdate()
     building_ct = len(state["building"])
     backlog_ct = len(state["planned"]) + len(state["ideas"]) + len(state["someday"])
@@ -135,8 +137,8 @@ def snapshot_today(workspace: Workspace, state: dict) -> dict:
     )
     attention_ct = len(state["attention"])
 
-    WorkspaceStatSnapshot.objects.update_or_create(
-        workspace=workspace,
+    OrgStatSnapshot.objects.update_or_create(
+        org=org,
         date=today,
         defaults={
             "building_ct": building_ct,
@@ -146,8 +148,8 @@ def snapshot_today(workspace: Workspace, state: dict) -> dict:
         },
     )
     prior = (
-        WorkspaceStatSnapshot.objects
-        .filter(workspace=workspace, date__lt=today)
+        OrgStatSnapshot.objects
+        .filter(org=org, date__lt=today)
         .order_by("-date")
         .first()
     )
@@ -164,25 +166,25 @@ def snapshot_today(workspace: Workspace, state: dict) -> dict:
     }
 
 
-def attention_items(workspace: Workspace) -> list[dict]:
+def attention_items(org: Org) -> list[dict]:
     now = timezone.now()
     cutoff = now - timedelta(days=STALE_DAYS)
     items: list[dict] = []
-    triage = Area.objects.filter(workspace=workspace, is_triage=True).first()
+    triage = Area.objects.filter(org=org, is_triage=True).first()
     if triage is not None:
         for s in Slice.objects.filter(area=triage, updated_at__lt=cutoff).exclude(status="dropped").prefetch_related("tags"):
             items.append({"slice": s, "reason": "triage_stale", "days": (now - s.updated_at).days})
-    for s in Slice.objects.filter(area__workspace=workspace, status="building", updated_at__lt=cutoff).prefetch_related("tags"):
+    for s in Slice.objects.filter(area__org=org, status="building", updated_at__lt=cutoff).prefetch_related("tags"):
         items.append({"slice": s, "reason": "building_stalled", "days": (now - s.updated_at).days})
     items.sort(key=lambda it: it["slice"].updated_at)
     return items
 
 
-def roadmap_state(workspace: Workspace) -> dict:
+def roadmap_state(org: Org) -> dict:
     """Non-triage, non-dropped slices grouped by roadmap status — powers the
     Roadmap board and its distribution counts."""
     slices = list(
-        Slice.objects.filter(area__workspace=workspace, area__is_triage=False)
+        Slice.objects.filter(area__org=org, area__is_triage=False)
         .exclude(status="dropped")
         .select_related("area")
         .prefetch_related("tags")
@@ -211,22 +213,22 @@ ROADMAP_BOARD_ORDER = ["idea", "planned", "building", "shipped"]
 ROADMAP_STATUS_KEYS = {"idea", "planned", "building", "shipped"}
 
 
-def cap_shipped(workspace: Workspace, shipped: list) -> tuple[list, int]:
-    """Trim a recency-sorted shipped list to the workspace's board window.
+def cap_shipped(org: Org, shipped: list) -> tuple[list, int]:
+    """Trim a recency-sorted shipped list to the org's board window.
     Returns (visible, total). Pure — operates on an already-fetched list."""
     total = len(shipped)
-    if workspace.shipped_board_mode == "days":
-        cutoff = timezone.now() - timedelta(days=workspace.shipped_board_limit)
+    if org.shipped_board_mode == "days":
+        cutoff = timezone.now() - timedelta(days=org.shipped_board_limit)
         visible = [s for s in shipped if s.completed_at and s.completed_at >= cutoff]
     else:  # count
-        visible = shipped[: workspace.shipped_board_limit]
+        visible = shipped[: org.shipped_board_limit]
     return visible, total
 
 
-def roadmap_board_view(workspace: Workspace) -> dict:
-    """Capped kanban groups + shipped overflow meta for the workspace Board tab."""
-    state = roadmap_state(workspace)
-    visible, total = cap_shipped(workspace, state["shipped"])
+def roadmap_board_view(org: Org) -> dict:
+    """Capped kanban groups + shipped overflow meta for the org Board tab."""
+    state = roadmap_state(org)
+    visible, total = cap_shipped(org, state["shipped"])
     capped = {**state, "shipped": visible}
     return {
         "state": capped,
@@ -236,16 +238,16 @@ def roadmap_board_view(workspace: Workspace) -> dict:
     }
 
 
-def recent_activity(workspace: Workspace, limit: int = 8) -> list:
-    """The workspace's most recent activity events (newest first, capped)."""
-    return list(workspace.activity.all()[:limit])
+def recent_activity(org: Org, limit: int = 8) -> list:
+    """The org's most recent activity events (newest first, capped)."""
+    return list(org.activity.all()[:limit])
 
 
-def in_progress_state(workspace: Workspace) -> dict:
+def in_progress_state(org: Org) -> dict:
     """What's actively being worked right now: building slices + doing bites."""
     slices = list(
         Slice.objects.filter(
-            area__workspace=workspace, area__is_triage=False, status="building"
+            area__org=org, area__is_triage=False, status="building"
         )
         .select_related("area")
         .prefetch_related("tags")
@@ -253,7 +255,7 @@ def in_progress_state(workspace: Workspace) -> dict:
     )
     bites = list(
         Bite.objects.filter(
-            plan__slice__area__workspace=workspace, plan__slice__area__is_triage=False, status="doing"
+            plan__slice__area__org=org, plan__slice__area__is_triage=False, status="doing"
         )
         .select_related("plan__slice", "plan__slice__area")
         .order_by("plan__slice__area__name", "rank")

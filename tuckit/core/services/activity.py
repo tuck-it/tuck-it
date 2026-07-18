@@ -3,7 +3,7 @@ from tuckit.core.models import ActivityEvent
 _TARGET_TYPES = {"Slice": "slice", "Bite": "bite", "Area": "area"}
 
 
-def record_activity(workspace, *, actor, verb, target, from_value="", to_value=""):
+def record_activity(org, *, actor, verb, target, from_value="", to_value=""):
     """Append one immutable activity row. Denormalizes target label so the log
     survives the target being deleted/dropped."""
     label = getattr(target, "title", None) or getattr(target, "name", "")
@@ -12,7 +12,7 @@ def record_activity(workspace, *, actor, verb, target, from_value="", to_value="
     except KeyError:
         raise ValueError(f"unsupported activity target: {type(target).__name__}") from None
     ActivityEvent.objects.create(
-        workspace=workspace,
+        org=org,
         actor=actor,
         verb=verb,
         target_type=target_type,
@@ -37,7 +37,7 @@ def slice_activity(slice_):
 
     bite_ids = list(Bite.objects.filter(plan__slice=slice_).values_list("id", flat=True))
     return list(
-        ActivityEvent.objects.filter(workspace=slice_.area.workspace)
+        ActivityEvent.objects.filter(org=slice_.area.org)
         .filter(Q(target_type="slice", target_id=slice_.id)
                 | Q(target_type="bite", target_id__in=bite_ids))
         .order_by("created_at")

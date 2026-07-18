@@ -1,56 +1,53 @@
 import pytest
 from pathlib import Path
 
-from tuckit.core.models import Org, Workspace
-from tuckit.core.services.tokens import generate_token, hash_token, list_tokens, resolve_workspace, revoke_token
+from tuckit.core.models import Org
+from tuckit.core.services.tokens import generate_token, hash_token, list_tokens, resolve_org, revoke_token
 
 
 @pytest.fixture
-def workspace(db):
-    org = Org.objects.create(name="Acme", slug="acme")
-    return Workspace.objects.create(org=org, name="P", slug="p")
+def org(db):
+    return Org.objects.create(name="Acme", slug="acme")
 
 
 @pytest.mark.django_db
-def test_generate_token_stores_only_hash(workspace):
-    token, raw = generate_token(workspace, "cli")
+def test_generate_token_stores_only_hash(org):
+    token, raw = generate_token(org, "cli")
     assert raw and len(raw) > 20
     assert token.token_hash == hash_token(raw)
     assert token.token_hash != raw
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_owner_and_stamps_use(workspace):
-    _, raw = generate_token(workspace, "cli")
-    resolved = resolve_workspace(raw)
-    assert resolved == workspace
+def test_resolve_org_returns_owner_and_stamps_use(org):
+    _, raw = generate_token(org, "cli")
+    resolved = resolve_org(raw)
+    assert resolved == org
     from tuckit.core.models import ApiToken
 
-    assert ApiToken.objects.get(workspace=workspace).last_used_at is not None
+    assert ApiToken.objects.get(org=org).last_used_at is not None
 
 
 @pytest.mark.django_db
-def test_resolve_workspace_returns_none_for_bad_token(workspace):
-    generate_token(workspace, "cli")
-    assert resolve_workspace("not-a-real-token") is None
+def test_resolve_org_returns_none_for_bad_token(org):
+    generate_token(org, "cli")
+    assert resolve_org("not-a-real-token") is None
 
 
 @pytest.mark.django_db
 def test_list_and_revoke_tokens():
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="W", slug="w")
-    t, _ = generate_token(ws, "a")
-    assert list(list_tokens(ws)) == [t]
-    revoke_token(ws, t.id)
-    assert list(list_tokens(ws)) == []
+    t, _ = generate_token(org, "a")
+    assert list(list_tokens(org)) == [t]
+    revoke_token(org, t.id)
+    assert list(list_tokens(org)) == []
 
 
 @pytest.mark.django_db
-def test_revoke_token_is_workspace_scoped(workspace):
-    org = Org.objects.create(name="Other Org", slug="other-org")
-    other = Workspace.objects.create(org=org, name="Other", slug="other")
+def test_revoke_token_is_org_scoped(org):
+    other = Org.objects.create(name="Other Org", slug="other-org")
     token, _ = generate_token(other, "cli")
-    revoke_token(workspace, token.id)
+    revoke_token(org, token.id)
     assert list(list_tokens(other)) == [token]
 
 

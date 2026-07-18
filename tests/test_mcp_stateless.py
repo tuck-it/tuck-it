@@ -24,7 +24,7 @@ import json
 import pytest
 from starlette.testclient import TestClient
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.tokens import generate_token
@@ -47,12 +47,9 @@ _INITIALIZE = {
 
 
 def _seed_token():
-    org = Org.objects.create(name="Acme", slug="acme")
-    workspace = Workspace.objects.create(
-        org=org, name="MyProduct", slug="myproduct", description="demo product"
-    )
-    create_slice(create_area(workspace, "Backend"), "Auth", status="shipped")
-    _token, raw_token = generate_token(workspace, "stateless-token")
+    org = Org.objects.create(name="Acme", slug="acme", description="demo product")
+    create_slice(create_area(org, "Backend"), "Auth", status="shipped")
+    _token, raw_token = generate_token(org, "stateless-token")
     return raw_token
 
 
@@ -106,4 +103,4 @@ def test_tool_call_without_session_id_succeeds(asgi_app):
     result = call_resp.json()["result"]
     assert result.get("isError") is not True, result
     payload = json.loads(result["content"][0]["text"])
-    assert payload["product"]["name"] == "MyProduct"
+    assert payload["org"]["name"] == "Acme"

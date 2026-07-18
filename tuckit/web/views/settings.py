@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -6,78 +6,50 @@ from django.views.decorators.http import require_POST
 from tuckit.core.models import Invitation
 from tuckit.core.services.exceptions import InvalidValue, LimitReached
 from tuckit.core.services.invitations import cancel_invitation, create_invitation, send_invitation_email
-from tuckit.core.services.orgs import delete_workspace, is_org_admin, rename_workspace
+from tuckit.core.services.orgs import is_org_admin
 from tuckit.core.services.tokens import list_tokens, generate_token, revoke_token
-from tuckit.web.auth import get_current_workspace
-from tuckit.web.htmx import redirect_response
 from tuckit.web.views.settings_shell import settings_context
 
 
-def ws_general(request):
-    ws = get_current_workspace(request)
-    ctx = settings_context(request, active="ws_general")
-    ctx["workspace"] = ws
-    return render(request, "web/settings/ws_general.html", ctx)
-
-
-def ws_agent(request):
-    ws = get_current_workspace(request)
-    ctx = settings_context(request, active="ws_agent")
-    ctx.update({"workspace": ws, "tokens": list(list_tokens(ws)) if ws else [],
+def org_agent(request):
+    org = request.org
+    ctx = settings_context(request, active="org_agent")
+    ctx.update({"org": org, "tokens": list(list_tokens(org)),
                 "mcp_url": request.build_absolute_uri("/mcp"),
-                "can_admin": bool(ws and is_org_admin(request.user, ws.org))})
-    return render(request, "web/settings/ws_agent.html", ctx)
+                "can_admin": is_org_admin(request.user, org)})
+    return render(request, "web/settings/org_agent.html", ctx)
 
 
-def ws_shipped(request):
-    ws = get_current_workspace(request)
-    ctx = settings_context(request, active="ws_shipped")
-    ctx["workspace"] = ws
-    return render(request, "web/settings/ws_shipped.html", ctx)
-
-
-def ws_danger(request):
-    ws = get_current_workspace(request)
-    ctx = settings_context(request, active="ws_danger")
-    ctx.update({"workspace": ws, "can_admin": bool(ws and is_org_admin(request.user, ws.org))})
-    return render(request, "web/settings/ws_danger.html", ctx)
+def org_shipped(request):
+    org = request.org
+    ctx = settings_context(request, active="org_shipped")
+    ctx["org"] = org
+    return render(request, "web/settings/org_shipped.html", ctx)
 
 
 @require_POST
 def token_create(request):
-    ws = get_current_workspace(request)
-    if ws is None or not is_org_admin(request.user, ws.org):
-        return HttpResponseForbidden("권한이 없습니다")
-    token, raw = generate_token(ws, request.POST.get("name") or "token")
-    return render(request, "web/partials/_token_row.html", {"token": token, "raw": raw})
+    org = request.org
+    if not is_org_admin(request.user, org):
+        return HttpResponseForbidden("You don't have permission.")
+    token, raw = generate_token(org, request.POST.get("name") or "token")
+    return render(request, "web/partials/_token_row.html", {"token": token, "raw": raw, "org": org})
 
 
 @require_POST
 def token_revoke(request, token_id):
-    ws = get_current_workspace(request)
-    if ws is None or not is_org_admin(request.user, ws.org):
-        return HttpResponseForbidden("권한이 없습니다")
-    revoke_token(ws, token_id)
+    org = request.org
+    if not is_org_admin(request.user, org):
+        return HttpResponseForbidden("You don't have permission.")
+    revoke_token(org, token_id)
     return HttpResponse(status=204)
 
 
 @require_POST
-def workspace_rename(request):
-    ws = get_current_workspace(request)
-    if ws is None or not is_org_admin(request.user, ws.org):
-        return HttpResponseForbidden("권한이 없습니다")
-    try:
-        ws = rename_workspace(ws, request.POST.get("name", ""))
-    except InvalidValue as exc:
-        return HttpResponse(str(exc), status=400)
-    return HttpResponse(ws.name)
-
-
-@require_POST
 def shipped_board_prefs(request):
-    ws = get_current_workspace(request)
-    if ws is None or not is_org_admin(request.user, ws.org):
-        return HttpResponseForbidden("권한이 없습니다")
+    org = request.org
+    if not is_org_admin(request.user, org):
+        return HttpResponseForbidden("You don't have permission.")
     mode = request.POST.get("mode")
     if mode not in ("count", "days"):
         return HttpResponse("invalid mode", status=400)
@@ -87,32 +59,17 @@ def shipped_board_prefs(request):
         return HttpResponse("invalid limit", status=400)
     if not (1 <= limit <= 365):
         return HttpResponse("limit out of range", status=400)
-    ws.shipped_board_mode = mode
-    ws.shipped_board_limit = limit
-    ws.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
+    org.shipped_board_mode = mode
+    org.shipped_board_limit = limit
+    org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
     return HttpResponse(status=204)
-
-
-@require_POST
-def workspace_delete(request):
-    ws = get_current_workspace(request)
-    if ws is None or not is_org_admin(request.user, ws.org):
-        return HttpResponseForbidden("권한이 없습니다")
-    ws_id = ws.id
-    try:
-        delete_workspace(ws)
-    except InvalidValue as exc:
-        return HttpResponse(str(exc), status=400)
-    if request.session.get("active_workspace_id") == ws_id:
-        request.session.pop("active_workspace_id", None)
-    return redirect_response(request, "web:root")
 
 
 @require_POST
 def invite_create(request):
     org = request.org
     if org is None or not is_org_admin(request.user, org):
-        return HttpResponseForbidden("권한이 없습니다")
+        return HttpResponseForbidden("You don't have permission.")
     try:
         inv = create_invitation(
             org=org,
@@ -133,7 +90,7 @@ def invite_create(request):
 def invite_cancel(request, invitation_id):
     org = request.org
     if org is None or not is_org_admin(request.user, org):
-        return HttpResponseForbidden("권한이 없습니다")
+        return HttpResponseForbidden("You don't have permission.")
     cancel_invitation(org=org, invitation_id=invitation_id)
     return HttpResponse(status=204)
 

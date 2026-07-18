@@ -31,7 +31,7 @@ def create_bite(
         b = Bite.objects.create(
             plan=plan_, title=title, body=body, status=status, rank=rank, source=source,
         )
-        record_activity(plan_.slice.area.workspace, actor=source, verb="created", target=b)
+        record_activity(plan_.slice.area.org, actor=source, verb="created", target=b)
     return b
 
 
@@ -55,7 +55,7 @@ def update_bite(
         bite.save()
         if status is not None and status != old_status:
             record_activity(
-                bite.plan.slice.area.workspace, actor=actor, verb=status_verb(status),
+                bite.plan.slice.area.org, actor=actor, verb=status_verb(status),
                 target=bite, from_value=old_status, to_value=status,
             )
     return bite
@@ -69,7 +69,7 @@ def set_bite_status(bite: Bite, status: str, *, actor: str = "human") -> Bite:
         bite.save(update_fields=["status", "updated_at"])
         if status != old_status:
             record_activity(
-                bite.plan.slice.area.workspace, actor=actor, verb=status_verb(status),
+                bite.plan.slice.area.org, actor=actor, verb=status_verb(status),
                 target=bite, from_value=old_status, to_value=status,
             )
     return bite

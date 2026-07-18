@@ -17,6 +17,7 @@
         <div class="auth-field">
           <label for="reg-org">Organization name</label>
           <input id="reg-org" name="org_name" value="{{ values.org_name }}" autocomplete="organization" required>
+          <small class="field-hint">Your company or team. You can create more later.</small>
         </div>
         <div class="auth-field">
           <label for="reg-slug">Organization URL</label>
@@ -45,7 +46,7 @@
             clearTimeout(t);
             t = setTimeout(function () {
               if (!slug.value) { status.textContent = ''; return; }
-              fetch('/api/check-slug?kind=org&slug=' + encodeURIComponent(slug.value))
+              fetch('/api/check-slug?slug=' + encodeURIComponent(slug.value))
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                   status.textContent = d.available ? 'Available' : (d.error || 'Unavailable');

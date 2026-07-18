@@ -4,11 +4,21 @@ from django.db import models
 
 _SLUG_VALIDATOR = RegexValidator(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$", "invalid slug")
 
+SHIPPED_BOARD_MODE_CHOICES = [("count", "Count"), ("days", "Days")]
+
 
 class Org(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=100, unique=True, validators=[_SLUG_VALIDATOR])
+    description = models.TextField(blank=True, default="")
+    onboarding_dismissed = models.BooleanField(default=False)
+    onboarding_completed = models.BooleanField(default=False)
+    shipped_board_mode = models.CharField(
+        max_length=5, choices=SHIPPED_BOARD_MODE_CHOICES, default="count"
+    )
+    shipped_board_limit = models.PositiveSmallIntegerField(default=8)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name

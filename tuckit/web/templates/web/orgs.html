@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+{% include "registration/_auth_head.html" with page_title="Your organizations" %}
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      {% include "registration/_auth_brand.html" %}
+      <h1 class="auth-title">Your organizations</h1>
+      {% if orgs %}
+        <p class="auth-sub">Pick one to continue, or create another below.</p>
+        <div class="org-pick-list">
+          {% for o in orgs %}
+            <a class="org-pick-item" href="{% url 'web:home' o.slug %}">{{ o.name }}</a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="auth-sub">Create your first organization. It's your company or team — you can create more later.</p>
+      {% endif %}
+      {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        <div class="auth-field">
+          <label for="org-name">Organization name</label>
+          <input id="org-name" name="name" value="{{ values.name }}" autocomplete="organization" required autofocus>
+        </div>
+        <div class="auth-field">
+          <label for="org-slug">Organization URL</label>
+          <div class="slug-preview">app.tuckit.dev/<span id="slug-echo">{{ values.slug|default:"your-org" }}</span></div>
+          <input id="org-slug" name="slug" value="{{ values.slug }}" pattern="[a-z0-9](?:[a-z0-9-]*[a-z0-9])?" maxlength="32" required>
+          <small id="slug-status" class="field-hint"></small>
+        </div>
+        <script>
+        (function () {
+          var name = document.getElementById('org-name');
+          var slug = document.getElementById('org-slug');
+          var echo = document.getElementById('slug-echo');
+          var status = document.getElementById('slug-status');
+          var edited = slug.value.length > 0;
+          function slugify(s) {
+            return s.toLowerCase().trim()
+              .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
+          }
+          function refreshEcho() { echo.textContent = slug.value || 'your-org'; }
+          name.addEventListener('input', function () {
+            if (!edited) { slug.value = slugify(name.value); refreshEcho(); check(); }
+          });
+          slug.addEventListener('input', function () { edited = true; refreshEcho(); check(); });
+          var t;
+          function check() {
+            clearTimeout(t);
+            t = setTimeout(function () {
+              if (!slug.value) { status.textContent = ''; return; }
+              fetch('/api/check-slug?slug=' + encodeURIComponent(slug.value))
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                  status.textContent = d.available ? 'Available' : (d.error || 'Unavailable');
+                  status.className = 'field-hint ' + (d.available ? 'ok' : 'err');
+                });
+            }, 250);
+          }
+        })();
+        </script>
+        <button type="submit" class="button button-primary">Create organization</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

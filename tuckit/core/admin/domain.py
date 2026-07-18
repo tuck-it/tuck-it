@@ -5,15 +5,15 @@ from tuckit.core.models import Area, Bite, Plan, Slice, Tag
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ("name", "workspace")
-    list_filter = ("workspace",)
+    list_display = ("name", "org")
+    list_filter = ("org",)
     search_fields = ("name",)
 
 
 @admin.register(Area)
 class AreaAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "workspace", "is_triage", "archived")
-    list_filter = ("workspace", "archived", "is_triage")
+    list_display = ("name", "slug", "org", "is_triage", "archived")
+    list_filter = ("org", "archived", "is_triage")
     search_fields = ("name", "slug")
     readonly_fields = ("created_at", "updated_at")
 

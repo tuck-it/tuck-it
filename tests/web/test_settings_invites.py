@@ -2,7 +2,6 @@ import pytest
 
 from tuckit.core.models import Invitation, Org, OrgMember, User
 from tuckit.core.services.invitations import create_invitation
-from tuckit.core.services.orgs import create_workspace
 
 
 @pytest.fixture
@@ -12,10 +11,9 @@ def owner_client(client, db):
     owner.set_password("pw123456")
     owner.save()
     OrgMember.objects.create(user=owner, org=org, role="owner")
-    ws = create_workspace(org, "Board")
     client.force_login(owner)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = org.id
     session.save()
     return client, org
 
@@ -48,10 +46,9 @@ def test_member_cannot_invite(client, db):
     org = Org.objects.create(name="Acme", slug="acme")
     member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
-    ws = create_workspace(org, "Board")
     client.force_login(member)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = org.id
     session.save()
     resp = client.post(f"/{org.slug}/settings/invites", {"email": "new@x.com", "role": "member"})
     assert resp.status_code == 403
@@ -66,10 +63,9 @@ def test_member_cannot_cancel_invite(client, db):
 
     member = User.objects.create(email="m@a.com")
     OrgMember.objects.create(user=member, org=org, role="member")
-    ws = create_workspace(org, "Board")
     client.force_login(member)
     session = client.session
-    session["active_workspace_id"] = ws.id
+    session["active_org_id"] = org.id
     session.save()
 
     resp = client.post(f"/{org.slug}/settings/invites/{inv.id}/cancel")

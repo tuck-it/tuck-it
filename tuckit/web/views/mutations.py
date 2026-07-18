@@ -6,20 +6,20 @@ from tuckit.core.services.resolve import get_slice, get_bite, get_plan as resolv
 from tuckit.core.services.slices import set_slice_status, update_slice
 from tuckit.core.services.bites import set_bite_status, update_bite
 from tuckit.core.services.plans import create_plan, delete_plan, update_plan
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_org
 from tuckit.web.panel import slice_panel_context
 
 
 def _slice_or_404(request, slice_id):
     try:
-        return get_slice(get_current_workspace(request), slice_id)
+        return get_slice(get_current_org(request), slice_id)
     except NotFound:
         raise Http404
 
 
 def _plan_or_404(request, plan_id):
     try:
-        return resolve_plan(get_current_workspace(request), plan_id)
+        return resolve_plan(get_current_org(request), plan_id)
     except NotFound:
         raise Http404
 
@@ -88,7 +88,7 @@ def slice_tags(request, slice_id):
 
 def bite_toggle(request, bite_id):
     try:
-        bite = get_bite(get_current_workspace(request), bite_id)
+        bite = get_bite(get_current_org(request), bite_id)
     except NotFound:
         raise Http404
     set_bite_status(bite, "todo" if bite.status == "done" else "done")
@@ -97,7 +97,7 @@ def bite_toggle(request, bite_id):
 
 def bite_body(request, bite_id):
     try:
-        bite = get_bite(get_current_workspace(request), bite_id)
+        bite = get_bite(get_current_org(request), bite_id)
     except NotFound:
         raise Http404
     update_bite(bite, body=request.POST.get("body", ""))

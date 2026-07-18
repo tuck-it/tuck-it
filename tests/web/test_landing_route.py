@@ -18,17 +18,17 @@ def _req(user):
 
 
 @pytest.mark.django_db
-def test_landing_route_workspaceless_user_goes_to_first_org():
+def test_landing_route_orgless_user_goes_to_orgs():
     u = User.objects.create(email="a@example.com")
     name, kwargs = landing_route(_req(u))
-    assert name == "web:first_org"
+    assert name == "web:orgs"
     assert kwargs == {}
 
 
 @pytest.mark.django_db
-def test_landing_route_user_with_workspace_goes_home():
+def test_landing_route_user_with_org_goes_home():
     u = User.objects.create(email="b@example.com")
-    _org, ws = create_org(u, name="Acme")
+    org = create_org(u, name="Acme")
     name, kwargs = landing_route(_req(u))
     assert name == "web:home"
-    assert kwargs == {"org_slug": ws.org.slug, "ws_slug": ws.slug}
+    assert kwargs == {"org_slug": org.slug}

@@ -9,7 +9,7 @@ from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, rename_area, delete_area, reorder_area
 from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices, grouped_slices
 from tuckit.core.services.resolve import get_area, get_slice, get_area_by_slug
-from tuckit.web.auth import get_current_workspace
+from tuckit.web.auth import get_current_org
 from tuckit.web.htmx import redirect_response
 
 
@@ -26,7 +26,7 @@ def capture(request):
     capturing); any authored detail creates a full slice and redirects the
     user into it. Bites are no longer authored here — they live under a
     Slice's Plan section."""
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
 
     title = request.POST.get("title", "").strip()
     if not title:
@@ -39,11 +39,11 @@ def capture(request):
     area = None
     if request.POST.get("area_id"):
         try:
-            area = get_area(ws, int(request.POST["area_id"]))
+            area = get_area(org, int(request.POST["area_id"]))
         except (NotFound, ValueError):
             raise Http404
 
-    triage = get_or_create_triage(ws)
+    triage = get_or_create_triage(org)
     target_area = area or triage
 
     # "Rich" = the user authored beyond a bare title-into-Inbox capture.
@@ -60,7 +60,7 @@ def capture(request):
 
     if rich:
         # Land in the freshly authored slice to keep working (full navigation).
-        return redirect_response(request, "web:slice", org_slug=ws.org.slug, ws_slug=ws.slug, slice_id=slice_.id)
+        return redirect_response(request, "web:slice", org_slug=org.slug, slice_id=slice_.id)
 
     # Quick path — bundle out-of-band swaps: a confirmation toast, the live
     # count, and an OOB re-render of the Triage list (lands only if that page is
@@ -68,27 +68,27 @@ def capture(request):
     # response fits every page).
     return render(request, "web/partials/_capture_result.html", {
         "slices": list(list_slices(triage).prefetch_related("tags")),
-        "areas": [a for a in list_areas(ws) if not a.is_triage],
+        "areas": [a for a in list_areas(org) if not a.is_triage],
         "statuses": ["idea", "planned", "building", "shipped"],
     })
 
 
 def triage_list(request):
-    ws = get_current_workspace(request)
-    triage_area = get_or_create_triage(ws)
+    org = get_current_org(request)
+    triage_area = get_or_create_triage(org)
     return render(request, "web/triage.html", {
         "slices": list(list_slices(triage_area).prefetch_related("tags")),
-        "areas": [a for a in list_areas(ws) if not a.is_triage],
+        "areas": [a for a in list_areas(org) if not a.is_triage],
         "statuses": ["idea", "planned", "building", "shipped"],
     })
 
 
 def triage(request, slice_id):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     area_id = request.POST.get("area_id")
     try:
-        slice_ = get_slice(ws, slice_id)
-        area = get_area(ws, int(area_id)) if area_id else None
+        slice_ = get_slice(org, slice_id)
+        area = get_area(org, int(area_id)) if area_id else None
     except NotFound:
         raise Http404
     try:
@@ -101,8 +101,8 @@ def triage(request, slice_id):
 
 
 def area_create(request):
-    ws = get_current_workspace(request)
-    create_area(ws, request.POST["name"])
+    org = get_current_org(request)
+    create_area(org, request.POST["name"])
     # OOB-swap the sidebar Areas list instead of a full-page reload; the
     # sidebar_areas context processor supplies the refreshed `areas`. Also
     # OOB-refresh the onboarding widget so its Step-1 checkbox ticks live.
@@ -111,9 +111,9 @@ def area_create(request):
 
 
 def area_rename(request, area_id):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        area = get_area(ws, area_id)
+        area = get_area(org, area_id)
     except NotFound:
         raise Http404
     try:
@@ -125,14 +125,14 @@ def area_rename(request, area_id):
     # 'area_rename', so resolver_match can't infer active — derive it from the
     # browser's current URL (htmx sends it as HX-Current-URL).
     current_path = urlparse(request.headers.get("HX-Current-URL", "")).path
-    active = current_path == reverse("web:area", args=[ws.org.slug, ws.slug, area.slug])
+    active = current_path == reverse("web:area", args=[org.slug, area.slug])
     return render(request, "web/partials/_area_row.html", {"a": area, "active": active})
 
 
 def area_delete(request, area_id):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        area = get_area(ws, area_id)
+        area = get_area(org, area_id)
     except NotFound:
         raise Http404
     try:
@@ -143,11 +143,11 @@ def area_delete(request, area_id):
 
 
 def area_reorder(request, area_id):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        area = get_area(ws, area_id)
-        before = get_area(ws, int(request.POST["before_id"])) if request.POST.get("before_id") else None
-        after = get_area(ws, int(request.POST["after_id"])) if request.POST.get("after_id") else None
+        area = get_area(org, area_id)
+        before = get_area(org, int(request.POST["before_id"])) if request.POST.get("before_id") else None
+        after = get_area(org, int(request.POST["after_id"])) if request.POST.get("after_id") else None
     except NotFound:
         raise Http404
     reorder_area(area, before=before, after=after)
@@ -155,9 +155,9 @@ def area_reorder(request, area_id):
 
 
 def area_slice_create(request, slug):
-    ws = get_current_workspace(request)
+    org = get_current_org(request)
     try:
-        area = get_area_by_slug(ws, slug)
+        area = get_area_by_slug(org, slug)
     except NotFound:
         raise Http404
     title = request.POST.get("title", "").strip()

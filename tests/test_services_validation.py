@@ -1,6 +1,6 @@
 import pytest
 
-from tuckit.core.models import Org, Workspace
+from tuckit.core.models import Org
 from tuckit.core.services.areas import create_area
 from tuckit.core.services.bites import create_bite, set_bite_status
 from tuckit.core.services.exceptions import InvalidValue
@@ -11,8 +11,7 @@ from tuckit.core.services.slices import create_slice, set_slice_status, update_s
 @pytest.fixture
 def area(db):
     org = Org.objects.create(name="Acme", slug="acme")
-    ws = Workspace.objects.create(org=org, name="A", slug="a")
-    return create_area(ws, "Backend")
+    return create_area(org, "Backend")
 
 
 @pytest.mark.django_db

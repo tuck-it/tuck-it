@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from tuckit.core.models import ActivityEvent, ApiToken, Area, Bite, Slice, Workspace
+from tuckit.core.models import ActivityEvent, ApiToken, Area, Bite, Org, Slice
 
 
 @dataclass(frozen=True)
@@ -34,16 +34,16 @@ class OnboardingState:
         return 0
 
 
-def onboarding_state(workspace: Workspace) -> OnboardingState:
+def onboarding_state(org: Org) -> OnboardingState:
     newest = (
-        Slice.objects.filter(area__workspace=workspace)
+        Slice.objects.filter(area__org=org)
         .order_by("-id").values_list("id", flat=True).first()
     )
     return OnboardingState(
-        has_area=Area.objects.filter(workspace=workspace, is_triage=False).exists(),
-        has_slice=Slice.objects.filter(area__workspace=workspace).exists(),
-        has_bite=Bite.objects.filter(plan__slice__area__workspace=workspace).exists(),
-        connected=ActivityEvent.objects.filter(workspace=workspace, actor="agent").exists(),
-        has_key=ApiToken.objects.filter(workspace=workspace).exists(),
+        has_area=Area.objects.filter(org=org, is_triage=False).exists(),
+        has_slice=Slice.objects.filter(area__org=org).exists(),
+        has_bite=Bite.objects.filter(plan__slice__area__org=org).exists(),
+        connected=ActivityEvent.objects.filter(org=org, actor="agent").exists(),
+        has_key=ApiToken.objects.filter(org=org).exists(),
         newest_slice_id=newest,
     )
