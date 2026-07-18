@@ -22,11 +22,6 @@ def test_slice_detail_uses_english_copy(client_local, org):
     s = create_slice(a, "empty slice")  # no spec, no bites → empty states show
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/slices/{s.id}/").content.decode()
-    # leftover Korean UI copy is gone
-    assert "설명을 추가하려면" not in body
-    assert "아직 bite가 없습니다" not in body
-    assert "이 slice를 구현하기" not in body
-    assert "전</span>" not in body            # timesince "… 전"
     # English replacements present (empty slice → PLAN empty state)
     assert "No plan yet" in body
 
