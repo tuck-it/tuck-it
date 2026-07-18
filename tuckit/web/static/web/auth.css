@@ -125,6 +125,8 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 24px;
+  max-height: 220px;
+  overflow-y: auto;
 }
 .org-pick-item {
   display: flex;
@@ -153,6 +155,7 @@ a.auth-brand:hover {
 .auth-split {
   width: 100%;
   max-width: 760px;
+  min-height: 460px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--line);
