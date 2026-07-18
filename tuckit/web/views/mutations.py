@@ -4,7 +4,7 @@ from django.shortcuts import render
 from tuckit.core.services.exceptions import NotFound, InvalidValue
 from tuckit.core.services.resolve import get_slice, get_bite, get_plan as resolve_plan, get_area
 from tuckit.core.services.slices import set_slice_status, update_slice, set_slice_area
-from tuckit.core.services.bites import set_bite_status, update_bite
+from tuckit.core.services.bites import create_bite, delete_bite, set_bite_status, update_bite
 from tuckit.core.services.plans import create_plan, delete_plan, update_plan
 from tuckit.web.auth import get_current_org
 from tuckit.web.panel import slice_panel_context
@@ -112,3 +112,32 @@ def bite_body(request, bite_id):
         raise Http404
     update_bite(bite, body=request.POST.get("body", ""))
     return render(request, "web/partials/_bite_row.html", {"bite": bite})
+
+
+def bite_create(request, plan_id):
+    plan = _plan_or_404(request, plan_id)
+    title = request.POST.get("title", "").strip()
+    if not title:
+        return HttpResponse("Title is required", status=400)
+    create_bite(plan, title, source="human")
+    return _panel(request, plan.slice)
+
+
+def bite_edit(request, bite_id):
+    try:
+        bite = get_bite(get_current_org(request), bite_id)
+    except NotFound:
+        raise Http404
+    if "title" in request.POST:
+        update_bite(bite, title=request.POST["title"])
+    return render(request, "web/partials/_bite_row.html", {"bite": bite})
+
+
+def bite_delete(request, bite_id):
+    try:
+        bite = get_bite(get_current_org(request), bite_id)
+    except NotFound:
+        raise Http404
+    slice_ = bite.plan.slice
+    delete_bite(bite)
+    return _panel(request, slice_)

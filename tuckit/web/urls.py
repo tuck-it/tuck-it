@@ -93,6 +93,9 @@ app_patterns = [
     path(f"{P}plans/<int:plan_id>/delete", mutations.plan_delete, name="plan_delete"),
     path(f"{P}bites/<int:bite_id>/toggle", mutations.bite_toggle, name="bite_toggle"),
     path(f"{P}bites/<int:bite_id>/body", mutations.bite_body, name="bite_body"),
+    path(f"{P}plans/<int:plan_id>/bites", mutations.bite_create, name="bite_create"),
+    path(f"{P}bites/<int:bite_id>/edit", mutations.bite_edit, name="bite_edit"),
+    path(f"{P}bites/<int:bite_id>/delete", mutations.bite_delete, name="bite_delete"),
 ]
 
 # --- org root = Home (single segment; MUST be last so literal single-segment
