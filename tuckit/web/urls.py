@@ -1,6 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
 from django.urls import path
+from django.views.generic import RedirectView
 
 from tuckit.web.views import (
     pages, slices, mutations, board, capture, health,
@@ -14,8 +15,8 @@ app_name = "web"
 # --- root / auth (no tenant) ---
 auth_patterns = [
     path("healthcheck", health.healthz, name="healthcheck"),
-    path("login/", login_not_required(auth_views.LoginView.as_view()), name="login"),
-    path("register/", login_not_required(accounts.register_view), name="register"),
+    path("login/", login_not_required(accounts.auth_entry), name="login"),
+    path("register/", login_not_required(RedirectView.as_view(pattern_name="web:login", permanent=False)), name="register"),
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("orgs/", onboarding.orgs, name="orgs"),

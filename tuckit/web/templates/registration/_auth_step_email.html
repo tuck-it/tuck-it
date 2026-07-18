@@ -1,0 +1,14 @@
+<h1 class="auth-title">Log in or sign up</h1>
+<p class="auth-sub">Continue with your email.</p>
+{% include "registration/_auth_sso.html" %}
+{% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+<form method="post" class="auth-form">
+  {% csrf_token %}
+  <input type="hidden" name="step" value="identify">
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <div class="auth-field">
+    <label for="id-email">Email</label>
+    <input id="id-email" type="email" name="email" value="{{ email|default:'' }}" autocomplete="email" required autofocus>
+  </div>
+  <button type="submit" class="button button-primary">Continue</button>
+</form>
