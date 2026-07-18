@@ -129,6 +129,25 @@ def area_rename(request, area_id):
     return render(request, "web/partials/_area_row.html", {"a": area, "active": active})
 
 
+def area_edit(request, area_id):
+    org = get_current_org(request)
+    try:
+        area = get_area(org, area_id)
+    except NotFound:
+        raise Http404
+    try:
+        update_area(
+            area,
+            name=request.POST.get("name", ""),
+            description=request.POST.get("description", ""),
+        )
+    except InvalidValue as e:
+        return HttpResponse(str(e), status=400)
+    html = render_to_string("web/partials/_area_header.html", {"area": area}, request=request)
+    nav = render_to_string("web/partials/_area_nav.html", {"oob": True}, request=request)
+    return HttpResponse(html + nav)
+
+
 def area_delete(request, area_id):
     org = get_current_org(request)
     try:

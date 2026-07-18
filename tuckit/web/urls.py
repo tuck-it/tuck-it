@@ -78,6 +78,7 @@ app_patterns = [
     path(f"{P}areas/<slug:slug>/", slices.area_view, name="area"),
     path(f"{P}areas/<slug:slug>/slices", capture.area_slice_create, name="area_slice_create"),
     path(f"{P}areas/<int:area_id>/rename", capture.area_rename, name="area_rename"),
+    path(f"{P}areas/<int:area_id>/edit", capture.area_edit, name="area_edit"),
     path(f"{P}areas/<int:area_id>/delete", capture.area_delete, name="area_delete"),
     path(f"{P}areas/<int:area_id>/reorder", capture.area_reorder, name="area_reorder"),
     path(f"{P}slices/<int:slice_id>/", slices.slice_detail, name="slice"),

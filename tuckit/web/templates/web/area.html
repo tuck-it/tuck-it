@@ -2,7 +2,7 @@
 {% load web_extras %}
 {% block main %}
   <header class="page-head">
-    <div class="page-head-l"><h1 class="page-title">{{ area.name }}</h1></div>
+    {% include "web/partials/_area_header.html" %}
     <div class="view-toggle">
       <a class="view-toggle-link{% if view == 'list' %} view-toggle-link--active{% endif %}"
          href="?view=list">List</a>
@@ -10,7 +10,6 @@
          href="?view=board">Board</a>
     </div>
   </header>
-  {% if area.description %}<p class="area-desc">{{ area.description }}</p>{% endif %}
   {% if view == "board" %}
     {% include "web/partials/_board.html" %}
     {% if not has_any_slice %}<div class="empty muted">No slices yet.</div>{% endif %}
