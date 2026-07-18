@@ -1,7 +1,7 @@
 import pytest
 
 from tuckit.core.models import Area, OrgMember, User
-from tuckit.core.services.accounts import register
+from tuckit.core.services.accounts import create_account, register
 from tuckit.core.services.exceptions import InvalidValue
 
 
@@ -66,3 +66,23 @@ def test_register_runs_signup_hook():
     with override_settings(TUCKIT_SIGNUP_HOOK="tests.test_services_accounts._hook"):
         register(email="h@b.com", org_name="H", slug="h0", password="pw123456")
     assert seen["ok"] == ("h@b.com", "h0")
+
+
+@pytest.mark.django_db
+def test_create_account_makes_user_with_no_org():
+    user = create_account(email="solo@x.z", password="Sup3rSecret!x")
+    assert user.pk and user.email == "solo@x.z"
+    assert not OrgMember.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_create_account_rejects_duplicate_email():
+    create_account(email="dupe@x.z", password="Sup3rSecret!x")
+    with pytest.raises(InvalidValue):
+        create_account(email="dupe@x.z", password="Sup3rSecret!x")
+
+
+@pytest.mark.django_db
+def test_create_account_rejects_weak_password():
+    with pytest.raises(InvalidValue):
+        create_account(email="weak@x.z", password="123")

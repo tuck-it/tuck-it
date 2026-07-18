@@ -1,7 +1,5 @@
 import secrets
 
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -48,17 +46,9 @@ def accept_invitation(*, token, user) -> OrgMember:
 
 @transaction.atomic
 def register_invited(*, invitation, password) -> tuple[User, OrgMember]:
-    if User.objects.filter(email=invitation.email).exists():
-        raise InvalidValue(f"User already exists: {invitation.email}")
-    if not password:
-        raise InvalidValue("비밀번호를 입력해 주세요")
-    user = User(email=invitation.email)
-    try:
-        validate_password(password, user)
-    except ValidationError as exc:
-        raise InvalidValue(" ".join(exc.messages))
-    user.set_password(password)
-    user.save()
+    from tuckit.core.services.accounts import create_account  # local: avoid import cycle
+
+    user = create_account(email=invitation.email, password=password)
     member = accept_invitation(token=invitation.token, user=user)
     return user, member
 
