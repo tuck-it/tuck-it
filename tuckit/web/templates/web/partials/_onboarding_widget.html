@@ -7,7 +7,7 @@ Slice/Bite steps. `areas` comes from the sidebar_areas context processor.{% endc
   <button type="button" class="ob-toggle" x-on:click="open = !open; localStorage.setItem('ob-open', open ? '1' : '0')"
           :aria-expanded="open" aria-controls="ob-body">
     <span class="ob-title">Get started</span>
-    <span class="ob-count">{{ onboarding.completed }}/4</span>
+    <span class="ob-count">{{ onboarding.completed }}/5</span>
     <span class="ob-chev" :class="{'ob-chev--up': open}">{% icon "chevron" "icon" %}</span>
   </button>
 
@@ -52,19 +52,28 @@ Slice/Bite steps. `areas` comes from the sidebar_areas context processor.{% endc
         {% endif %}
       </li>
 
-      {# Step 3 — Bite: go to the REAL Slice panel #}
-      <li class="ob-step {% if onboarding.has_bite %}done{% endif %} {% if onboarding.current == 3 %}current{% endif %}">
+      {# Step 3 — Plan: go to the newest Slice's panel, focus the add-plan form #}
+      <li class="ob-step {% if onboarding.has_plan %}done{% endif %} {% if onboarding.current == 3 %}current{% endif %}">
+        <div class="ob-step-head"><span class="ob-box" aria-hidden="true">✓</span><span>Add a Plan</span></div>
+        {% if onboarding.has_slice and not onboarding.has_plan and onboarding.newest_slice_id %}
+        <p class="ob-hint">A plan holds this slice's work steps. Add one, then break it into bites.</p>
+        <a class="button button-small ob-cta" href="{% wurl 'web:slice' onboarding.newest_slice_id %}?focus=plan">Open the Slice →</a>
+        {% endif %}
+      </li>
+
+      {# Step 4 — Bite: go to the REAL Slice panel, focus the add-bite form #}
+      <li class="ob-step {% if onboarding.has_bite %}done{% endif %} {% if onboarding.current == 4 %}current{% endif %}">
         <div class="ob-step-head"><span class="ob-box" aria-hidden="true">✓</span><span>Break it into Bites</span></div>
-        {% if onboarding.has_slice and not onboarding.has_bite and onboarding.newest_slice_id %}
+        {% if onboarding.has_plan and not onboarding.has_bite and onboarding.newest_slice_id %}
         <p class="ob-hint">One implementation step of a Slice. Add it in the Slice.</p>
         <a class="button button-small ob-cta" href="{% wurl 'web:slice' onboarding.newest_slice_id %}?focus=bite">Open the Slice →</a>
         {% endif %}
       </li>
 
-      {# Step 4 — Connect: inline, reuses the existing connect fragments #}
-      <li class="ob-step {% if onboarding.connected %}done{% endif %} {% if onboarding.current == 4 %}current{% endif %}">
+      {# Step 5 — Connect: inline, reuses the existing connect fragments #}
+      <li class="ob-step {% if onboarding.connected %}done{% endif %} {% if onboarding.current == 5 %}current{% endif %}">
         <div class="ob-step-head"><span class="ob-box" aria-hidden="true">✓</span><span>Connect your agent</span></div>
-        {% if onboarding.current == 4 %}
+        {% if onboarding.current == 5 %}
         <div id="ob-connect">
           {% if onboarding.has_key %}
             {% include "web/partials/_get_started_listen.html" with agent_baseline=onboarding_agent_baseline %}

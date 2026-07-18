@@ -63,6 +63,15 @@ def test_reorder_bite_to_front(plan_):
 
 
 @pytest.mark.django_db
+def test_delete_bite_removes_it(plan_):
+    from tuckit.core.services.bites import delete_bite
+    a = create_bite(plan_, "A")
+    b = create_bite(plan_, "B")
+    delete_bite(a)
+    assert list(list_bites(plan_)) == [b]
+
+
+@pytest.mark.django_db
 def test_bite_progress_counts_done_over_non_dropped():
     org = Org.objects.create(name="Acme", slug="acme")
     area = create_area(org, "A")

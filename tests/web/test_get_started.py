@@ -11,13 +11,15 @@ def _p(org):
 
 
 @pytest.mark.django_db
-def test_widget_shows_four_steps_on_fresh_home(client_local, org):
+def test_widget_shows_five_steps_on_fresh_home(client_local, org):
     body = client_local.get(f"{_p(org)}/").content.decode()
     assert 'id="onboarding-widget"' in body
     assert "Create your first Area" in body
     assert "Add your first Slice" in body
+    assert "Add a Plan" in body
     assert "Break it into Bites" in body
     assert "Connect your agent" in body
+    assert "/5" in body  # step counter
     # a11y: disclosure toggle points at the collapsible body, decorative
     # checkmark glyphs are hidden from assistive tech.
     assert 'aria-controls="ob-body"' in body
@@ -43,11 +45,20 @@ def test_widget_slice_step_opens_area_scoped_modal(client_local, org):
 
 
 @pytest.mark.django_db
-def test_widget_bite_step_links_to_real_slice(client_local, org):
-    from tuckit.core.services.areas import create_area
-    from tuckit.core.services.slices import create_slice
+def test_widget_plan_step_links_to_newest_slice(client_local, org):
     area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="idea")
+    body = client_local.get(f"/{org.slug}/").content.decode()
+    # With a Slice but no Plan, the current step is Add-a-Plan → ?focus=plan.
+    assert f"/slices/{sl.id}/?focus=plan" in body
+
+
+@pytest.mark.django_db
+def test_widget_bite_step_links_after_plan_exists(client_local, org):
+    from tuckit.core.services.plans import create_plan
+    area = create_area(org, "Backend")
+    sl = create_slice(area, "Retry webhooks", status="idea")
+    create_plan(sl, title="Plan")
     body = client_local.get(f"/{org.slug}/").content.decode()
     assert f"/slices/{sl.id}/?focus=bite" in body
 
@@ -78,8 +89,8 @@ def test_dismiss_hides_widget(client_local, org):
 
 @pytest.mark.django_db
 def test_step4_shows_generate_key_when_no_key(client_local, org):
-    # Reach step 4 (onboarding.current == 4) by completing area/slice/bite first —
-    # the widget only renders the connect UI once current == 4.
+    # Reach step 5 (onboarding.current == 5) by completing area/slice/plan/bite
+    # first — the widget only renders the connect UI once current == 5.
     area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="planned")
     create_bite(create_plan(sl, title="Plan"), "Add backoff")

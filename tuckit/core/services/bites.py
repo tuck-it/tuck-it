@@ -81,6 +81,10 @@ def reorder_bite(bite: Bite, *, before: Bite | None = None, after: Bite | None =
     return bite
 
 
+def delete_bite(bite: Bite) -> None:
+    bite.delete()
+
+
 def bite_progress(slice_: Slice) -> tuple[int, int]:
     qs = Bite.objects.filter(plan__slice=slice_).exclude(status="dropped")
     return qs.filter(status="done").count(), qs.count()
