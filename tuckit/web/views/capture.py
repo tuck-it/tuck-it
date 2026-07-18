@@ -181,7 +181,19 @@ def area_slice_create(request, slug):
         raise Http404
     title = request.POST.get("title", "").strip()
     if title:
-        create_slice(area, title, status="idea", source="human")
+        target = area
+        if request.POST.get("area_id"):
+            try:
+                target = get_area(org, int(request.POST["area_id"]))
+            except (NotFound, ValueError):
+                raise Http404
+        status = request.POST.get("status", "idea") or "idea"
+        spec = request.POST.get("spec", "").strip()
+        tags = [t.strip() for t in request.POST.getlist("tags") if t.strip()]
+        try:
+            create_slice(target, title, spec=spec, status=status, tags=tags, source="human")
+        except InvalidValue as e:
+            return HttpResponse(str(e), status=400)
     groups = grouped_slices(area)
     has_any_slice = any(items for _, items in groups)
     html = render_to_string("web/partials/_area_list.html", {
