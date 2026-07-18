@@ -11,7 +11,9 @@ from tuckit.core.services.onboarding import onboarding_state
 @pytest.mark.django_db
 def test_fresh_workspace_all_incomplete(org):
     st = onboarding_state(org)
-    assert (st.has_area, st.has_slice, st.has_bite, st.connected) == (False, False, False, False)
+    assert (st.has_area, st.has_slice, st.has_plan, st.has_bite, st.connected) == (
+        False, False, False, False, False,
+    )
     assert st.done is False and st.completed == 0 and st.current == 1
 
 
@@ -31,13 +33,22 @@ def test_slice_marks_has_slice(org):
 
 
 @pytest.mark.django_db
+def test_plan_marks_has_plan(org):
+    area = create_area(org, "Backend")
+    sl = create_slice(area, "Retry webhooks", status="idea")
+    create_plan(sl, title="Plan")
+    st = onboarding_state(org)
+    assert st.has_plan is True and st.has_bite is False and st.current == 4
+
+
+@pytest.mark.django_db
 def test_bite_marks_has_bite(org):
     area = create_area(org, "Backend")
     sl = create_slice(area, "Retry webhooks", status="idea")
     p = create_plan(sl, title="Plan")
     create_bite(p, "Add backoff")
     st = onboarding_state(org)
-    assert st.has_bite is True and st.current == 4
+    assert st.has_bite is True and st.current == 5
 
 
 @pytest.mark.django_db
@@ -83,4 +94,4 @@ def test_all_done(org):
         target_type="slice", target_id=sl.id, target_label=sl.title,
     )
     st = onboarding_state(org)
-    assert st.done is True and st.completed == 4 and st.current == 0
+    assert st.done is True and st.completed == 5 and st.current == 0
