@@ -138,3 +138,23 @@ def test_onboarding_step1_has_description_field(client_local, org):
     assert 'name="name"' in form
     assert 'name="description"' in form          # description is a first-class labeled field
     assert "Create a new Area" in form           # deliberate, titled modal (not a bare input)
+
+
+@pytest.mark.django_db
+def test_step5_leads_with_tokenless_oauth_and_live_poller(client_local, org):
+    a = create_area(org, "Backend")
+    s = create_slice(a, "Retry webhooks")
+    pl = create_plan(s, title="v1")
+    create_bite(pl, "wire it")  # now at step 5 (all prior steps done, not connected)
+    body = client_local.get(f"{_p(org)}/").content.decode()
+    # tokenless command is the headline; no raw-token instruction up front
+    assert "claude mcp add --transport http tuckit" in body
+    assert "Authorization: Bearer" not in body   # no raw-token command on the page
+    # the live poller starts immediately, without generating a key
+    assert 'id="gs-listen"' in body
+    # key-gen demoted into a headless fallback disclosure
+    assert "<details" in body
+    assert "Generate agent key" in body
+    assert "No browser" in body
+    # other clients point to the canonical settings switcher
+    assert "/settings/agent" in body

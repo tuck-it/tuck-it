@@ -71,24 +71,32 @@ Slice/Bite steps. `areas` comes from the sidebar_areas context processor.{% endc
         {% endif %}
       </li>
 
-      {# Step 5 — Connect: inline, reuses the existing connect fragments #}
+      {# Step 5 — Connect: OAuth browser flow is primary; key-gen is a headless fallback #}
       <li class="ob-step {% if onboarding.connected %}done{% endif %} {% if onboarding.current == 5 %}current{% endif %}">
         <div class="ob-step-head"><span class="ob-box" aria-hidden="true">✓</span><span>Connect your agent</span></div>
         {% if onboarding.current == 5 %}
         <div id="ob-connect">
-          {% if onboarding.has_key %}
-            {% include "web/partials/_get_started_listen.html" with agent_baseline=onboarding_agent_baseline %}
-            <button type="button" class="button button-small" hx-post="{% wurl 'web:onboarding_connect_key' %}" hx-target="#ob-connect" hx-swap="innerHTML">Generate another key</button>
-          {% else %}
-            <div class="gs-field">
-              <label>MCP endpoint</label>
-              <div class="gs-copyrow" x-data>
-                <input class="gs-mono" value="{{ onboarding_mcp_url }}" readonly x-ref="v">
-                <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.v.value)">Copy</button>
-              </div>
+          <div class="gs-field">
+            <label>MCP endpoint</label>
+            <div class="gs-copyrow" x-data>
+              <input class="gs-mono" value="{{ onboarding_mcp_url }}" readonly x-ref="v">
+              <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.v.value)">Copy</button>
             </div>
-            <button type="button" class="button button-primary button-small" hx-post="{% wurl 'web:onboarding_connect_key' %}" hx-target="#ob-connect" hx-swap="innerHTML">Generate agent key</button>
-          {% endif %}
+          </div>
+          <div class="gs-snip" x-data>
+            <label>Claude Code — run this, then click Allow in your browser</label>
+            <pre class="gs-code" x-ref="cc">claude mcp add --transport http tuckit {{ onboarding_mcp_url }}</pre>
+            <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.cc.textContent)">Copy</button>
+          </div>
+          <p class="ob-hint">Your browser opens — pick this workspace, click Allow. No token to copy.</p>
+          {% include "web/partials/_get_started_listen.html" with agent_baseline=onboarding_agent_baseline %}
+          <details class="ob-fallback">
+            <summary>No browser / headless?</summary>
+            <div id="ob-connect-key">
+              <button type="button" class="button button-small" hx-post="{% wurl 'web:onboarding_connect_key' %}" hx-target="#ob-connect-key" hx-swap="innerHTML">Generate agent key</button>
+            </div>
+          </details>
+          <p class="ob-hint">Using another client? <a href="{% wurl 'web:settings_org_agent' %}">Settings → Agent access</a></p>
         </div>
         {% endif %}
       </li>
