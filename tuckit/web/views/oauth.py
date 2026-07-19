@@ -6,12 +6,13 @@ from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from tuckit.core.models import OAuthClient, OrgMember
+from tuckit.core.models import OAuthClient, OAuthRefreshToken, OrgMember
 from tuckit.core.services.oauth import (
     consume_authorization_code, create_authorization_code, create_client,
     issue_tokens, rotate_refresh_token, verify_pkce,
 )
 from tuckit.core.services.oauth_hook import TokenDenied, run_token_hook
+from tuckit.core.services.tokens import hash_token
 
 
 def issuer(request) -> str:
@@ -155,7 +156,18 @@ def token(request):
         })
 
     if grant == "refresh_token":
-        rotated = rotate_refresh_token(request.POST.get("refresh_token", ""))
+        raw_refresh = request.POST.get("refresh_token", "")
+        rt = (
+            OAuthRefreshToken.objects.select_related("client", "user", "org")
+            .filter(token_hash=hash_token(raw_refresh), revoked=False).first()
+        )
+        if rt is None:
+            return _token_error("invalid_grant", 400)
+        try:
+            run_token_hook(user=rt.user, org=rt.org, client=rt.client)
+        except TokenDenied:
+            return _token_error("access_denied", 403)
+        rotated = rotate_refresh_token(raw_refresh)
         if rotated is None:
             return _token_error("invalid_grant", 400)
         access, refresh, expires_in, scope = rotated

@@ -30,7 +30,11 @@ def s256(verifier: str) -> str:
 def verify_pkce(challenge: str, verifier: str) -> bool:
     if not challenge or not verifier:
         return False
-    return secrets.compare_digest(s256(verifier), challenge)
+    try:
+        digest = s256(verifier)
+    except UnicodeEncodeError:
+        return False
+    return secrets.compare_digest(digest, challenge)
 
 
 def create_authorization_code(

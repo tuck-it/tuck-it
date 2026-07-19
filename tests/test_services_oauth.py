@@ -19,6 +19,13 @@ def test_pkce_roundtrip():
 
 
 @pytest.mark.django_db
+def test_verify_pkce_rejects_non_ascii_verifier():
+    """A non-ASCII code_verifier must fail closed (return False), not raise
+    UnicodeEncodeError (which would surface as a 500 at the token endpoint)."""
+    assert oauth.verify_pkce(oauth.s256("abc"), "abcé") is False
+
+
+@pytest.mark.django_db
 def test_auth_code_is_single_use(actors):
     org, user, client = actors
     raw = oauth.create_authorization_code(

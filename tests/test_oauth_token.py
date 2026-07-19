@@ -112,3 +112,37 @@ def test_token_hook_denial_returns_403_and_issues_no_token(client, granted):
     assert resp.status_code == 403
     assert resp.json()["error"] == "access_denied"
     assert OAuthAccessToken.objects.count() == before
+
+
+@pytest.mark.django_db
+def test_refresh_grant_runs_token_hook_denied_returns_403(client, granted):
+    """The refresh_token grant must also run the token hook (cloud entitlement
+    gate), BEFORE rotating tokens. A denied hook must: (1) return 403
+    access_denied, (2) issue no new access token, and (3) leave the refresh
+    token usable afterward (i.e. NOT consumed/rotated by the denied attempt)."""
+    org, c, code, verifier = granted
+    first = client.post("/oauth/token", {
+        "grant_type": "authorization_code", "code": code,
+        "redirect_uri": "http://localhost:9999/cb",
+        "client_id": c.client_id, "code_verifier": verifier,
+    }).json()
+    refresh_token = first["refresh_token"]
+
+    before = OAuthAccessToken.objects.count()
+    with patch("tuckit.web.views.oauth.run_token_hook", side_effect=TokenDenied):
+        resp = client.post("/oauth/token", {
+            "grant_type": "refresh_token", "refresh_token": refresh_token,
+            "client_id": c.client_id,
+        })
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "access_denied"
+    assert OAuthAccessToken.objects.count() == before
+
+    # The refresh token must still be usable (not rotated/consumed) once the
+    # hook stops denying.
+    retry = client.post("/oauth/token", {
+        "grant_type": "refresh_token", "refresh_token": refresh_token,
+        "client_id": c.client_id,
+    })
+    assert retry.status_code == 200
+    assert oauth.resolve_oauth_org(retry.json()["access_token"]) == org
