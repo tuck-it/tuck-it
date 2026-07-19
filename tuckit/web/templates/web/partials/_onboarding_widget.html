@@ -89,7 +89,7 @@ Slice/Bite steps. `areas` comes from the sidebar_areas context processor.{% endc
             <button type="button" class="gs-mini" x-on:click="navigator.clipboard.writeText($refs.cc.textContent)">Copy</button>
           </div>
           <p class="ob-hint">Your browser opens — pick this workspace, click Allow. No token to copy.</p>
-          {% include "web/partials/_get_started_listen.html" with agent_baseline=onboarding_agent_baseline %}
+          {% include "web/partials/_get_started_listen.html" with agent_baseline=onboarding_agent_baseline listen_id="ob-listen" %}
           <details class="ob-fallback">
             <summary>No browser / headless?</summary>
             <div id="ob-connect-key">

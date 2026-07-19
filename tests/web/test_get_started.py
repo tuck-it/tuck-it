@@ -121,7 +121,9 @@ def test_step4_shows_poller_when_key_exists(client_local, org):
     create_bite(create_plan(sl, title="Plan"), "Add backoff")
     ApiToken.objects.create(org=org, name="a", token_hash="x")
     body = client_local.get(f"{_p(org)}/").content.decode()
-    assert 'id="gs-listen"' in body
+    # Primary onboarding poller now uses a distinct id (ob-listen) so it can't
+    # collide with the headless fallback's own poller (gs-listen).
+    assert 'id="ob-listen"' in body
     assert "/onboarding/agent-activity" in body
 
 
@@ -151,10 +153,26 @@ def test_step5_leads_with_tokenless_oauth_and_live_poller(client_local, org):
     assert "claude mcp add --transport http tuckit" in body
     assert "Authorization: Bearer" not in body   # no raw-token command on the page
     # the live poller starts immediately, without generating a key
-    assert 'id="gs-listen"' in body
+    assert 'id="ob-listen"' in body
     # key-gen demoted into a headless fallback disclosure
     assert "<details" in body
     assert "Generate agent key" in body
     assert "No browser" in body
     # other clients point to the canonical settings switcher
     assert "/settings/agent" in body
+
+
+@pytest.mark.django_db
+def test_step5_poller_has_distinct_id_no_collision_with_fallback(client_local, org):
+    # The primary poller must use a distinct id (ob-listen) from the
+    # fallback's poller (gs-listen, rendered only after key-gen). Before the
+    # fix both instances shared id="gs-listen", so htmx's self-referencing
+    # hx-target="#gs-listen" resolved to the first match and the fallback
+    # poller became a zombie that never got replaced.
+    a = create_area(org, "Backend")
+    s = create_slice(a, "Retry webhooks")
+    pl = create_plan(s, title="v1")
+    create_bite(pl, "wire it")  # now at step 5
+    body = client_local.get(f"{_p(org)}/").content.decode()
+    assert 'id="ob-listen"' in body
+    assert 'id="gs-listen"' not in body  # fallback poller not rendered until key-gen runs
