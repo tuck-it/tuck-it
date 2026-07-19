@@ -1,0 +1,20 @@
+{# tuckit/tuckit/web/templates/web/oauth/error.html #}
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Authorization error · tuckit</title>
+  <link rel="stylesheet" href="{% static 'web/tokens.brand.css' %}">
+  <link rel="stylesheet" href="{% static 'web/base.css' %}">
+  <style>.oauth-wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }</style>
+</head>
+<body>
+  <div class="oauth-wrap">
+    <div>
+      <h1>Authorization error</h1>
+      <p>{{ detail }}</p>
+    </div>
+  </div>
+</body>
+</html>

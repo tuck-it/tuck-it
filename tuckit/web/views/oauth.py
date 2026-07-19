@@ -1,10 +1,13 @@
 import json
+from urllib.parse import quote
 
 from django.conf import settings
 from django.http import HttpResponseNotAllowed, JsonResponse
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from tuckit.core.services.oauth import create_client
+from tuckit.core.models import OAuthClient, OrgMember
+from tuckit.core.services.oauth import create_authorization_code, create_client
 
 
 def issuer(request) -> str:
@@ -61,3 +64,56 @@ def register(request):
         "grant_types": ["authorization_code", "refresh_token"],
         "response_types": ["code"],
     }, status=201)
+
+
+def _redirect_error(redirect_uri: str, state: str, error: str):
+    sep = "&" if "?" in redirect_uri else "?"
+    url = f"{redirect_uri}{sep}error={error}"
+    if state:
+        url += f"&state={quote(state)}"
+    return redirect(url)
+
+
+def authorize(request):
+    """OAuth 2.1 authorization endpoint. Login-required (LoginRequiredMiddleware).
+    GET renders consent + org picker; POST ('Allow') issues an authorization code."""
+    src = request.POST if request.method == "POST" else request.GET
+    client_id = src.get("client_id", "")
+    redirect_uri = src.get("redirect_uri", "")
+    state = src.get("state", "")
+    code_challenge = src.get("code_challenge", "")
+    method = src.get("code_challenge_method", "")
+    scope = src.get("scope", "")
+    response_type = src.get("response_type", "code")
+
+    client = OAuthClient.objects.filter(client_id=client_id).first()
+    # Invalid client / redirect_uri -> render an error page, never redirect
+    # (open-redirector guard: we only redirect to a verified redirect_uri).
+    if client is None or redirect_uri not in client.redirect_uris:
+        return render(request, "web/oauth/error.html",
+                      {"detail": "Unknown client or redirect URI."}, status=400)
+    if response_type != "code" or method != "S256" or not code_challenge:
+        return _redirect_error(redirect_uri, state, "invalid_request")
+
+    orgs = [m.org for m in OrgMember.objects.filter(user=request.user).select_related("org")]
+
+    if request.method == "GET":
+        return render(request, "web/oauth/consent.html", {
+            "client": client, "orgs": orgs, "redirect_uri": redirect_uri,
+            "state": state, "code_challenge": code_challenge,
+            "code_challenge_method": method, "scope": scope,
+            "response_type": response_type,
+        })
+
+    # POST = Allow
+    org_id = request.POST.get("org_id", "")
+    org = next((o for o in orgs if str(o.id) == str(org_id)), None)
+    if org is None:
+        return render(request, "web/oauth/error.html",
+                      {"detail": "Select a workspace to authorize."}, status=400)
+    raw_code = create_authorization_code(client, request.user, org, redirect_uri, code_challenge, scope)
+    sep = "&" if "?" in redirect_uri else "?"
+    url = f"{redirect_uri}{sep}code={raw_code}"
+    if state:
+        url += f"&state={quote(state)}"
+    return redirect(url)
