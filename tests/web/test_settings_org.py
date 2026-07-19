@@ -3,7 +3,8 @@ import re
 import pytest
 from django.urls import NoReverseMatch, reverse
 
-from tuckit.core.models import ApiToken, Invitation, Org, OrgMember, User
+from tuckit.core.models import ApiToken, Invitation, OAuthAccessToken, Org, OrgMember, User
+from tuckit.core.services import oauth
 from tuckit.core.services.tokens import generate_token, hash_token, list_tokens
 
 
@@ -326,6 +327,38 @@ def test_member_cannot_revoke_token(client_local, org):
     resp = client_local.post(f"/{org.slug}/settings/tokens/{token.id}/revoke")
     assert resp.status_code == 403
     assert len(list(list_tokens(org))) == before
+
+
+# --- oauth connected-apps disconnect (view-level security, mirrors the ApiToken
+# revoke tests above) ---
+
+
+@pytest.mark.django_db
+def test_oauth_disconnect_is_org_scoped(client_local, org):
+    # A client's OAuth access token lives in a DIFFERENT org (`other_org`).
+    # POSTing that client_id through `org`'s disconnect URL must not touch it:
+    # disconnect_app() filters by the *viewed* org, so this is a no-op (the
+    # view always re-renders the (unchanged) connected-apps partial with 200).
+    other_org = Org.objects.create(name="Other Org", slug="other-oauth-org")
+    user = User.objects.get(email="local@tuckit.local")
+    c = oauth.create_client("Sneaky App", ["http://localhost:9999/cb"])
+    oauth.issue_tokens(c, user, other_org, "mcp")
+    resp = client_local.post(f"/{org.slug}/settings/agent/apps/{c.client_id}/disconnect")
+    assert resp.status_code == 200
+    assert OAuthAccessToken.objects.filter(client=c, org=other_org).exists()
+
+
+@pytest.mark.django_db
+def test_member_cannot_disconnect_app(client_local, org):
+    user = User.objects.get(email="local@tuckit.local")
+    c = oauth.create_client("Some App", ["http://localhost:9999/cb"])
+    oauth.issue_tokens(c, user, org, "mcp")
+    member = User.objects.create(email="m-oauth@a.com")
+    OrgMember.objects.create(user=member, org=org, role="member")
+    client_local.force_login(member)
+    resp = client_local.post(f"/{org.slug}/settings/agent/apps/{c.client_id}/disconnect")
+    assert resp.status_code == 403
+    assert OAuthAccessToken.objects.filter(client=c, org=org).exists()
 
 
 # --- shipped-board prefs (moved from workspace to org scope) ---

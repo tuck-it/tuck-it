@@ -1,9 +1,11 @@
+from unittest.mock import patch
 from urllib.parse import urlparse, parse_qs
 
 import pytest
 
-from tuckit.core.models import Org, User, OrgMember
+from tuckit.core.models import Org, OAuthAccessToken, User, OrgMember
 from tuckit.core.services import oauth
+from tuckit.core.services.oauth_hook import TokenDenied
 
 
 @pytest.fixture
@@ -66,3 +68,47 @@ def test_refresh_grant(client, granted):
     })
     assert resp.status_code == 200
     assert oauth.resolve_oauth_org(resp.json()["access_token"]) == org
+
+
+# --- Addition B (MED-2): authorization-code replay + TokenDenied hook ---
+
+
+@pytest.mark.django_db
+def test_authorization_code_cannot_be_replayed(client, granted):
+    """A code is single-use: consume_authorization_code deletes it on first use
+    regardless of validity, so replaying the SAME code must fail even though the
+    first exchange succeeded."""
+    org, c, code, verifier = granted
+    first = client.post("/oauth/token", {
+        "grant_type": "authorization_code", "code": code,
+        "redirect_uri": "http://localhost:9999/cb",
+        "client_id": c.client_id, "code_verifier": verifier,
+    })
+    assert first.status_code == 200
+
+    replay = client.post("/oauth/token", {
+        "grant_type": "authorization_code", "code": code,
+        "redirect_uri": "http://localhost:9999/cb",
+        "client_id": c.client_id, "code_verifier": verifier,
+    })
+    assert replay.status_code == 400
+    assert replay.json()["error"] == "invalid_grant"
+
+
+@pytest.mark.django_db
+def test_token_hook_denial_returns_403_and_issues_no_token(client, granted):
+    """If TUCKIT_OAUTH_TOKEN_HOOK denies issuance (e.g. plan/seat limit), the
+    token endpoint must surface 403 access_denied and must NOT create an
+    OAuthAccessToken row. The view calls `run_token_hook` imported into its own
+    module namespace (tuckit.web.views.oauth), so that's what we patch."""
+    org, c, code, verifier = granted
+    before = OAuthAccessToken.objects.count()
+    with patch("tuckit.web.views.oauth.run_token_hook", side_effect=TokenDenied):
+        resp = client.post("/oauth/token", {
+            "grant_type": "authorization_code", "code": code,
+            "redirect_uri": "http://localhost:9999/cb",
+            "client_id": c.client_id, "code_verifier": verifier,
+        })
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "access_denied"
+    assert OAuthAccessToken.objects.count() == before
