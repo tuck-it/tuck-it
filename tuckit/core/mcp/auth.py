@@ -1,6 +1,7 @@
 from asgiref.sync import sync_to_async
 
 from tuckit.core.services.exceptions import NotFound
+from tuckit.core.services.oauth import resolve_oauth_org
 from tuckit.core.services.tokens import resolve_org
 
 
@@ -9,6 +10,11 @@ def _bearer(headers) -> str | None:
     if not value or not value.lower().startswith("bearer "):
         return None
     return value[len("bearer "):].strip() or None
+
+
+def _resolve_bearer(raw: str):
+    """Additive: OAuth access token first, then legacy ApiToken."""
+    return resolve_oauth_org(raw) or resolve_org(raw)
 
 
 class BearerAuthMiddleware:
@@ -26,10 +32,17 @@ class BearerAuthMiddleware:
                 for k, v in scope.get("headers", [])
             }
             if _bearer(headers) is None:
+                scheme = headers.get("x-forwarded-proto", scope.get("scheme", "https"))
+                host = headers.get("host", "")
+                prm = f"{scheme}://{host}/.well-known/oauth-protected-resource/mcp"
                 await send({
                     "type": "http.response.start",
                     "status": 401,
-                    "headers": [(b"content-type", b"application/json")],
+                    "headers": [
+                        (b"content-type", b"application/json"),
+                        (b"www-authenticate",
+                         f'Bearer resource_metadata="{prm}"'.encode("latin-1")),
+                    ],
                 })
                 await send({"type": "http.response.body", "body": b'{"error": "missing bearer token"}'})
                 return
@@ -37,12 +50,13 @@ class BearerAuthMiddleware:
 
 
 async def require_org(ctx):
-    """Authoritative auth: resolve the caller's bearer token to an Org, or raise."""
+    """Authoritative auth: resolve the caller's bearer token to an Org, or raise.
+    Accepts an OAuth 2.1 access token or a legacy ApiToken (additive)."""
     request = ctx.request_context.request
     raw = _bearer(request.headers) if request is not None else None
     if raw is None:
         raise NotFound("missing bearer token")
-    org = await sync_to_async(resolve_org, thread_sensitive=True)(raw)
+    org = await sync_to_async(_resolve_bearer, thread_sensitive=True)(raw)
     if org is None:
         raise NotFound("invalid or unknown API token")
     return org
