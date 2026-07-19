@@ -6,7 +6,7 @@ from django.views.generic import RedirectView
 from tuckit.web.views import (
     pages, slices, mutations, board, capture, health,
     accounts, settings_org, settings_account, settings_shell, routing,
-    onboarding,
+    onboarding, oauth,
 )
 from tuckit.web.views import settings as settings_views
 
@@ -25,6 +25,14 @@ auth_patterns = [
 # --- internal JSON API (no HTML pages) ---
 api_patterns = [
     path("api/check-slug", login_not_required(routing.check_slug), name="api_check_slug"),
+]
+
+# --- OAuth 2.1 (MCP authorization server; no tenant slug) ---
+oauth_patterns = [
+    path(".well-known/oauth-protected-resource/mcp",
+         login_not_required(oauth.protected_resource_metadata), name="oauth_prm"),
+    path(".well-known/oauth-authorization-server",
+         login_not_required(oauth.authorization_server_metadata), name="oauth_asm"),
 ]
 
 # --- settings shell (org-based URLs; the new IA). Task 2 lays the shell +
@@ -105,6 +113,6 @@ home_patterns = [
 ]
 
 urlpatterns = (
-    auth_patterns + api_patterns + settings_patterns
+    auth_patterns + api_patterns + oauth_patterns + settings_patterns
     + root_patterns + app_patterns + home_patterns
 )

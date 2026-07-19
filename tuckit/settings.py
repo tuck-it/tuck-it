@@ -103,6 +103,12 @@ TUCKIT_SIGNUP_HOOK = env("TUCKIT_SIGNUP_HOOK", default=None) or None
 # unlimited — self-host is unconstrained); cloud injects plan-based limits.
 TUCKIT_ENTITLEMENTS_HOOK = env("TUCKIT_ENTITLEMENTS_HOOK", default=None) or None
 
+# OAuth 2.1 issuer/base URL for the MCP authorization server. Core default is
+# empty -> derived from the incoming request origin (self-host needs no config).
+# Cloud/reverse-proxy deploys set this to pin the public https origin. Keeps the
+# public core free of any hardcoded cloud hostname (same rule as TUCKIT_MARKETING_URL).
+TUCKIT_OAUTH_ISSUER = env("TUCKIT_OAUTH_ISSUER", default="") or ""
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Manifest storage requires collectstatic to have built the manifest — true in
