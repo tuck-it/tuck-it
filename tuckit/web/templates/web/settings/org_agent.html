@@ -12,6 +12,9 @@
         hx-on::after-request="this.reset()">
     <input name="name" placeholder="＋ Token name (e.g. Claude Code)">
   </form>
+  <div class="settings-subhead">Connected apps</div>
+  <div class="hint">Agents connected over OAuth. Disconnecting revokes their access immediately.</div>
+  {% include "web/settings/_connected_apps.html" %}
   <div class="settings-subhead">Connect an agent</div>
   <div class="hint">Register this organization with Claude Code as an MCP server using the command below.</div>
   <pre class="mcp-snippet"><code>claude mcp add --transport http tuck-it {{ mcp_url }} --header "Authorization: Bearer &lt;token&gt;"</code></pre>

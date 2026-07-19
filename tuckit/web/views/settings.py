@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from tuckit.core.models import Invitation
 from tuckit.core.services.exceptions import InvalidValue, LimitReached
 from tuckit.core.services.invitations import cancel_invitation, create_invitation, send_invitation_email
+from tuckit.core.services.oauth_apps import list_connected_apps, disconnect_app
 from tuckit.core.services.orgs import is_org_admin
 from tuckit.core.services.tokens import list_tokens, generate_token, revoke_token
 from tuckit.web.views.settings_shell import settings_context
@@ -16,6 +17,7 @@ def org_agent(request):
     ctx = settings_context(request, active="org_agent")
     ctx.update({"org": org, "tokens": list(list_tokens(org)),
                 "mcp_url": request.build_absolute_uri("/mcp"),
+                "connected_apps": list_connected_apps(org),
                 "can_admin": is_org_admin(request.user, org)})
     return render(request, "web/settings/org_agent.html", ctx)
 
@@ -43,6 +45,16 @@ def token_revoke(request, token_id):
         return HttpResponseForbidden("You don't have permission.")
     revoke_token(org, token_id)
     return HttpResponse(status=204)
+
+
+@require_POST
+def oauth_disconnect(request, client_id):
+    org = request.org
+    if not is_org_admin(request.user, org):
+        return HttpResponseForbidden("You don't have permission.")
+    disconnect_app(org, client_id)
+    return render(request, "web/settings/_connected_apps.html",
+                  {"connected_apps": list_connected_apps(org), "org": org})
 
 
 @require_POST

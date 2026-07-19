@@ -54,6 +54,7 @@ settings_patterns = [
     path("<slug:org_slug>/settings/agent", settings_views.org_agent, name="settings_org_agent"),
     path("<slug:org_slug>/settings/tokens", settings_views.token_create, name="token_create"),
     path("<slug:org_slug>/settings/tokens/<int:token_id>/revoke", settings_views.token_revoke, name="token_revoke"),
+    path("<slug:org_slug>/settings/agent/apps/<str:client_id>/disconnect", settings_views.oauth_disconnect, name="oauth_disconnect"),
     # The page lives at .../shipped-board and the mutation at .../shipped-board/prefs
     # so the fixed page URL and the mutation never collide.
     path("<slug:org_slug>/settings/shipped-board", settings_views.org_shipped, name="settings_org_shipped"),

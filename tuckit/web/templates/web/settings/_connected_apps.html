@@ -1,0 +1,19 @@
+{% load web_extras %}
+<div id="connected-apps" class="panel">
+  {% for app in connected_apps %}
+    <div class="token-row">
+      <div>
+        <div class="token-name">{{ app.name }}</div>
+        <div class="hint">Connected via OAuth{% if app.last_used_at %} · last used {{ app.last_used_at|timesince }} ago{% endif %}</div>
+      </div>
+      <form method="post" action="{% url 'web:oauth_disconnect' org.slug app.client_id %}"
+            hx-post="{% url 'web:oauth_disconnect' org.slug app.client_id %}"
+            hx-target="#connected-apps" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button type="submit" class="ghost">Disconnect</button>
+      </form>
+    </div>
+  {% empty %}
+    <div class="empty muted">No connected apps yet</div>
+  {% endfor %}
+</div>
