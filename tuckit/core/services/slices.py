@@ -49,6 +49,15 @@ def grouped_slices(area: Area) -> list[tuple[str, list[Slice]]]:
     return [(s, [x for x in slices if x.status == s]) for s in STATUS_ORDER]
 
 
+def allocate_number(org: Org) -> int:
+    """Atomically mint the next per-org number (shared by Slices and Tickets)."""
+    locked = Org.objects.select_for_update().get(pk=org.pk)
+    number = locked.next_slice_number
+    locked.next_slice_number = number + 1
+    locked.save(update_fields=["next_slice_number"])
+    return number
+
+
 def create_slice(
     area: Area,
     title: str,
@@ -61,6 +70,7 @@ def create_slice(
     source: str = "human",
     assignee_member=None,
     external_key: str = "",
+    number: int | None = None,
 ) -> Slice:
     if external_key:
         existing = Slice.objects.filter(area__org=area.org, external_key=external_key).first()
@@ -77,10 +87,8 @@ def create_slice(
     validate_choice(status, Slice.STATUS_CHOICES, "status")
     rank = rank_for(Slice, {"area": area}, before=before, after=after)
     with transaction.atomic():
-        locked = Org.objects.select_for_update().get(pk=area.org_id)
-        number = locked.next_slice_number
-        locked.next_slice_number = number + 1
-        locked.save(update_fields=["next_slice_number"])
+        if number is None:
+            number = allocate_number(area.org)
         slice_ = Slice.objects.create(
             area=area,
             title=title,
