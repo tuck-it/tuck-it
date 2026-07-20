@@ -28,7 +28,6 @@ from tuckit.core.services.slices import query_slices as _query_slices
 from tuckit.core.services.slices import update_slice as _update_slice
 from tuckit.core.services.state import get_project_state as _get_project_state
 from tuckit.core.services.state import render_slice_markdown
-from tuckit.core.services.tags import list_tags as _list_tags
 
 # FastMCP's Streamable HTTP transport enables DNS-rebinding protection (Host/Origin
 # header allowlisting) by default whenever `host` is unset/loopback (see
@@ -121,17 +120,6 @@ async def create_area(ctx: Context, name: str, description: str = "") -> dict:
 
     def _run():
         return area_dict(_create_area(org, name, description=description))
-
-    return await sync_to_async(_run, thread_sensitive=True)()
-
-
-@mcp.tool()
-async def list_tags(ctx: Context) -> list[str]:
-    """List all tag names defined in the org."""
-    org = await require_org(ctx)
-
-    def _run():
-        return [t.name for t in _list_tags(org)]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
