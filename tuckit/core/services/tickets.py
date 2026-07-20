@@ -107,16 +107,3 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> "Slice
     record_activity(ticket.org, actor=actor, verb="promoted", target=ticket,
                     to_value=slice_.title)
     return slice_
-
-
-def convert_org_backlog(org: Org) -> None:
-    """Retired. This one-way migration helper (see migration 0031) converted
-    'idea'-status Slices into Tickets and demoted Triage Areas to plain areas.
-    Both the 'idea' status and Area.is_triage were removed once every org had
-    already been converted (see migration 0032) — the fields this function
-    depended on no longer exist on the models. Kept as a no-op purely so
-    migration 0031's historical RunPython call stays importable; it can never
-    run against real data again (Django won't replay an already-applied
-    migration), and a freshly created database has no orgs yet when 0031
-    applies, so this is never invoked with real data either."""
-    return None

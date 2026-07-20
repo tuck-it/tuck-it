@@ -121,25 +121,6 @@ def test_shipping_slice_autocloses_ticket():
     assert t.status == "closed" and t.closed_at is not None
 
 
-from tuckit.core.services.tickets import convert_org_backlog
-
-
-@pytest.mark.django_db
-def test_convert_org_backlog_is_retired_to_a_noop():
-    """The one-time backlog conversion (see migration 0031) depended on the
-    'idea' Slice status and Area.is_triage, both removed once every org had
-    already been converted (migration 0032). It can never run again against
-    real data, so it's now a no-op — this just guards that it stays safely
-    callable (migration 0031's historical RunPython still imports it)."""
-    org = Org.objects.create(name="Acme", slug="acme")
-    area = create_area(org, "Backend")
-    s = Slice.objects.create(area=area, title="Untouched", status="planned", rank="m", number=3)
-    assert convert_org_backlog(org) is None
-    s.refresh_from_db()
-    assert s.status == "planned"  # unchanged — the function does nothing now
-    assert Ticket.objects.count() == 0
-
-
 from datetime import timedelta
 from django.utils import timezone
 from tuckit.core.services.state import attention_items
