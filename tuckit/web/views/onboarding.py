@@ -63,7 +63,8 @@ def agent_check(request):
     )
     if ev is None:
         # 200 (not 204 — base.html:42 swaps on 204); re-serve the poller.
-        return render(request, "web/partials/_get_started_listen.html", {"agent_baseline": since})
+        lid = request.GET.get("lid", "gs-listen")
+        return render(request, "web/partials/_get_started_listen.html", {"agent_baseline": since, "listen_id": lid})
     celebrate = render_to_string("web/partials/_get_started_celebrate.html", {"event": ev}, request=request)
     widget = render_to_string("web/partials/_onboarding_widget.html", {"oob": True}, request=request)
     return HttpResponse(celebrate + widget)
