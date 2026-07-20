@@ -1,6 +1,6 @@
 import pytest
 from tuckit.core.models import ActivityEvent, Org
-from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice, set_slice_status, set_slice_area, update_slice
 
 
@@ -12,7 +12,7 @@ def _org(slug="w"):
 def test_create_slice_records_created_with_source_actor():
     org = _org()
     a = create_area(org, "Backend")
-    create_slice(a, "Payment", status="idea", source="agent")
+    create_slice(a, "Payment", status="planned", source="agent")
     e = ActivityEvent.objects.get(verb="created")
     assert e.actor == "agent" and e.target_type == "slice" and e.target_label == "Payment"
 
@@ -50,18 +50,6 @@ def test_set_slice_status_noop_records_nothing():
 
 
 @pytest.mark.django_db
-def test_set_slice_area_records_triaged_when_leaving_triage():
-    org = _org("w5")
-    triage = get_or_create_triage(org)
-    backend = create_area(org, "Backend")
-    s = create_slice(triage, "To move")
-    ActivityEvent.objects.all().delete()
-    set_slice_area(s, backend)
-    e = ActivityEvent.objects.get()
-    assert e.verb == "triaged" and e.to_value == "Backend"
-
-
-@pytest.mark.django_db
 def test_set_slice_area_records_moved_between_real_areas():
     org = _org("w6")
     a1 = create_area(org, "A1")
@@ -76,7 +64,7 @@ def test_set_slice_area_records_moved_between_real_areas():
 def test_update_slice_records_only_on_status_change():
     org = _org("w7")
     a = create_area(org, "Backend")
-    s = create_slice(a, "Title", status="idea")
+    s = create_slice(a, "Title", status="building")
     ActivityEvent.objects.all().delete()
     update_slice(s, title="New title")           # edit only -> no event
     assert ActivityEvent.objects.count() == 0

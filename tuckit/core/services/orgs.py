@@ -1,7 +1,6 @@
 from django.db import transaction
 
 from tuckit.core.models import Org, OrgMember
-from tuckit.core.services.areas import get_or_create_triage
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.slugs import RESERVED_ORG_SLUGS, validate_slug
 
@@ -47,7 +46,6 @@ def create_org(user, *, name: str, slug: str | None = None) -> Org:
         raise InvalidValue(f"That organization slug is already taken: {slug}")
     org = Org.objects.create(name=name, slug=slug)
     OrgMember.objects.create(user=user, org=org, role="owner")
-    get_or_create_triage(org)
     run_signup_hook(user=user, org=org)
     return org
 

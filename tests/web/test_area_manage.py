@@ -1,7 +1,7 @@
 import pytest
 
 from tuckit.core.models import Area, Org
-from tuckit.core.services.areas import create_area, get_or_create_triage, list_areas
+from tuckit.core.services.areas import create_area, list_areas
 
 
 @pytest.mark.django_db
@@ -35,15 +35,6 @@ def test_delete_area_returns_204_and_removes(client_local, org):
 
 
 @pytest.mark.django_db
-def test_delete_triage_returns_400(client_local, org):
-    p = f"/{org.slug}"
-    triage = get_or_create_triage(org)
-    resp = client_local.post(f"{p}/areas/{triage.id}/delete", HTTP_HX_REQUEST="true")
-    assert resp.status_code == 400
-    assert Area.objects.filter(id=triage.id).exists()
-
-
-@pytest.mark.django_db
 def test_manage_foreign_area_404s(client_local, org):
     other_org = Org.objects.create(name="Other", slug="other")
     p = f"/{org.slug}"
@@ -66,8 +57,6 @@ def test_reorder_area_before_neighbor(client_local, org):
     )
     assert resp.status_code == 204
     ordered = list(list_areas(org))
-    # the org fixture pre-creates only Triage, so filter the full ordered
-    # list down to the three areas this test cares about.
     ids = [x.id for x in ordered if x.id in {a.id, b.id, c.id}]
     assert ids == [c.id, a.id, b.id]
 

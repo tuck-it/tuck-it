@@ -2,11 +2,12 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 
-from tuckit.core.models import Org, Slice
-from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.models import Org, Slice, Ticket
+from tuckit.core.services.areas import create_area
 from tuckit.core.services.bites import create_bite
 from tuckit.core.services.plans import create_plan
 from tuckit.core.services.slices import create_slice
+from tuckit.core.services.tickets import create_ticket
 from tuckit.core.services.state import (
     attention_items,
     cap_shipped,
@@ -36,7 +37,7 @@ def test_project_state_buckets_by_status(product_org):
     create_bite(building_plan, "Stripe", status="doing")
     create_bite(building_plan, "Done bite", status="done")
     create_slice(area, "Notifications", status="planned")
-    create_slice(area, "Someday idea", status="idea", tags=["someday"])
+    create_slice(area, "Someday item", status="planned", tags=["someday"])
 
     state = get_project_state(product_org)
     assert state["org"]["description"] == "A demo product"
@@ -45,7 +46,7 @@ def test_project_state_buckets_by_status(product_org):
     assert [s["title"] for s in a["building"]] == ["Payments"]
     assert [b["title"] for b in a["building"][0]["open_bites"]] == ["Stripe"]  # 'done' excluded
     assert [s["title"] for s in a["roadmap"]] == ["Notifications"]
-    assert [s["title"] for s in a["someday"]] == ["Someday idea"]
+    assert [s["title"] for s in a["someday"]] == ["Someday item"]
 
 
 @pytest.mark.django_db
@@ -115,20 +116,24 @@ def test_counts_and_dropped_bite_excluded(product_org):
 
 
 @pytest.mark.django_db
-def test_attention_flags_stale_inbox_and_stalled_building():
+def test_attention_flags_stale_ticket_and_stalled_building():
     org = Org.objects.create(name="Acme", slug="acme")
-    inbox = get_or_create_triage(org)
     backend = create_area(org, "Backend")
-    stale_in = create_slice(inbox, "old capture")
-    fresh_in = create_slice(inbox, "new capture")
+    stale_ticket = create_ticket(org, "old capture")
+    fresh_ticket = create_ticket(org, "new capture")
     stalled = create_slice(backend, "in flight", status="building")
     old = timezone.now() - timedelta(days=STALE_DAYS + 1)
-    Slice.objects.filter(pk__in=[stale_in.pk, stalled.pk]).update(updated_at=old)
+    Ticket.objects.filter(pk=stale_ticket.pk).update(updated_at=old)
+    Slice.objects.filter(pk=stalled.pk).update(updated_at=old)
     items = attention_items(org)
-    got = {(it["slice"].id, it["reason"]) for it in items}
-    assert (stale_in.id, "triage_stale") in got
+    got = {
+        ((it["ticket"].id if "ticket" in it else it["slice"].id), it["reason"])
+        for it in items
+    }
+    assert (stale_ticket.id, "ticket_stale") in got
     assert (stalled.id, "building_stalled") in got
-    assert fresh_in.id not in {it["slice"].id for it in items}
+    ticket_ids = {it["ticket"].id for it in items if "ticket" in it}
+    assert fresh_ticket.id not in ticket_ids
 
 
 @pytest.mark.django_db
@@ -138,12 +143,12 @@ def test_home_state_buckets_across_areas_someday_excluded():
     create_slice(a1, "pay", status="building")
     create_slice(a2, "ui", status="building")
     create_slice(a1, "next", status="planned")
-    create_slice(a2, "later", status="idea", tags=["someday"])
+    create_slice(a2, "later", status="planned", tags=["someday"])
     st = home_state(org)
     assert {s.title for s in st["building"]} == {"pay", "ui"}
     assert {s.title for s in st["planned"]} == {"next"}
     assert {s.title for s in st["someday"]} == {"later"}
-    assert "later" not in {s.title for s in st["ideas"]}
+    assert "ideas" not in st  # the 'idea' status/bucket is retired
 
 
 @pytest.mark.django_db
@@ -151,34 +156,31 @@ def test_attention_items_include_reason_and_days():
     from tuckit.core.management.commands.bootstrap import ensure_bootstrap
 
     org, _ = ensure_bootstrap()
-    inbox = get_or_create_triage(org)
-    s = create_slice(inbox, "Old capture", status="idea")
+    t = create_ticket(org, "Old capture")
     old = timezone.now() - timedelta(days=11)
-    Slice.objects.filter(pk=s.pk).update(updated_at=old)
+    Ticket.objects.filter(pk=t.pk).update(updated_at=old)
 
     items = attention_items(org)
-    hit = [it for it in items if it["slice"].id == s.id]
-    assert hit, "stale inbox slice should surface"
-    assert hit[0]["reason"] == "triage_stale"
+    hit = [it for it in items if it.get("ticket") and it["ticket"].id == t.id]
+    assert hit, "stale ticket should surface"
+    assert hit[0]["reason"] == "ticket_stale"
     assert hit[0]["days"] == 11
 
 
 @pytest.mark.django_db
-def test_roadmap_state_buckets_non_triage_slices():
+def test_roadmap_state_buckets_by_status():
     org = Org.objects.create(name="Acme", slug="acme")
     a = create_area(org, "Backend")
-    create_slice(a, "idea one", status="idea")
     create_slice(a, "planned one", status="planned")
     create_slice(a, "building one", status="building")
     create_slice(a, "shipped one", status="shipped")
     create_slice(a, "dropped one", status="dropped")
-    create_slice(get_or_create_triage(org), "captured", status="idea")  # triage excluded
     rs = roadmap_state(org)
-    assert [s.title for s in rs["idea"]] == ["idea one"]        # triage 'captured' excluded
     assert [s.title for s in rs["planned"]] == ["planned one"]
     assert [s.title for s in rs["building"]] == ["building one"]
     assert [s.title for s in rs["shipped"]] == ["shipped one"]
     assert "dropped" not in rs                                   # dropped never bucketed
+    assert "idea" not in rs                                      # the 'idea' status is retired
 
 
 @pytest.mark.django_db
@@ -186,7 +188,7 @@ def test_in_progress_state_has_building_slices_and_doing_bites():
     org = Org.objects.create(name="Acme", slug="acme")
     a = create_area(org, "Backend")
     s = create_slice(a, "building slice", status="building")
-    create_slice(a, "idea slice", status="idea")
+    create_slice(a, "planned slice", status="planned")
     p = create_plan(s, title="Plan")
     create_bite(p, "doing bite", status="doing")
     create_bite(p, "todo bite", status="todo")

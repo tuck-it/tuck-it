@@ -236,14 +236,15 @@ async def create_slice(
     area_id: int,
     title: str,
     spec: str = "",
-    status: str = "idea",
+    status: str = "planned",
     tags: list[str] | None = None,
     assignee: str | None = None,
     external_key: str = "",
     after_id: int | None = None,
     before_id: int | None = None,
 ) -> dict:
-    """Create a slice ('idea' = quick capture). external_key makes re-runs idempotent
+    """Create a slice directly in an area (default status 'planned'). For quick,
+    unfiled capture use create_ticket instead. external_key makes re-runs idempotent
     (same key updates instead of duplicating). assignee = 'me' or an email. Optionally
     position with after_id/before_id (another slice's id in the same area)."""
     org, user = await require_caller(ctx)

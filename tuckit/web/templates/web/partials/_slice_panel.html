@@ -180,7 +180,7 @@
   <div class="action-bar">
     {% if slice.status == 'dropped' %}
       <span class="dropped-tag">dropped</span>
-      <button class="ghost" hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "idea"}'
+      <button class="ghost" hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "planned"}'
               hx-target="closest .panel-inner" hx-swap="outerHTML">Restore</button>
     {% else %}
       <button class="ghost action-drop" hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "dropped"}'

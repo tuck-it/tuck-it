@@ -73,7 +73,7 @@ def test_slice_panel_shows_its_activity_thread(client_local, org):
     from tuckit.core.services.plans import create_plan
     p = f"/{org.slug}"
     a = create_area(org, "Backend")
-    s = create_slice(a, "Thread slice", status="idea")   # logs created (slice)
+    s = create_slice(a, "Thread slice", status="planned")   # logs created (slice)
     set_slice_status(s, "building")                          # logs status_changed (slice)
     create_bite(create_plan(s, title="Plan"), "First bite")                             # logs created (bite)
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
@@ -119,7 +119,7 @@ def test_panel_header_title_and_status_tabs(client_local, org):
     assert "Design" in body
     assert 'class="props"' in body
     assert 'class="status-menu"' in body
-    assert body.count('class="status-opt') == 4          # one option per status
+    assert body.count('class="status-opt') == 3          # one option per status (planned/building/shipped)
     assert "status-opt--on" in body                       # active (building) option marked
     assert "Created" in body and "Updated" in body        # properties rows
     assert 'class="section-label">Spec' in body          # spec is a labeled section
@@ -197,7 +197,7 @@ def test_activity_timeline_has_nodes(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
     p = f"/{org.slug}"
-    s = create_slice(create_area(org, "Design"), "Timeline", status="idea")
+    s = create_slice(create_area(org, "Design"), "Timeline", status="planned")
     set_slice_status(s, "building")
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="timeline"' in body
@@ -210,9 +210,9 @@ def test_slice_activity_helper_is_chronological_and_scoped(org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
     a = create_area(org, "Backend")
-    s = create_slice(a, "A", status="idea")
+    s = create_slice(a, "A", status="planned")
     set_slice_status(s, "building")
-    other = create_slice(a, "B", status="idea")              # unrelated slice's events excluded
+    other = create_slice(a, "B", status="planned")              # unrelated slice's events excluded
     events = slice_activity(s)
     times = [e.created_at for e in events]
     assert times == sorted(times) and len(events) >= 2        # oldest-first

@@ -39,7 +39,7 @@ def query_slices(org, *, area=None, status=None, tag=None, query=None,
     return list(qs)
 
 
-STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
+STATUS_ORDER = ["planned", "building", "shipped", "dropped"]
 
 
 def grouped_slices(area: Area) -> list[tuple[str, list[Slice]]]:
@@ -63,7 +63,7 @@ def create_slice(
     title: str,
     *,
     spec: str = "",
-    status: str = "idea",
+    status: str = "planned",
     tags: list[str] | None = None,
     before: Slice | None = None,
     after: Slice | None = None,
@@ -76,7 +76,7 @@ def create_slice(
         existing = Slice.objects.filter(area__org=area.org, external_key=external_key).first()
         if existing is not None:
             # Idempotent: a re-run with the same key updates in place, no duplicate.
-            # Status is deliberately NOT touched here — create defaults to 'idea' and
+            # Status is deliberately NOT touched here — create defaults to 'planned' and
             # would otherwise regress a slice that already progressed; use update_slice
             # to move status. Empty spec is treated as "unchanged" (spec or None).
             return update_slice(
@@ -195,9 +195,9 @@ def set_slice_area(
     slice_.rank = rank_for(Slice, {"area": area}, before=before, after=after)
     with transaction.atomic():
         slice_.save(update_fields=["area", "rank", "updated_at"])
-        if area.id != old_area.id:  # no spurious event when the area didn't change (e.g. concurrent re-triage)
+        if area.id != old_area.id:  # no spurious event when the area didn't change (e.g. concurrent resubmit)
             record_activity(
-                area.org, actor=actor, verb="triaged" if old_area.is_triage else "moved",
+                area.org, actor=actor, verb="moved",
                 target=slice_, from_value=old_area.name, to_value=area.name,
             )
     return slice_

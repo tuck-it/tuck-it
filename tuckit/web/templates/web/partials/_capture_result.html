@@ -2,7 +2,7 @@
 <div id="toast" hx-swap-oob="true" class="toast" x-data="{show:true}"
      x-init="setTimeout(() => show=false, 1800)" x-show="show" x-transition x-cloak>Captured in Inbox.</div>
 
-{# Count badge — always refreshed (context processor supplies triage_count). #}
+{# Count badge — always refreshed (context processor supplies inbox_count). #}
 {% include "web/partials/_triage_count.html" with oob=True %}
 
 {# Triage list — OOB re-render of the whole list (matches what a page reload

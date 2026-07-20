@@ -121,34 +121,43 @@ def test_shipping_slice_autocloses_ticket():
     assert t.status == "closed" and t.closed_at is not None
 
 
-from tuckit.core.models import ActivityEvent, Area, Plan
 from tuckit.core.services.tickets import convert_org_backlog
 
 
 @pytest.mark.django_db
-def test_convert_backlog_idea_without_plan_becomes_ticket():
+def test_convert_org_backlog_is_retired_to_a_noop():
+    """The one-time backlog conversion (see migration 0031) depended on the
+    'idea' Slice status and Area.is_triage, both removed once every org had
+    already been converted (migration 0032). It can never run again against
+    real data, so it's now a no-op — this just guards that it stays safely
+    callable (migration 0031's historical RunPython still imports it)."""
     org = Org.objects.create(name="Acme", slug="acme")
-    triage = Area.objects.create(org=org, name="Triage", slug="triage", is_triage=True, rank="m")
-    s = Slice.objects.create(area=triage, title="Stray", spec="notes", status="idea",
-                             rank="m", number=7, source="human")
-    ActivityEvent.objects.create(org=org, actor="human", verb="created",
-                                 target_type="slice", target_id=s.id, target_label="Stray")
-    convert_org_backlog(org)
-    assert not Slice.objects.filter(pk=s.id).exists()
-    t = Ticket.objects.get(number=7)
-    assert t.title == "Stray" and t.body == "notes" and t.area is None
-    assert not ActivityEvent.objects.filter(target_type="slice", target_id=s.id).exists()
-    triage.refresh_from_db()
-    assert triage.is_triage is False and triage.name == "General"
+    area = create_area(org, "Backend")
+    s = Slice.objects.create(area=area, title="Untouched", status="planned", rank="m", number=3)
+    assert convert_org_backlog(org) is None
+    s.refresh_from_db()
+    assert s.status == "planned"  # unchanged — the function does nothing now
+    assert Ticket.objects.count() == 0
+
+
+from datetime import timedelta
+from django.utils import timezone
+from tuckit.core.services.state import attention_items
 
 
 @pytest.mark.django_db
-def test_convert_backlog_idea_with_plan_becomes_planned():
+def test_slice_default_status_is_planned():
     org = Org.objects.create(name="Acme", slug="acme")
     area = create_area(org, "Backend")
-    s = Slice.objects.create(area=area, title="Worked", status="idea", rank="m", number=3)
-    Plan.objects.create(slice=s, title="P")
-    convert_org_backlog(org)
-    s.refresh_from_db()
+    from tuckit.core.services.slices import create_slice
+    s = create_slice(area, "S")
     assert s.status == "planned"
-    assert not Ticket.objects.filter(number=3).exists()
+
+
+@pytest.mark.django_db
+def test_attention_flags_stale_open_tickets():
+    org = Org.objects.create(name="Acme", slug="acme")
+    t = create_ticket(org, "Old idea")
+    Ticket.objects.filter(pk=t.pk).update(updated_at=timezone.now() - timedelta(days=10))
+    reasons = [it["reason"] for it in attention_items(org)]
+    assert "ticket_stale" in reasons

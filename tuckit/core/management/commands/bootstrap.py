@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 
 from tuckit.core.models import ApiToken, Org, OrgMember, User
-from tuckit.core.services.areas import get_or_create_triage
 from tuckit.core.services.tokens import generate_token
 
 
@@ -9,7 +8,6 @@ def ensure_bootstrap(email: str = "local@tuckit.local", org_slug: str = "default
     user, _ = User.objects.get_or_create(email=email)
     org, _ = Org.objects.get_or_create(slug=org_slug, defaults={"name": "Default"})
     OrgMember.objects.get_or_create(user=user, org=org, defaults={"role": "owner"})
-    get_or_create_triage(org)
 
     raw = None
     if not ApiToken.objects.filter(org=org).exists():

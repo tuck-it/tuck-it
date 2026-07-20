@@ -61,7 +61,7 @@ def test_slice_modal_teaches_what_a_slice_is(client_local, org):
 @pytest.mark.django_db
 def test_widget_plan_step_links_to_newest_slice(client_local, org):
     area = create_area(org, "Backend")
-    sl = create_slice(area, "Retry webhooks", status="idea")
+    sl = create_slice(area, "Retry webhooks", status="planned")
     body = client_local.get(f"/{org.slug}/").content.decode()
     # With a Slice but no Plan, the current step is Add-a-Plan → ?focus=plan.
     assert f"/slices/{sl.id}/?focus=plan" in body
@@ -71,7 +71,7 @@ def test_widget_plan_step_links_to_newest_slice(client_local, org):
 def test_widget_bite_step_links_after_plan_exists(client_local, org):
     from tuckit.core.services.plans import create_plan
     area = create_area(org, "Backend")
-    sl = create_slice(area, "Retry webhooks", status="idea")
+    sl = create_slice(area, "Retry webhooks", status="planned")
     create_plan(sl, title="Plan")
     body = client_local.get(f"/{org.slug}/").content.decode()
     assert f"/slices/{sl.id}/?focus=bite" in body

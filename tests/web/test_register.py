@@ -37,7 +37,7 @@ def test_signup_then_create_org_lands_home(client):
     u = User.objects.get(email="e2e@x.com")
     org = Org.objects.get(members__user=u)
     assert org.slug == "acme"
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
+    assert Area.objects.filter(org=org).count() == 0  # no magic area — Inbox starts empty
 
 
 @override_settings(REGISTRATION_OPEN=True)

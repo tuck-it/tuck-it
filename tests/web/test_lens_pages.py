@@ -2,7 +2,7 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from tuckit.core.models import Slice
-from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.services.areas import create_area
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.bites import create_bite
 from tuckit.core.services.plans import create_plan
@@ -42,12 +42,12 @@ def test_in_progress_page_shows_building_and_doing(client_local, org):
 def test_roadmap_page_shows_distribution_and_slices(client_local, org):
     a = create_area(org, "Backend")
     create_slice(a, "Roadmap item", status="planned")
-    create_slice(get_or_create_triage(org), "Stray note", status="idea")  # excluded
+    create_slice(a, "Dropped item", status="dropped")  # dropped never bucketed
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/roadmap/").content.decode()
     assert "Roadmap item" in body
     assert 'data-status="planned"' in body   # rendered in its status column
-    assert "Stray note" not in body   # triage slices excluded from roadmap
+    assert "Dropped item" not in body   # dropped slices excluded from the board
 
 
 @pytest.mark.django_db

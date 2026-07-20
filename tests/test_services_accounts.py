@@ -14,8 +14,7 @@ def test_register_creates_user_and_org():
     assert user.check_password("pw123456")
     assert org.slug == "space"
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
-    assert Area.objects.filter(org=org, is_triage=False).count() == 0
+    assert Area.objects.filter(org=org).count() == 0  # no magic area — Inbox starts empty
 
 
 @pytest.mark.django_db

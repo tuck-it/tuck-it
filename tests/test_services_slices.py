@@ -22,7 +22,7 @@ def area(db):
 def test_create_slice_defaults_and_append_order(area):
     a = create_slice(area, "Auth")
     b = create_slice(area, "Payments")
-    assert a.status == "idea"
+    assert a.status == "planned"
     assert list(list_slices(area)) == [a, b]
     assert a.rank < b.rank
 
@@ -44,7 +44,7 @@ def test_create_slice_after_inserts_between(area):
 
 @pytest.mark.django_db
 def test_list_slices_filters_by_status_and_tag(area):
-    create_slice(area, "Idea one")
+    create_slice(area, "Building one", status="building")
     planned = create_slice(area, "Planned bug", status="planned", tags=["bug"])
     assert list(list_slices(area, status="planned")) == [planned]
     assert list(list_slices(area, tag="bug")) == [planned]

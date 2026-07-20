@@ -21,9 +21,9 @@ def test_self_service_signup_then_org_lands_on_home(client):
 
 
 @override_settings(REGISTRATION_OPEN=True)
-def test_signup_creates_exactly_one_org_and_triage(client):
+def test_signup_creates_exactly_one_org_with_empty_inbox(client):
     """Regression: the flat app serves /<org_slug>/ (the Workspace model is gone),
-    and a fresh org gets exactly one Triage Area."""
+    and a fresh org starts with an empty Inbox — no magic Area is seeded."""
     _signup(client, "logical@example.com")
     r = client.post("/orgs/", {"name": "Logical Org", "slug": "logical-org"})
     assert r.status_code == 302
@@ -33,4 +33,4 @@ def test_signup_creates_exactly_one_org_and_triage(client):
     assert orgs.count() == 1
     org = orgs.get()
     assert org.slug == "logical-org"
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
+    assert Area.objects.filter(org=org).count() == 0

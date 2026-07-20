@@ -18,7 +18,6 @@ class Area(models.Model):
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, default="")
     archived = models.BooleanField(default=False)
-    is_triage = models.BooleanField(default=False)
     rank = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,7 +32,6 @@ class Area(models.Model):
 
 class Slice(models.Model):
     STATUS_CHOICES = [
-        ("idea", "Idea"),
         ("planned", "Planned"),
         ("building", "Building"),
         ("shipped", "Shipped"),
@@ -44,7 +42,7 @@ class Slice(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="slices")
     title = models.CharField(max_length=300)
     spec = models.TextField(blank=True, default="")
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="idea")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planned")
     tags = models.ManyToManyField(Tag, blank=True, related_name="slices")
     rank = models.CharField(max_length=255)
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="human")

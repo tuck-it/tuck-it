@@ -4,26 +4,24 @@ from tuckit.web.auth import current_org_or_fallback
 
 
 def sidebar_areas(request):
-    """Make the org's non-inbox areas available to every template so the
-    sidebar's Areas list (and active-nav highlighting) is consistent across
-    all pages, not just the ones whose view happens to pass `areas` itself."""
+    """Make the org's areas available to every template so the sidebar's Areas
+    list (and active-nav highlighting) is consistent across all pages, not
+    just the ones whose view happens to pass `areas` itself."""
     org = current_org_or_fallback(request)
     if not org:
         return {}
-    return {"areas": [a for a in list_areas(org) if not a.is_triage]}
+    return {"areas": list(list_areas(org))}
 
 
-def triage_count(request):
-    """Expose the org's active (non-dropped) triage Slice count to every
-    template so the sidebar can show a muted count badge next to Triage."""
-    from tuckit.core.models import Area, Slice
+def inbox_count(request):
+    """Expose the org's open (unpromoted) Ticket count to every template so
+    the sidebar can show a muted count badge next to Inbox."""
+    from tuckit.core.services.tickets import query_tickets
 
     org = current_org_or_fallback(request)
     if not org:
         return {}
-    triage = Area.objects.filter(org=org, is_triage=True).first()
-    n = Slice.objects.filter(area=triage).exclude(status="dropped").count() if triage else 0
-    return {"triage_count": n}
+    return {"inbox_count": len(query_tickets(org))}
 
 
 def attention_count(request):
@@ -46,12 +44,8 @@ def in_progress_count(request):
     if not org:
         return {}
     n = (
-        Slice.objects.filter(
-            area__org=org, area__is_triage=False, status="building"
-        ).count()
-        + Bite.objects.filter(
-            plan__slice__area__org=org, plan__slice__area__is_triage=False, status="doing"
-        ).count()
+        Slice.objects.filter(area__org=org, status="building").count()
+        + Bite.objects.filter(plan__slice__area__org=org, status="doing").count()
     )
     return {"in_progress_count": n}
 

@@ -1,12 +1,13 @@
 """The global capture modal is a full slice-authoring form: Title is required,
 everything else (area, status, spec, tags) is optional. Submitting a title
-alone stays a quick Inbox capture; filling any optional field creates a
-complete slice and redirects the user into it. Bites are no longer authored
-from capture — they live under a Slice's Plan section."""
+alone stays a quick, unfiled Inbox capture — it becomes a Ticket, since there's
+no more Inbox Area to place a Slice in. Filling in an area (with or without
+other detail) creates a complete Slice and redirects the user into it. Bites
+are no longer authored from capture — they live under a Slice's Plan section."""
 import pytest
 
-from tuckit.core.models import Slice
-from tuckit.core.services.areas import create_area, get_or_create_triage
+from tuckit.core.models import Slice, Ticket
+from tuckit.core.services.areas import create_area
 
 
 P = lambda org: f"/{org.slug}"
@@ -14,19 +15,20 @@ P = lambda org: f"/{org.slug}"
 
 @pytest.mark.django_db
 def test_capture_title_only_stays_quick(client_local, org):
-    """Title-only keeps today's behavior: Inbox/idea, 200 toast bundle, no redirect."""
-    get_or_create_triage(org)
+    """Title-only stays a quick, unfiled capture: a Ticket, 200 toast bundle, no redirect."""
     resp = client_local.post(f"{P(org)}/capture", {"title": "quick one"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     assert "HX-Redirect" not in resp
-    s = Slice.objects.get(title="quick one")
-    assert s.area.is_triage and s.status == "idea"
+    t = Ticket.objects.get(title="quick one")
+    assert t.area is None and t.status == "open"
 
 
 @pytest.mark.django_db
 def test_capture_rich_creates_full_slice_and_redirects(client_local, org):
+    backend = create_area(org, "Backend")
     resp = client_local.post(f"{P(org)}/capture", {
         "title": "Payment integration",
+        "area_id": backend.id,
         "spec": "Paddle webhook handling",
         "status": "planned",
         "tags": ["billing", "urgent"],
@@ -53,13 +55,29 @@ def test_capture_rich_into_explicit_area(client_local, org):
 
 @pytest.mark.django_db
 def test_capture_status_change_alone_is_rich(client_local, org):
-    """Bumping the status off the default (idea) is enough to count as authoring."""
+    """Bumping the status off the default (planned) is enough to count as
+    authoring — but authoring a Slice always needs an area now."""
+    backend = create_area(org, "Backend")
     resp = client_local.post(
-        f"{P(org)}/capture", {"title": "planned thing", "status": "building"}, HTTP_HX_REQUEST="true"
+        f"{P(org)}/capture", {"title": "planned thing", "area_id": backend.id, "status": "building"},
+        HTTP_HX_REQUEST="true",
     )
     assert resp.status_code == 204
     assert "HX-Redirect" in resp
     assert Slice.objects.get(title="planned thing").status == "building"
+
+
+@pytest.mark.django_db
+def test_capture_rich_without_area_requires_one(client_local, org):
+    """Spec/tags/status alone (no area) can't create a Slice — there's no more
+    magic Inbox area to fall back into — so it's rejected rather than silently
+    dropping the authored detail."""
+    resp = client_local.post(
+        f"{P(org)}/capture", {"title": "no area", "status": "building"}, HTTP_HX_REQUEST="true"
+    )
+    assert resp.status_code == 400
+    assert not Slice.objects.filter(title="no area").exists()
+    assert not Ticket.objects.filter(title="no area").exists()
 
 
 @pytest.mark.django_db

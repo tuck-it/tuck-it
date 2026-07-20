@@ -12,8 +12,8 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Area)
 class AreaAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "org", "is_triage", "archived")
-    list_filter = ("org", "archived", "is_triage")
+    list_display = ("name", "slug", "org", "archived")
+    list_filter = ("org", "archived")
     search_fields = ("name", "slug")
     readonly_fields = ("created_at", "updated_at")
 

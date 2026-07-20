@@ -1,10 +1,9 @@
 {% load web_extras %}
-<form class="triage-row" hx-post="{% wurl 'web:slice_triage' slice.id %}"
+<form class="triage-row" hx-post="{% wurl 'web:ticket_promote' ticket.id %}"
       hx-trigger="change" hx-target="closest .triage-row" hx-swap="outerHTML">
-  {% include "web/partials/_status_dot.html" with status=slice.status %}
-  <span class="row-title">{{ slice.title }}</span>
-  <span class="source-badge{% if slice.source == 'agent' %} is-agent{% endif %}">{% if slice.source == 'agent' %}agent{% else %}you{% endif %}</span>
-  <span class="row-meta">{{ slice.created_at|timesince }}</span>
+  <span class="row-title">{{ ticket.title }}</span>
+  <span class="source-badge{% if ticket.source == 'agent' %} is-agent{% endif %}">{% if ticket.source == 'agent' %}agent{% else %}you{% endif %}</span>
+  <span class="row-meta">{{ ticket.created_at|timesince }}</span>
   <div class="triage-controls">
     <label class="triage-field">Area
       <select name="area_id" class="triage-select">
@@ -14,7 +13,7 @@
     </label>
     <label class="triage-field">Status
       <select name="status" class="triage-select">
-        {% for st in statuses %}<option value="{{ st }}" {% if st == slice.status %}selected{% endif %}>{{ st }}</option>{% endfor %}
+        {% for st in statuses %}<option value="{{ st }}">{{ st }}</option>{% endfor %}
       </select>
     </label>
   </div>

@@ -1,7 +1,7 @@
 import pytest
 
 from tuckit.core.models import Area, Org
-from tuckit.core.services.areas import create_area, get_or_create_triage, list_areas, update_area, delete_area, reorder_area
+from tuckit.core.services.areas import create_area, list_areas, update_area, delete_area, reorder_area
 from tuckit.core.services.exceptions import InvalidValue
 from tuckit.core.services.slices import create_slice
 
@@ -41,26 +41,6 @@ def test_duplicate_name_gets_unique_slug(org):
     a = create_area(org, "Backend")
     b = create_area(org, "Backend")
     assert a.slug != b.slug
-
-
-@pytest.mark.django_db
-def test_get_or_create_triage_is_idempotent_and_single():
-    org = Org.objects.create(name="Acme", slug="acme")
-    a = get_or_create_triage(org)
-    b = get_or_create_triage(org)
-    assert a.id == b.id
-    assert a.is_triage is True
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
-
-
-@pytest.mark.django_db
-def test_triage_sorts_before_existing_areas():
-    org = Org.objects.create(name="Acme", slug="acme")
-    backend = create_area(org, "Backend")
-    inbox = get_or_create_triage(org)
-    ordered = list(list_areas(org))
-    assert ordered[0].id == inbox.id
-    assert ordered[1].id == backend.id
 
 
 @pytest.mark.django_db
@@ -121,19 +101,11 @@ def test_update_area_description_only_keeps_name(org):
 @pytest.mark.django_db
 def test_delete_area_removes_it_and_cascades_slices(org):
     a = create_area(org, "Doomed")
-    create_slice(a, "child idea", status="idea", source="human")
+    create_slice(a, "child planned", status="planned", source="human")
     delete_area(a)
     assert not Area.objects.filter(org=org, name="Doomed").exists()
     from tuckit.core.models import Slice
     assert not Slice.objects.filter(area_id=a.id).exists()
-
-
-@pytest.mark.django_db
-def test_delete_area_refuses_triage(org):
-    triage = get_or_create_triage(org)
-    with pytest.raises(InvalidValue):
-        delete_area(triage)
-    assert Area.objects.filter(id=triage.id).exists()
 
 
 @pytest.mark.django_db
