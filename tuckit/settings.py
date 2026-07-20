@@ -121,6 +121,25 @@ TUCKIT_OAUTH_DCR_OPEN = env_bool("TUCKIT_OAUTH_DCR_OPEN", default=True)
 # entitlements hooks. Never billing code in core.
 TUCKIT_OAUTH_TOKEN_HOOK = env("TUCKIT_OAUTH_TOKEN_HOOK", default=None) or None
 
+# Social login (Google / GitHub). A provider is enabled only when BOTH its id and
+# secret env vars are present. Core ships none configured -> the feature is simply
+# off until a deployer sets these. No secrets or provider URLs live in code beyond
+# the neutral registry in tuckit.core.services.social.providers.
+def _social_provider(id_key, secret_key):
+    cid = env(id_key, default="") or ""
+    secret = env(secret_key, default="") or ""
+    return {"client_id": cid, "client_secret": secret} if (cid and secret) else None
+
+
+SOCIAL_PROVIDERS = {
+    name: cfg
+    for name, cfg in {
+        "google": _social_provider("GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"),
+        "github": _social_provider("GITHUB_OAUTH_CLIENT_ID", "GITHUB_OAUTH_CLIENT_SECRET"),
+    }.items()
+    if cfg
+}
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Manifest storage requires collectstatic to have built the manifest — true in
