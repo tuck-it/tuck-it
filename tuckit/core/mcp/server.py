@@ -10,10 +10,8 @@ from tuckit.core.services.activity import add_note as _add_note
 from tuckit.core.services.areas import create_area as _create_area
 from tuckit.core.services.areas import list_areas as _list_areas
 from tuckit.core.services.bites import (
-    create_bite as _create_bite,
+    add_bites as _add_bites,
     list_bites as _list_bites,
-    reorder_bite as _reorder_bite,
-    set_bite_status as _set_bite_status,
     update_bite as _update_bite,
 )
 from tuckit.core.services.plans import create_plan as _create_plan
@@ -313,24 +311,14 @@ async def list_bites(ctx: Context, plan_id: int) -> list[dict]:
 
 
 @mcp.tool()
-async def create_bite(
-    ctx: Context,
-    plan_id: int,
-    title: str,
-    body: str = "",
-    status: str = "todo",
-    after_id: int | None = None,
-    before_id: int | None = None,
-) -> dict:
-    """Add a bite (implementation step) to a plan, optionally positioned with after_id/before_id."""
+async def add_bites(ctx: Context, plan_id: int, bites: list[dict]) -> list[dict]:
+    """Add one or more bites (implementation steps) to a plan, in order.
+    Each item: {title, body?, status?}."""
     org = await require_org(ctx)
 
     def _run():
         plan = _resolve_plan(org, plan_id)
-        after = _resolve_bite(org, after_id) if after_id is not None else None
-        before = _resolve_bite(org, before_id) if before_id is not None else None
-        b = _create_bite(plan, title, body=body, status=status, after=after, before=before, source="agent")
-        return bite_dict(b)
+        return [bite_dict(b) for b in _add_bites(plan, bites, source="agent")]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
@@ -342,37 +330,18 @@ async def update_bite(
     title: str | None = None,
     body: str | None = None,
     status: str | None = None,
+    after_id: int | None = None,
+    before_id: int | None = None,
 ) -> dict:
-    """Update a bite's title, body, and/or status."""
-    org = await require_org(ctx)
-
-    def _run():
-        b = _resolve_bite(org, bite_id)
-        return bite_dict(_update_bite(b, title=title, body=body, status=status, actor="agent"))
-
-    return await sync_to_async(_run, thread_sensitive=True)()
-
-
-@mcp.tool()
-async def set_bite_status(ctx: Context, bite_id: int, status: str) -> dict:
-    """Set a bite's status (todo/doing/done/dropped)."""
-    org = await require_org(ctx)
-
-    def _run():
-        return bite_dict(_set_bite_status(_resolve_bite(org, bite_id), status, actor="agent"))
-
-    return await sync_to_async(_run, thread_sensitive=True)()
-
-
-@mcp.tool()
-async def reorder_bite(ctx: Context, bite_id: int, after_id: int | None = None, before_id: int | None = None) -> dict:
-    """Move a bite to just after (after_id) or just before (before_id) another bite in its slice."""
+    """Update a bite. status folds in set_bite_status; after_id/before_id fold in reorder."""
     org = await require_org(ctx)
 
     def _run():
         b = _resolve_bite(org, bite_id)
         after = _resolve_bite(org, after_id) if after_id is not None else None
         before = _resolve_bite(org, before_id) if before_id is not None else None
-        return bite_dict(_reorder_bite(b, after=after, before=before))
+        return bite_dict(_update_bite(
+            b, title=title, body=body, status=status, before=before, after=after, actor="agent",
+        ))
 
     return await sync_to_async(_run, thread_sensitive=True)()
