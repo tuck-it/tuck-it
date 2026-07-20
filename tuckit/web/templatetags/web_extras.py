@@ -121,8 +121,8 @@ _ICON_PATHS = {
 @register.simple_tag
 def attention_label(item):
     days = item.get("days", 0)
-    if item.get("reason") == "triage_stale":
-        return f"Triage {days}d"
+    if item.get("reason") == "ticket_stale":
+        return f"Inbox {days}d"
     return f"{days}d idle"
 
 

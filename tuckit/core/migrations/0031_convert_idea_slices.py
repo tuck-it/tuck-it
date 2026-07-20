@@ -7,6 +7,8 @@ def forward(apps, schema_editor):
     with a Plan -> 'planned'; idea-Slices without a Plan -> a Ticket reusing the
     slice's number (spec->body, created_at preserved), dropping the slice's
     activity rows; Triage Areas demoted to plain areas ('Triage'->'General').
+    Tags on converted idea-Slices are NOT carried over (Ticket has no tags
+    field in v1); this drop is intended and one-way.
     One-way; irreversible."""
     Org = apps.get_model("core", "Org")
     Slice = apps.get_model("core", "Slice")
