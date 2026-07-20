@@ -49,8 +49,10 @@ class Provider:
             resp.raise_for_status()
             return _google_identity(resp.json())
         if self.name == "github":
-            user = client.get(self.userinfo_url); user.raise_for_status()
-            emails = client.get("https://api.github.com/user/emails"); emails.raise_for_status()
+            user = client.get(self.userinfo_url)
+            user.raise_for_status()
+            emails = client.get("https://api.github.com/user/emails")
+            emails.raise_for_status()
             return _github_identity(user.json(), emails.json())
         raise ValueError(f"Unknown provider: {self.name}")
 

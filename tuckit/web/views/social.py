@@ -5,7 +5,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from tuckit.core.services.social import PROVIDERS, SocialLoginError, resolve_social_login
+from tuckit.core.services.social import PROVIDERS, SocialLoginError, enabled_providers, resolve_social_login
 from tuckit.core.services.social.oauth_client import begin_url, exchange_and_fetch
 from tuckit.web.views.accounts import _safe_next, _success
 
@@ -27,9 +27,18 @@ def _redirect_uri(request, provider_name):
     return request.build_absolute_uri(reverse("web:social_callback", args=[provider_name]))
 
 
-def _login_error(request, message):
+def _login_error(request, message, next_url: str = ""):
     """Re-render the login email step with an error (mirrors accounts._render)."""
-    return render(request, "registration/login.html", {"step": "email", "next": "", "error": message})
+    return render(
+        request,
+        "registration/login.html",
+        {
+            "step": "email",
+            "next": next_url,
+            "error": message,
+            "social_providers": enabled_providers(),
+        },
+    )
 
 
 def social_begin(request, provider):
@@ -49,9 +58,17 @@ def social_callback(request, provider):
     stashed = request.session.pop(SESSION_KEY, None)
 
     if request.GET.get("error") or not stashed or stashed.get("provider") != provider:
-        return _login_error(request, "Sign-in was cancelled or failed. Please try again.")
+        return _login_error(
+            request,
+            "Sign-in was cancelled or failed. Please try again.",
+            next_url=stashed.get("next", "") if stashed else "",
+        )
     if not request.GET.get("state") or request.GET["state"] != stashed.get("state"):
-        return _login_error(request, "Sign-in could not be verified. Please try again.")
+        return _login_error(
+            request,
+            "Sign-in could not be verified. Please try again.",
+            next_url=stashed.get("next", ""),
+        )
 
     try:
         identity = exchange_and_fetch(
@@ -61,7 +78,11 @@ def social_callback(request, provider):
         )
     except Exception:
         log.exception("social token exchange/userinfo failed for provider=%s", provider)
-        return _login_error(request, "We couldn't complete sign-in. Please try again.")
+        return _login_error(
+            request,
+            "We couldn't complete sign-in. Please try again.",
+            next_url=stashed.get("next", ""),
+        )
 
     try:
         user = resolve_social_login(
@@ -69,7 +90,7 @@ def social_callback(request, provider):
             email_verified=identity.email_verified, name=identity.name,
         )
     except SocialLoginError as exc:
-        return _login_error(request, str(exc))
+        return _login_error(request, str(exc), next_url=stashed.get("next", ""))
 
     login(request, user)
     # Reuse the email flow's post-login redirect, honoring the stashed `next`.

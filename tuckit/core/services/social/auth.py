@@ -32,10 +32,12 @@ def resolve_social_login(
 
     Branch order IS the security contract:
       1. Known (provider, uid) -> that user (returning login).
-      2. Verified email matching an existing user -> auto-link.
-      3. No such user + REGISTRATION_OPEN -> provision a passwordless account.
-      4. No such user + registration closed -> refuse.
-      5. Matching user but email unverified -> refuse (anti-takeover)."""
+      2. Existing user matches the email:
+         2a. Email verified -> auto-link.
+         2b. Email unverified -> refuse (anti-takeover).
+      3. No such user:
+         3a. REGISTRATION_OPEN -> provision a passwordless account.
+         3b. Registration closed -> refuse."""
     existing = SocialAccount.objects.filter(provider=provider, uid=uid).select_related("user").first()
     if existing:
         return existing.user

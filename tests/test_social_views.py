@@ -116,3 +116,15 @@ def test_callback_exchange_failure_shows_generic_error(client, monkeypatch):
     assert resp.status_code == 200
     assert "_auth_user_id" not in client.session
     assert b"boom-secret-detail" not in resp.content  # exception detail never echoed
+
+
+@override_settings(SOCIAL_PROVIDERS=GOOGLE)
+@pytest.mark.django_db
+def test_callback_error_rerender_keeps_sso_buttons(client):
+    s = client.session
+    s["social_oauth"] = {"provider": "google", "state": "st", "code_verifier": "cv", "next": ""}
+    s.save()
+
+    resp = client.get(reverse("web:social_callback", args=["google"]) + "?state=WRONG&code=abc")
+    assert resp.status_code == 200
+    assert b"Continue with Google" in resp.content  # SSO button still rendered on the error page
