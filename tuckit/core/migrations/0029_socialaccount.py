@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0023_oauthclient_oauthauthorizationcode_oauthaccesstoken_and_more'),
+        ('core', '0028_slice_external_key'),
     ]
 
     operations = [
