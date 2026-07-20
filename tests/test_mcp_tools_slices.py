@@ -79,3 +79,16 @@ async def test_cross_org_area_rejected():
     raw2 = await other_token()
     with pytest.raises(NotFound):
         await create_slice(make_ctx(raw2), area_id, "X")  # area belongs to org, not other_org
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_get_slice_accepts_ref_and_dict_has_ref():
+    _org, _other, raw, area_id = await _seed()
+    ctx = make_ctx(raw)
+    s = await create_slice(ctx, area_id, "Auth", spec="x")
+    assert s["ref"].startswith("acme-")
+    md = await get_slice(ctx, s["ref"])
+    assert "# Auth" in md
+    md2 = await get_slice(ctx, s["ref"], with_activity=True)
+    assert "## Activity" in md2

@@ -22,6 +22,7 @@ from tuckit.core.services.resolve import get_area
 from tuckit.core.services.resolve import get_bite as _resolve_bite
 from tuckit.core.services.resolve import get_plan as _resolve_plan
 from tuckit.core.services.resolve import get_slice as _resolve_slice
+from tuckit.core.services.resolve import get_slice_flexible as _resolve_slice_flexible
 from tuckit.core.services.slices import create_slice as _create_slice
 from tuckit.core.services.slices import list_slices as _list_slices
 from tuckit.core.services.slices import reorder_slice as _reorder_slice
@@ -150,12 +151,15 @@ async def list_slices(ctx: Context, area_id: int, status: str | None = None, tag
 
 
 @mcp.tool()
-async def get_slice(ctx: Context, slice_id: int) -> str:
-    """Return a slice rendered as markdown (its spec plus a bite checklist)."""
+async def get_slice(ctx: Context, slice: int | str, with_activity: bool = False) -> str:
+    """Return a slice rendered as markdown (spec + bite checklist). `slice` may be
+    a numeric id or a ref like 'tuck-it-42'. Set with_activity=true to append the
+    activity/notes thread."""
     org = await require_org(ctx)
 
     def _run():
-        return render_slice_markdown(_resolve_slice(org, slice_id))
+        s = _resolve_slice_flexible(org, slice)
+        return render_slice_markdown(s, with_activity=with_activity)
 
     return await sync_to_async(_run, thread_sensitive=True)()
 

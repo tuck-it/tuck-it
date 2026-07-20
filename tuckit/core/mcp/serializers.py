@@ -1,3 +1,6 @@
+from tuckit.core.services.refs import slice_ref
+
+
 def tag_names(slice_) -> list[str]:
     return [t.name for t in slice_.tags.all()]
 
@@ -5,6 +8,7 @@ def tag_names(slice_) -> list[str]:
 def slice_dict(slice_) -> dict:
     return {
         "id": slice_.id,
+        "ref": slice_ref(slice_),
         "title": slice_.title,
         "status": slice_.status,
         "tags": tag_names(slice_),
