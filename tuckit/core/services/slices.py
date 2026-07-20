@@ -145,6 +145,7 @@ def update_slice(
                 slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
+            _autoclose_ticket(slice_)
     return slice_
 
 
@@ -154,6 +155,14 @@ def _apply_status(slice_: Slice, status: str) -> None:
         slice_.completed_at = slice_.completed_at or timezone.now()
     else:
         slice_.completed_at = None
+
+
+def _autoclose_ticket(slice_: Slice) -> None:
+    """When a Slice reaches a terminal state, close its originating Ticket."""
+    if slice_.ticket_id and slice_.status in ("shipped", "dropped"):
+        from tuckit.core.services.tickets import close_ticket
+        if slice_.ticket.status != "closed":
+            close_ticket(slice_.ticket, actor="human")
 
 
 def set_slice_status(slice_: Slice, status: str, *, actor: str = "human") -> Slice:
@@ -167,6 +176,7 @@ def set_slice_status(slice_: Slice, status: str, *, actor: str = "human") -> Sli
                 slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
+            _autoclose_ticket(slice_)
     return slice_
 
 

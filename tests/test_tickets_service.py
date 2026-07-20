@@ -79,3 +79,43 @@ def test_update_and_close_ticket():
     close_ticket(t)
     t.refresh_from_db()
     assert t.status == "closed" and t.closed_at is not None
+
+
+from tuckit.core.services.exceptions import InvalidValue
+from tuckit.core.services.slices import set_slice_status, update_slice
+from tuckit.core.services.tickets import promote_ticket
+
+
+@pytest.mark.django_db
+def test_promote_inherits_number_and_links():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Fix login", area=area)
+    s = promote_ticket(t)
+    assert s.number == t.number          # same ref across promotion
+    assert s.status == "planned"
+    assert s.ticket_id == t.id
+    t.refresh_from_db()
+    assert t.status == "open"            # stays open while the Slice is in flight
+
+
+@pytest.mark.django_db
+def test_promote_area_less_ticket_requires_area():
+    org = Org.objects.create(name="Acme", slug="acme")
+    inbox_t = create_ticket(org, "Stray")   # area=None
+    with pytest.raises(InvalidValue):
+        promote_ticket(inbox_t)
+    area = create_area(org, "Backend")
+    s = promote_ticket(inbox_t, area=area)
+    assert s.area_id == area.id
+
+
+@pytest.mark.django_db
+def test_shipping_slice_autocloses_ticket():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Fix login", area=area)
+    s = promote_ticket(t)
+    set_slice_status(s, "shipped")
+    t.refresh_from_db()
+    assert t.status == "closed" and t.closed_at is not None
