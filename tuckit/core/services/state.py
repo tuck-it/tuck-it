@@ -56,9 +56,14 @@ def _area_state(area: Area) -> dict:
     }
 
 
-def get_project_state(org: Org, area: Area | None = None) -> dict:
+def get_project_state(org: Org, area: Area | None = None, caller_user=None) -> dict:
     areas = [area] if area is not None else list(Area.objects.filter(org=org, archived=False))
     return {
+        "caller": {
+            "user_email": caller_user.email if caller_user is not None else None,
+            "org_slug": org.slug,
+            "org_name": org.name,
+        },
         "org": {"name": org.name, "description": org.description},
         "areas": [_area_state(a) for a in areas],
     }

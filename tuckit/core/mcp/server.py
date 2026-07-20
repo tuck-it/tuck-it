@@ -4,7 +4,7 @@ from asgiref.sync import sync_to_async
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from tuckit.core.mcp.auth import require_org
+from tuckit.core.mcp.auth import require_caller, require_org
 from tuckit.core.mcp.serializers import activity_event_dict, area_dict, bite_dict, plan_dict, slice_dict
 from tuckit.core.services.activity import add_note as _add_note
 from tuckit.core.services.areas import create_area as _create_area
@@ -93,17 +93,17 @@ mcp = FastMCP(
 )
 
 
-def _project_state(org, area_id: int | None) -> dict:
-    area = get_area(org, area_id) if area_id is not None else None
-    return _get_project_state(org, area=area)
-
-
 @mcp.tool()
 async def get_project_state(ctx: Context, area_id: int | None = None) -> dict:
-    """Return the current project state (shipped / building / roadmap / ideas / someday),
-    assembled live from the org's slices and bites. Optionally scope to one area by id."""
-    org = await require_org(ctx)
-    return await sync_to_async(_project_state, thread_sensitive=True)(org, area_id)
+    """Current project state (shipped/building/roadmap/ideas/someday) plus the
+    caller's identity (user_email, org). Optionally scope to one area by id."""
+    org, user = await require_caller(ctx)
+
+    def _run():
+        area = get_area(org, area_id) if area_id is not None else None
+        return _get_project_state(org, area=area, caller_user=user)
+
+    return await sync_to_async(_run, thread_sensitive=True)()
 
 
 @mcp.tool()
