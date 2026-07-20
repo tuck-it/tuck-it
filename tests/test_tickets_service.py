@@ -2,6 +2,8 @@ import pytest
 
 from tuckit.core.models import Org, Ticket, Slice
 from tuckit.core.services.areas import create_area
+from tuckit.core.services.refs import ticket_ref
+from tuckit.core.services.resolve import get_ticket, get_ticket_by_ref, resolve_ref
 
 
 @pytest.mark.django_db
@@ -20,3 +22,18 @@ def test_ticket_defaults_and_slice_link():
     # Slice can link back to a Ticket
     s = Slice.objects.create(area=area, title="S", rank="m", number=1, ticket=t)
     assert t.slice == s
+
+
+@pytest.mark.django_db
+def test_ref_and_resolution_prefers_slice():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = Ticket.objects.create(org=org, area=area, title="T", rank="m", number=42)
+    assert ticket_ref(t) == "acme-42"
+    assert get_ticket(org, t.id) == t
+    assert get_ticket_by_ref(org, "acme-42") == t
+    # unpromoted -> ref resolves to the Ticket
+    assert resolve_ref(org, "acme-42") == t
+    # promote: a Slice inherits number 42 -> ref now resolves to the Slice
+    s = Slice.objects.create(area=area, title="S", rank="m", number=42, ticket=t)
+    assert resolve_ref(org, "acme-42") == s

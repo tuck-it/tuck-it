@@ -6,6 +6,12 @@ def slice_ref(slice_) -> str:
     return f"{slice_.area.org.slug}-{slice_.number}"
 
 
+def ticket_ref(ticket) -> str:
+    """Stable ref for a Ticket: '<org-slug>-<number>' — shares the Slice number
+    space, so a promoted Ticket's Slice keeps the same ref."""
+    return f"{ticket.org.slug}-{ticket.number}"
+
+
 def parse_slice_ref(org, ref: str) -> int:
     """Return the slice number encoded in `ref`, verifying the slug prefix matches
     `org`. Org slugs may contain '-', so split on the LAST '-'. Raises NotFound."""
