@@ -6,7 +6,7 @@ from django.views.generic import RedirectView
 from tuckit.web.views import (
     pages, slices, mutations, board, capture, health,
     accounts, settings_org, settings_account, settings_shell, routing,
-    onboarding, oauth,
+    onboarding, oauth, social,
 )
 from tuckit.web.views import settings as settings_views
 
@@ -16,6 +16,8 @@ app_name = "web"
 auth_patterns = [
     path("healthcheck", health.healthz, name="healthcheck"),
     path("login/", login_not_required(accounts.auth_entry), name="login"),
+    path("login/<slug:provider>/", login_not_required(social.social_begin), name="social_begin"),
+    path("login/<slug:provider>/callback/", login_not_required(social.social_callback), name="social_callback"),
     path("register/", login_not_required(RedirectView.as_view(pattern_name="web:login", permanent=False)), name="register"),
     path("invite/<str:token>/", login_not_required(accounts.invite_accept), name="invite_accept"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
