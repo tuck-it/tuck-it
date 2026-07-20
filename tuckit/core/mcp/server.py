@@ -26,7 +26,7 @@ from tuckit.core.services.resolve import get_slice as _resolve_slice
 from tuckit.core.services.resolve import get_slice_flexible as _resolve_slice_flexible
 from tuckit.core.services.members import resolve_member
 from tuckit.core.services.slices import create_slice as _create_slice
-from tuckit.core.services.slices import list_slices as _list_slices
+from tuckit.core.services.slices import query_slices as _query_slices
 from tuckit.core.services.slices import update_slice as _update_slice
 from tuckit.core.services.state import get_project_state as _get_project_state
 from tuckit.core.services.state import render_slice_markdown
@@ -139,13 +139,27 @@ async def list_tags(ctx: Context) -> list[str]:
 
 
 @mcp.tool()
-async def list_slices(ctx: Context, area_id: int, status: str | None = None, tag: str | None = None) -> list[dict]:
-    """List slices in an area, optionally filtered by status or tag name."""
-    org = await require_org(ctx)
+async def list_slices(
+    ctx: Context,
+    area_id: int | None = None,
+    status: str | None = None,
+    tag: str | None = None,
+    query: str | None = None,
+    assignee: str | None = None,
+    limit: int | None = 50,
+) -> list[dict]:
+    """List/search slices. All filters optional; with no area_id it searches the
+    whole org. query = text match on title/spec. assignee = 'me' or an email."""
+    org, user = await require_caller(ctx)
 
     def _run():
-        area = get_area(org, area_id)
-        return [slice_dict(s) for s in _list_slices(area, status=status, tag=tag)]
+        area = get_area(org, area_id) if area_id is not None else None
+        member = resolve_member(org, assignee, caller_user=user) if assignee else None
+        rows = _query_slices(
+            org, area=area, status=status, tag=tag, query=query,
+            assignee_member=member, limit=limit,
+        )
+        return [slice_dict(s) for s in rows]
 
     return await sync_to_async(_run, thread_sensitive=True)()
 

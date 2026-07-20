@@ -90,3 +90,14 @@ async def test_get_slice_accepts_ref_and_dict_has_ref():
     assert "# Auth" in md
     md2 = await get_slice(ctx, s["ref"], with_activity=True)
     assert "## Activity" in md2
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_list_slices_search_without_area():
+    _org, _other, raw, area_id = await _seed()
+    ctx = make_ctx(raw)
+    await create_slice(ctx, area_id, "Auth login")
+    await create_slice(ctx, area_id, "Payments")
+    hits = await list_slices(ctx, query="login")   # no area_id -> org-wide
+    assert [s["title"] for s in hits] == ["Auth login"]

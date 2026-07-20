@@ -151,3 +151,19 @@ def test_update_slice_assign_by_email_and_clear():
     update_slice(s, assignee="", assignee_member=resolve_member(org, ""))
     s.refresh_from_db()
     assert s.assignee_id is None
+
+
+@pytest.mark.django_db
+def test_query_slices_org_wide_and_text():
+    from tuckit.core.services.slices import query_slices
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    a1, a2 = create_area(org, "OSS"), create_area(org, "Cloud")
+    create_slice(a1, "MCP search endpoint", spec="fuzzy find")
+    create_slice(a2, "Billing webhook")
+    all_ = query_slices(org)
+    assert len(all_) == 2                      # org-wide, no area needed
+    found = query_slices(org, query="webhook")
+    assert [s.title for s in found] == ["Billing webhook"]
+    in_spec = query_slices(org, query="fuzzy")
+    assert [s.title for s in in_spec] == ["MCP search endpoint"]

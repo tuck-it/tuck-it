@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from tuckit.core.models import Area, Org, Slice
@@ -16,6 +16,27 @@ def list_slices(area: Area, status: str | None = None, tag: str | None = None) -
     if tag:
         qs = qs.filter(tags__name=tag)
     return qs
+
+
+def query_slices(org, *, area=None, status=None, tag=None, query=None,
+                 assignee_member=None, limit=None) -> list[Slice]:
+    """Org-wide slice query used by the MCP list_slices tool. All filters optional;
+    with no `area` it searches the whole org. `query` = icontains on title/spec."""
+    qs = Slice.objects.filter(area__org=org).select_related("area", "assignee__user")
+    if area is not None:
+        qs = qs.filter(area=area)
+    if status:
+        qs = qs.filter(status=status)
+    if tag:
+        qs = qs.filter(tags__name=tag)
+    if query:
+        qs = qs.filter(Q(title__icontains=query) | Q(spec__icontains=query))
+    if assignee_member is not None:
+        qs = qs.filter(assignee=assignee_member)
+    qs = qs.prefetch_related("tags").distinct()
+    if limit:
+        qs = qs[:limit]
+    return list(qs)
 
 
 STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
