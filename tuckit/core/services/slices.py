@@ -92,6 +92,7 @@ def create_slice(
             number = allocate_number(area.org)
         slice_ = Slice.objects.create(
             area=area,
+            org=area.org,
             title=title,
             spec=spec,
             status=status,

@@ -20,7 +20,7 @@ def test_ticket_defaults_and_slice_link():
     inbox = Ticket.objects.create(org=org, area=None, title="Stray idea", rank="m")
     assert inbox.area is None
     # Slice can link back to a Ticket
-    s = Slice.objects.create(area=area, title="S", rank="m", number=1, ticket=t)
+    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=1, ticket=t)
     assert t.slice == s
 
 
@@ -35,7 +35,7 @@ def test_ref_and_resolution_prefers_slice():
     # unpromoted -> ref resolves to the Ticket
     assert resolve_ref(org, "acme-42") == t
     # promote: a Slice inherits number 42 -> ref now resolves to the Slice
-    s = Slice.objects.create(area=area, title="S", rank="m", number=42, ticket=t)
+    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=42, ticket=t)
     assert resolve_ref(org, "acme-42") == s
 
 

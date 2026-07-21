@@ -40,6 +40,13 @@ class Slice(models.Model):
     SOURCE_CHOICES = [("human", "Human"), ("agent", "Agent")]
 
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="slices")
+    # Denormalized from area.org so the per-org number uniqueness constraint is
+    # expressible at all — UniqueConstraint cannot traverse relations, and the
+    # readers that need the guarantee (get_slice_by_ref, resolve_ref) scope by
+    # org, not area. Safe because set_slice_area() refuses cross-org moves,
+    # making a slice's org immutable after creation: a cached projection of a
+    # fixed fact, not a second mutable copy.
+    org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="slices")
     title = models.CharField(max_length=300)
     spec = models.TextField(blank=True, default="")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planned")
@@ -62,6 +69,18 @@ class Slice(models.Model):
 
     class Meta:
         ordering = ["rank"]
+        constraints = [
+            # Mirrors uniq_ticket_number_per_org (0034). allocate_number()
+            # already serializes minting, but admin/import/raw-ORM paths bypass
+            # it — and get_slice_by_ref() resolves with .get(), so a collision
+            # raises MultipleObjectsReturned, which that caller does not catch.
+            # resolve_ref() uses .first() and would silently pick either row.
+            models.UniqueConstraint(
+                fields=["org", "number"],
+                condition=models.Q(number__isnull=False),
+                name="uniq_slice_number_per_org",
+            ),
+        ]
 
     def __str__(self):
         return self.title
