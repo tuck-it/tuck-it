@@ -61,7 +61,7 @@ def test_slice_modal_teaches_what_a_slice_is(client_local, org):
 @pytest.mark.django_db
 def test_widget_plan_step_links_to_newest_slice(client_local, org):
     area = create_area(org, "Backend")
-    sl = create_slice(area, "Retry webhooks", status="idea")
+    sl = create_slice(area, "Retry webhooks", status="planned")
     body = client_local.get(f"/{org.slug}/").content.decode()
     # With a Slice but no Plan, the current step is Add-a-Plan → ?focus=plan.
     assert f"/slices/{sl.id}/?focus=plan" in body
@@ -71,7 +71,7 @@ def test_widget_plan_step_links_to_newest_slice(client_local, org):
 def test_widget_bite_step_links_after_plan_exists(client_local, org):
     from tuckit.core.services.plans import create_plan
     area = create_area(org, "Backend")
-    sl = create_slice(area, "Retry webhooks", status="idea")
+    sl = create_slice(area, "Retry webhooks", status="planned")
     create_plan(sl, title="Plan")
     body = client_local.get(f"/{org.slug}/").content.decode()
     assert f"/slices/{sl.id}/?focus=bite" in body
@@ -131,7 +131,7 @@ def test_step4_shows_poller_when_key_exists(client_local, org):
 def test_onboarding_step1_has_description_field(client_local, org):
     # Fresh org (no non-triage areas) => Step 1 is active with the create form rendered.
     import re
-    body = client_local.get(f"/{org.slug}/triage/").content.decode()
+    body = client_local.get(f"/{org.slug}/inbox/").content.decode()
     assert 'id="onboarding-widget"' in body
     # Step 1 opens the shared Area-create modal (also used by the sidebar/areas page).
     m = re.search(r'<form class="[^"]*area-create-form[^"]*".*?</form>', body, re.S)

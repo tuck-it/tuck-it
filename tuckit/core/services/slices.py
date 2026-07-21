@@ -39,7 +39,7 @@ def query_slices(org, *, area=None, status=None, tag=None, query=None,
     return list(qs)
 
 
-STATUS_ORDER = ["idea", "planned", "building", "shipped", "dropped"]
+STATUS_ORDER = ["planned", "building", "shipped", "dropped"]
 
 
 def grouped_slices(area: Area) -> list[tuple[str, list[Slice]]]:
@@ -49,24 +49,34 @@ def grouped_slices(area: Area) -> list[tuple[str, list[Slice]]]:
     return [(s, [x for x in slices if x.status == s]) for s in STATUS_ORDER]
 
 
+def allocate_number(org: Org) -> int:
+    """Atomically mint the next per-org number (shared by Slices and Tickets)."""
+    locked = Org.objects.select_for_update().get(pk=org.pk)
+    number = locked.next_slice_number
+    locked.next_slice_number = number + 1
+    locked.save(update_fields=["next_slice_number"])
+    return number
+
+
 def create_slice(
     area: Area,
     title: str,
     *,
     spec: str = "",
-    status: str = "idea",
+    status: str = "planned",
     tags: list[str] | None = None,
     before: Slice | None = None,
     after: Slice | None = None,
     source: str = "human",
     assignee_member=None,
     external_key: str = "",
+    number: int | None = None,
 ) -> Slice:
     if external_key:
         existing = Slice.objects.filter(area__org=area.org, external_key=external_key).first()
         if existing is not None:
             # Idempotent: a re-run with the same key updates in place, no duplicate.
-            # Status is deliberately NOT touched here — create defaults to 'idea' and
+            # Status is deliberately NOT touched here — create defaults to 'planned' and
             # would otherwise regress a slice that already progressed; use update_slice
             # to move status. Empty spec is treated as "unchanged" (spec or None).
             return update_slice(
@@ -77,10 +87,8 @@ def create_slice(
     validate_choice(status, Slice.STATUS_CHOICES, "status")
     rank = rank_for(Slice, {"area": area}, before=before, after=after)
     with transaction.atomic():
-        locked = Org.objects.select_for_update().get(pk=area.org_id)
-        number = locked.next_slice_number
-        locked.next_slice_number = number + 1
-        locked.save(update_fields=["next_slice_number"])
+        if number is None:
+            number = allocate_number(area.org)
         slice_ = Slice.objects.create(
             area=area,
             title=title,
@@ -137,6 +145,7 @@ def update_slice(
                 slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
+            _autoclose_ticket(slice_)
     return slice_
 
 
@@ -146,6 +155,14 @@ def _apply_status(slice_: Slice, status: str) -> None:
         slice_.completed_at = slice_.completed_at or timezone.now()
     else:
         slice_.completed_at = None
+
+
+def _autoclose_ticket(slice_: Slice) -> None:
+    """When a Slice reaches a terminal state, close its originating Ticket."""
+    if slice_.ticket_id and slice_.status in ("shipped", "dropped"):
+        from tuckit.core.services.tickets import close_ticket
+        if slice_.ticket.status != "closed":
+            close_ticket(slice_.ticket, actor="human")
 
 
 def set_slice_status(slice_: Slice, status: str, *, actor: str = "human") -> Slice:
@@ -159,6 +176,7 @@ def set_slice_status(slice_: Slice, status: str, *, actor: str = "human") -> Sli
                 slice_.area.org, actor=actor, verb=status_verb(status),
                 target=slice_, from_value=old_status, to_value=status,
             )
+            _autoclose_ticket(slice_)
     return slice_
 
 
@@ -177,9 +195,9 @@ def set_slice_area(
     slice_.rank = rank_for(Slice, {"area": area}, before=before, after=after)
     with transaction.atomic():
         slice_.save(update_fields=["area", "rank", "updated_at"])
-        if area.id != old_area.id:  # no spurious event when the area didn't change (e.g. concurrent re-triage)
+        if area.id != old_area.id:  # no spurious event when the area didn't change (e.g. concurrent resubmit)
             record_activity(
-                area.org, actor=actor, verb="triaged" if old_area.is_triage else "moved",
+                area.org, actor=actor, verb="moved",
                 target=slice_, from_value=old_area.name, to_value=area.name,
             )
     return slice_

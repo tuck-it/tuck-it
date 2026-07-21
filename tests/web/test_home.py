@@ -1,5 +1,30 @@
 import pytest
 
+
+@pytest.mark.django_db
+def test_home_and_attention_ok_with_stale_open_ticket(client_local, org):
+    """A stale open Ticket surfaces in attention_items() as a ticket-keyed row
+    (no `slice` key). The attention panel must render it without reversing
+    web:slice on a null id — otherwise Home and /attention/ 500 (NoReverseMatch).
+    """
+    from datetime import timedelta
+    from django.utils import timezone
+    from tuckit.core.models import Ticket
+    from tuckit.core.services.tickets import create_ticket
+
+    t = create_ticket(org, "Stale ticket")   # open, unpromoted, area-less
+    stale = timezone.now() - timedelta(days=30)
+    Ticket.objects.filter(pk=t.pk).update(updated_at=stale)
+
+    home = client_local.get(f"/{org.slug}/")
+    assert home.status_code == 200
+    assert "Stale ticket" in home.content.decode()
+
+    attention = client_local.get(f"/{org.slug}/attention/")
+    assert attention.status_code == 200
+    assert "Stale ticket" in attention.content.decode()
+
+
 @pytest.mark.django_db
 def test_home_lists_building_and_attention(client_local, org):
     from tuckit.core.services.areas import create_area

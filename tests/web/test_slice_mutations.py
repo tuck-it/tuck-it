@@ -215,10 +215,10 @@ def test_slice_panel_dropped_shows_restore(client_local, org):
     body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
     assert "Restore" in body
     # restoring puts it back into the flow
-    resp = client_local.post(f"{p}/slices/{s.id}/status", {"status": "idea"}, HTTP_HX_REQUEST="true")
+    resp = client_local.post(f"{p}/slices/{s.id}/status", {"status": "planned"}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     s.refresh_from_db()
-    assert s.status == "idea"
+    assert s.status == "planned"
 
 @pytest.mark.django_db
 def test_slice_panel_shows_byline(client_local, org):

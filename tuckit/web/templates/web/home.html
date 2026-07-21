@@ -108,7 +108,7 @@
             <div class="home-col-empty"><span>Nothing parked for later.</span></div>
           {% endif %}
         </div>
-        {% if later_ct > 5 %}<a class="home-col-more" href="{% wurl 'web:roadmap' %}?view=list&status=idea">View all ({{ later_ct }}) &rarr;</a>{% endif %}
+        {% if later_ct > 5 %}<a class="home-col-more" href="{% wurl 'web:roadmap' %}?view=list">View all ({{ later_ct }}) &rarr;</a>{% endif %}
       </section>
     </div>
   </div>

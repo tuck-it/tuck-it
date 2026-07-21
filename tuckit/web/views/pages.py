@@ -41,7 +41,7 @@ def home(request):
         shipped_hidden = shipped_total - len(visible)
         state = {**state, "shipped": visible}
     building_ct = len(state.get("building", []))
-    later_items = state.get("ideas", []) + state.get("someday", [])
+    later_items = state.get("someday", [])
     later_ct = len(later_items)
     queued_ct = len(state.get("planned", [])) + later_ct
     return render(request, "web/home.html", {
@@ -109,8 +109,6 @@ def areas(request):
         from tuckit.core.services.areas import list_areas
         from tuckit.core.models import Slice
         for a in list_areas(org):
-            if a.is_triage:
-                continue
             counts = {}
             for s in Slice.objects.filter(area=a).exclude(status="dropped").values_list("status", flat=True):
                 counts[s] = counts.get(s, 0) + 1

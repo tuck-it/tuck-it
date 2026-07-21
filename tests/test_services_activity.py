@@ -13,15 +13,15 @@ def _org(slug="w"):
 def test_record_activity_derives_target_fields():
     org = _org()
     a = create_area(org, "Backend")
-    s = create_slice(a, "Payment integration", status="idea")
+    s = create_slice(a, "Payment integration", status="planned")
     ActivityEvent.objects.all().delete()  # ignore the create_slice event from Task 2
-    record_activity(org, actor="agent", verb="status_changed", target=s, from_value="idea", to_value="building")
+    record_activity(org, actor="agent", verb="status_changed", target=s, from_value="planned", to_value="building")
     e = ActivityEvent.objects.get()
     assert e.org_id == org.id
     assert e.actor == "agent" and e.verb == "status_changed"
     assert e.target_type == "slice" and e.target_id == s.id
     assert e.target_label == "Payment integration"
-    assert e.from_value == "idea" and e.to_value == "building"
+    assert e.from_value == "planned" and e.to_value == "building"
 
 
 @pytest.mark.django_db

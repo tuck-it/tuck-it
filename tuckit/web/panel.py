@@ -29,7 +29,7 @@ def slice_panel_context(slice_, is_panel: bool = False) -> dict:
     return {
         "slice": slice_,
         "spec_html": render_markdown_html(slice_.spec),
-        "statuses": ["idea", "planned", "building", "shipped"],
+        "statuses": ["planned", "building", "shipped"],
         "activity": slice_activity(slice_),
         "is_panel": is_panel,
         "panel_qs": "?panel=1" if is_panel else "",

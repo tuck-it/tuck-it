@@ -1,6 +1,6 @@
 from tuckit.core.models import ActivityEvent
 
-_TARGET_TYPES = {"Slice": "slice", "Bite": "bite", "Area": "area"}
+_TARGET_TYPES = {"Slice": "slice", "Bite": "bite", "Area": "area", "Ticket": "ticket"}
 
 
 def record_activity(org, *, actor, verb, target, from_value="", to_value="", body=""):

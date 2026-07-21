@@ -5,8 +5,6 @@ from tuckit.core.models import Area, Org
 from tuckit.core.services.ranking_helpers import rank_for
 from tuckit.core.services.exceptions import InvalidValue
 
-TRIAGE_NAME = "Triage"
-
 
 def list_areas(org: Org, include_archived: bool = False) -> QuerySet:
     qs = Area.objects.filter(org=org)
@@ -33,21 +31,6 @@ def create_area(org: Org, name: str, description: str = "", slug: str | None = N
     )
 
 
-def get_or_create_triage(org: Org) -> Area:
-    triage = Area.objects.filter(org=org, is_triage=True).first()
-    if triage is not None:
-        return triage
-    first = Area.objects.filter(org=org).order_by("rank").first()
-    rank = rank_for(Area, {"org": org}, before=first)
-    return Area.objects.create(
-        org=org,
-        name=TRIAGE_NAME,
-        slug=_unique_slug(org, TRIAGE_NAME),
-        is_triage=True,
-        rank=rank,
-    )
-
-
 def update_area(area: Area, *, name: str | None = None, description: str | None = None) -> Area:
     fields = ["updated_at"]
     if name is not None:
@@ -64,8 +47,6 @@ def update_area(area: Area, *, name: str | None = None, description: str | None 
 
 
 def delete_area(area: Area) -> None:
-    if area.is_triage:
-        raise InvalidValue("Triage cannot be deleted")
     area.delete()  # cascades to slices/bites via FK on_delete=CASCADE
 
 

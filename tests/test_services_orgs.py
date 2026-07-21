@@ -106,13 +106,12 @@ def test_cannot_remove_owner(org_owner_admin_member):
 
 
 @pytest.mark.django_db
-def test_create_org_makes_org_owner_and_seeds_triage():
+def test_create_org_makes_org_owner_with_empty_inbox():
     user = User.objects.create(email="u@u.com")
     org = create_org(user, name="Acme Labs")
     assert org.slug == "acme-labs"                       # auto slug from name
     assert OrgMember.objects.filter(user=user, org=org, role="owner").exists()
-    assert Area.objects.filter(org=org, is_triage=True).count() == 1
-    assert Area.objects.filter(org=org, is_triage=False).count() == 0
+    assert Area.objects.filter(org=org).count() == 0     # no magic area — Inbox starts empty
 
 
 @pytest.mark.django_db

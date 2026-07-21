@@ -18,7 +18,6 @@ class Area(models.Model):
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True, default="")
     archived = models.BooleanField(default=False)
-    is_triage = models.BooleanField(default=False)
     rank = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,7 +32,6 @@ class Area(models.Model):
 
 class Slice(models.Model):
     STATUS_CHOICES = [
-        ("idea", "Idea"),
         ("planned", "Planned"),
         ("building", "Building"),
         ("shipped", "Shipped"),
@@ -44,7 +42,7 @@ class Slice(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="slices")
     title = models.CharField(max_length=300)
     spec = models.TextField(blank=True, default="")
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="idea")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planned")
     tags = models.ManyToManyField(Tag, blank=True, related_name="slices")
     rank = models.CharField(max_length=255)
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="human")
@@ -54,9 +52,41 @@ class Slice(models.Model):
         "core.OrgMember", null=True, blank=True,
         on_delete=models.SET_NULL, related_name="assigned_slices",
     )
+    ticket = models.OneToOneField(
+        "core.Ticket", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="slice",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["rank"]
+
+    def __str__(self):
+        return self.title
+
+
+class Ticket(models.Model):
+    STATUS_CHOICES = [("open", "Open"), ("closed", "Closed")]
+    SOURCE_CHOICES = [("human", "Human"), ("agent", "Agent")]
+
+    org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="tickets")
+    area = models.ForeignKey(Area, null=True, blank=True, on_delete=models.SET_NULL, related_name="tickets")
+    title = models.CharField(max_length=300)
+    body = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="open")
+    number = models.PositiveIntegerField(null=True, blank=True)
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="human")
+    created_by = models.ForeignKey(
+        "core.OrgMember", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="created_tickets",
+    )
+    external_key = models.CharField(max_length=200, blank=True, default="")
+    rank = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["rank"]

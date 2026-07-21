@@ -27,7 +27,6 @@ def _area_state(area: Area) -> dict:
     someday_ids = {s.id for s in someday}
     building = [s for s in slices if s.status == "building" and s.id not in someday_ids]
     planned = [s for s in slices if s.status == "planned" and s.id not in someday_ids]
-    ideas = [s for s in slices if s.status == "idea" and s.id not in someday_ids]
 
     building_out = []
     open_bite_count = 0
@@ -50,14 +49,15 @@ def _area_state(area: Area) -> dict:
         "shipped": [_slice_brief(s) for s in shipped],
         "building": building_out,
         "roadmap": [_slice_brief(s) for s in planned],
-        "ideas": [{"id": s.id, "title": s.title} for s in ideas],
         "someday": [{"id": s.id, "title": s.title} for s in someday],
         "counts": {"open_bites": open_bite_count, "shipped": len(shipped)},
     }
 
 
 def get_project_state(org: Org, area: Area | None = None, caller_user=None) -> dict:
+    from tuckit.core.services.tickets import query_tickets
     areas = [area] if area is not None else list(Area.objects.filter(org=org, archived=False))
+    inbox = query_tickets(org, limit=10)
     return {
         "caller": {
             "user_email": caller_user.email if caller_user is not None else None,
@@ -65,6 +65,10 @@ def get_project_state(org: Org, area: Area | None = None, caller_user=None) -> d
             "org_name": org.name,
         },
         "org": {"name": org.name, "description": org.description},
+        "inbox": {
+            "open_count": len(query_tickets(org)),
+            "recent": [{"id": t.id, "title": t.title} for t in inbox],
+        },
         "areas": [_area_state(a) for a in areas],
     }
 
@@ -95,6 +99,13 @@ def render_slice_markdown(slice_: Slice, with_activity: bool = False) -> str:
     return out
 
 
+def render_ticket_markdown(ticket) -> str:
+    lines = [f"# {ticket.title}", "", f"Status: {ticket.status}", ""]
+    if ticket.body:
+        lines += [ticket.body, ""]
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _render_activity(slice_: Slice) -> str:
     events = slice_activity(slice_)
     if not events:
@@ -119,7 +130,7 @@ def home_state(org: Org) -> dict:
     someday = [s for s in slices if "someday" in _tag_names(s) and s.status != "shipped"]
     someday_ids = {s.id for s in someday}
     attention = attention_items(org)
-    attention_ids = {it["slice"].id for it in attention}
+    attention_ids = {it["slice"].id for it in attention if "slice" in it}
     hidden_ids = someday_ids | attention_ids
 
     def bucket(status):
@@ -136,7 +147,6 @@ def home_state(org: Org) -> dict:
         "attention": attention,
         "building": bucket("building"),
         "planned": bucket("planned"),
-        "ideas": bucket("idea"),
         "someday": someday,
         "shipped": shipped,
     }
@@ -155,7 +165,7 @@ def snapshot_today(org: Org, state: dict) -> dict:
     uniq_org_snapshot_per_day."""
     today = timezone.localdate()
     building_ct = len(state["building"])
-    backlog_ct = len(state["planned"]) + len(state["ideas"]) + len(state["someday"])
+    backlog_ct = len(state["planned"]) + len(state["someday"])
     week_ago = timezone.now() - timedelta(days=7)
     shipped_week_ct = sum(
         1 for s in state["shipped"] if s.completed_at and s.completed_at >= week_ago
@@ -192,24 +202,24 @@ def snapshot_today(org: Org, state: dict) -> dict:
 
 
 def attention_items(org: Org) -> list[dict]:
+    from tuckit.core.services.tickets import query_tickets
     now = timezone.now()
     cutoff = now - timedelta(days=STALE_DAYS)
     items: list[dict] = []
-    triage = Area.objects.filter(org=org, is_triage=True).first()
-    if triage is not None:
-        for s in Slice.objects.filter(area=triage, updated_at__lt=cutoff).exclude(status="dropped").prefetch_related("tags"):
-            items.append({"slice": s, "reason": "triage_stale", "days": (now - s.updated_at).days})
+    for t in query_tickets(org):
+        if t.updated_at < cutoff:
+            items.append({"ticket": t, "reason": "ticket_stale", "days": (now - t.updated_at).days})
     for s in Slice.objects.filter(area__org=org, status="building", updated_at__lt=cutoff).prefetch_related("tags"):
         items.append({"slice": s, "reason": "building_stalled", "days": (now - s.updated_at).days})
-    items.sort(key=lambda it: it["slice"].updated_at)
+    items.sort(key=lambda it: (it.get("slice") or it.get("ticket")).updated_at)
     return items
 
 
 def roadmap_state(org: Org) -> dict:
-    """Non-triage, non-dropped slices grouped by roadmap status — powers the
-    Roadmap board and its distribution counts."""
+    """Non-dropped slices grouped by roadmap status — powers the Roadmap board
+    and its distribution counts."""
     slices = list(
-        Slice.objects.filter(area__org=org, area__is_triage=False)
+        Slice.objects.filter(area__org=org)
         .exclude(status="dropped")
         .select_related("area")
         .prefetch_related("tags")
@@ -227,15 +237,14 @@ def roadmap_state(org: Org) -> dict:
         reverse=True,
     )
     return {
-        "idea": bucket("idea"),
         "planned": bucket("planned"),
         "building": bucket("building"),
         "shipped": shipped,
     }
 
 
-ROADMAP_BOARD_ORDER = ["idea", "planned", "building", "shipped"]
-ROADMAP_STATUS_KEYS = {"idea", "planned", "building", "shipped"}
+ROADMAP_BOARD_ORDER = ["planned", "building", "shipped"]
+ROADMAP_STATUS_KEYS = {"planned", "building", "shipped"}
 
 
 def cap_shipped(org: Org, shipped: list) -> tuple[list, int]:
@@ -271,17 +280,13 @@ def recent_activity(org: Org, limit: int = 8) -> list:
 def in_progress_state(org: Org) -> dict:
     """What's actively being worked right now: building slices + doing bites."""
     slices = list(
-        Slice.objects.filter(
-            area__org=org, area__is_triage=False, status="building"
-        )
+        Slice.objects.filter(area__org=org, status="building")
         .select_related("area")
         .prefetch_related("tags")
         .order_by("area__name", "rank")
     )
     bites = list(
-        Bite.objects.filter(
-            plan__slice__area__org=org, plan__slice__area__is_triage=False, status="doing"
-        )
+        Bite.objects.filter(plan__slice__area__org=org, status="doing")
         .select_related("plan__slice", "plan__slice__area")
         .order_by("plan__slice__area__name", "rank")
     )

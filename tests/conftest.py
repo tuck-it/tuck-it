@@ -2,14 +2,11 @@ import sys
 import pytest
 
 from tuckit.core.models import Org
-from tuckit.core.services.areas import get_or_create_triage
 
 
 @pytest.fixture
 def org(db):
-    org = Org.objects.create(name="Test Org", slug="test-org")
-    get_or_create_triage(org)
-    return org
+    return Org.objects.create(name="Test Org", slug="test-org")
 
 
 @pytest.fixture

@@ -22,14 +22,13 @@ def test_current_org_resolves(client_local, org):
 
 
 @pytest.mark.django_db
-def test_sidebar_shows_icons_and_triage_count(client_local, org):
-    from tuckit.core.services.areas import get_or_create_triage
-    from tuckit.core.services.slices import create_slice
-    create_slice(get_or_create_triage(org), "Uncategorized 1")
+def test_sidebar_shows_icons_and_inbox_count(client_local, org):
+    from tuckit.core.services.tickets import create_ticket
+    create_ticket(org, "Uncategorized 1")
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert "<svg" in body                 # line icons present
-    assert 'class="nav-count"' in body    # triage count element rendered
+    assert 'class="nav-count"' in body    # inbox count element rendered
 
 
 @pytest.mark.django_db
@@ -39,7 +38,7 @@ def test_sidebar_grouped_with_english_labels_and_capture(client_local, org):
     assert 'class="nav-group"' in body        # grouped, not a flat list
     assert 'class="capture-btn"' in body       # Capture promoted to its own button
     assert ">Home<" in body and ">Inbox<" in body and ">Settings<" in body
-    assert f'href="{p}/triage/"' in body            # Inbox anchor keeps the route
+    assert f'href="{p}/inbox/"' in body             # Inbox anchor keeps the route
     assert ">Board<" in body                         # was Roadmap
     assert ">Attention<" not in body and ">In Progress<" not in body
     assert 'class="nav-sep"' in body        # visual group separator present
@@ -54,26 +53,20 @@ def test_lens_count_context_processors(client_local, org):
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
     from tuckit.core.services.plans import create_plan
-    from tuckit.core.services.areas import get_or_create_triage
     a = create_area(org, "Backend")
     s = create_slice(a, "Stalled", status="building")        # building -> in_progress
     create_bite(create_plan(s, title="Plan"), "doing bite", status="doing")             # doing bite -> in_progress
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))  # -> attention
-    # A doing bite in a Triage-area slice must NOT be counted (badge must match
-    # the /in-progress/ page, which excludes triage). Guards the badge/page drift.
-    triage_slice = create_slice(get_or_create_triage(org), "captured", status="building")
-    create_bite(create_plan(triage_slice, title="Plan"), "triage doing bite", status="doing")
     p = f"/{org.slug}"
     resp = client_local.get(f"{p}/")
     assert resp.context["attention_count"] == 1              # the stalled building slice
-    assert resp.context["in_progress_count"] == 2             # building slice + doing bite (triage excluded)
+    assert resp.context["in_progress_count"] == 2             # building slice + doing bite
 
 
 @pytest.mark.django_db
 def test_sidebar_inbox_count_and_no_lens_tabs(client_local, org):
-    from tuckit.core.services.areas import get_or_create_triage
-    from tuckit.core.services.slices import create_slice
-    create_slice(get_or_create_triage(org), "Uncategorized", status="idea")
+    from tuckit.core.services.tickets import create_ticket
+    create_ticket(org, "Uncategorized")
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/").content.decode()
     assert ">Inbox<" in body

@@ -76,7 +76,7 @@ def test_area_list_empty_copy_is_english(client_local, org):
 
 
 @pytest.mark.django_db
-def test_add_slice_creates_idea_slice_in_area(client_local, org):
+def test_add_slice_creates_planned_slice_in_area(client_local, org):
     from tuckit.core.models import Slice
     p = f"/{org.slug}"
     a = create_area(org, "Backend")
@@ -84,7 +84,7 @@ def test_add_slice_creates_idea_slice_in_area(client_local, org):
                              HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     s = Slice.objects.get(area=a, title="new idea")
-    assert s.status == "idea"
+    assert s.status == "planned"
     body = resp.content.decode()
     assert 'id="area-list"' in body
     assert "new idea" in body
@@ -143,7 +143,7 @@ def test_area_quick_add_title_only_still_works(client_local, org):
     a = create_area(org, "Backend")
     client_local.post(f"/{org.slug}/areas/{a.slug}/slices", {"title": "just this"}, HTTP_HX_REQUEST="true")
     s = Slice.objects.get(title="just this")
-    assert s.area_id == a.id and s.status == "idea"
+    assert s.area_id == a.id and s.status == "planned"
 
 
 @pytest.mark.django_db

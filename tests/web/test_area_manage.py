@@ -1,7 +1,7 @@
 import pytest
 
 from tuckit.core.models import Area, Org
-from tuckit.core.services.areas import create_area, get_or_create_triage, list_areas
+from tuckit.core.services.areas import create_area, list_areas
 
 
 @pytest.mark.django_db
@@ -35,15 +35,6 @@ def test_delete_area_returns_204_and_removes(client_local, org):
 
 
 @pytest.mark.django_db
-def test_delete_triage_returns_400(client_local, org):
-    p = f"/{org.slug}"
-    triage = get_or_create_triage(org)
-    resp = client_local.post(f"{p}/areas/{triage.id}/delete", HTTP_HX_REQUEST="true")
-    assert resp.status_code == 400
-    assert Area.objects.filter(id=triage.id).exists()
-
-
-@pytest.mark.django_db
 def test_manage_foreign_area_404s(client_local, org):
     other_org = Org.objects.create(name="Other", slug="other")
     p = f"/{org.slug}"
@@ -66,8 +57,6 @@ def test_reorder_area_before_neighbor(client_local, org):
     )
     assert resp.status_code == 204
     ordered = list(list_areas(org))
-    # the org fixture pre-creates only Triage, so filter the full ordered
-    # list down to the three areas this test cares about.
     ids = [x.id for x in ordered if x.id in {a.id, b.id, c.id}]
     assert ids == [c.id, a.id, b.id]
 
@@ -89,7 +78,7 @@ def test_sidebar_row_has_rename_and_delete_affordances(client_local, org):
     p = f"/{org.slug}"
     a = create_area(org, "Visible")
     # any authenticated page renders the sidebar
-    body = client_local.get(f"{p}/triage/").content.decode()
+    body = client_local.get(f"{p}/inbox/").content.decode()
     assert f'data-area-id="{a.id}"' in body          # draggable row present
     assert f'{p}/areas/{a.id}/rename' in body         # inline rename form target
     assert f'{p}/areas/{a.id}/delete' in body         # delete button target
@@ -112,7 +101,7 @@ def test_rename_response_is_swappable_row(client_local, org):
 def test_sidebar_loads_reorder_script(client_local, org):
     p = f"/{org.slug}"
     create_area(org, "Any")
-    body = client_local.get(f"{p}/triage/").content.decode()
+    body = client_local.get(f"{p}/inbox/").content.decode()
     assert "area_nav.js" in body
 
 
@@ -138,7 +127,7 @@ def test_rename_other_area_is_not_active(client_local, org):
     body = client_local.post(
         f"{p}/areas/{a.id}/rename", {"name": "Other2"},
         HTTP_HX_REQUEST="true",
-        HTTP_HX_CURRENT_URL=f"http://testserver{p}/triage/",
+        HTTP_HX_CURRENT_URL=f"http://testserver{p}/inbox/",
     ).content.decode()
     assert "nav--active" not in body
 

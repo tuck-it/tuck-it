@@ -12,8 +12,10 @@ class ActivityEvent(models.Model):
         ("dropped", "dropped"),
         ("planned", "planned"),
         ("noted", "noted"),
+        ("promoted", "promoted"),
+        ("closed", "closed"),
     ]
-    TARGET_CHOICES = [("slice", "Slice"), ("bite", "Bite"), ("area", "Area")]
+    TARGET_CHOICES = [("slice", "Slice"), ("bite", "Bite"), ("area", "Area"), ("ticket", "Ticket")]
 
     org = models.ForeignKey("core.Org", on_delete=models.CASCADE, related_name="activity")
     actor = models.CharField(max_length=10, choices=ACTOR_CHOICES)

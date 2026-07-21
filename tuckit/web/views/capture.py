@@ -6,26 +6,30 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from tuckit.core.services.exceptions import NotFound, InvalidValue
-from tuckit.core.services.areas import get_or_create_triage, create_area, list_areas, update_area, delete_area, reorder_area
-from tuckit.core.services.slices import create_slice, set_slice_area, set_slice_status, list_slices, grouped_slices
-from tuckit.core.services.resolve import get_area, get_slice, get_area_by_slug
+from tuckit.core.services.areas import create_area, list_areas, update_area, delete_area, reorder_area
+from tuckit.core.services.slices import create_slice, set_slice_status, grouped_slices
+from tuckit.core.services.tickets import create_ticket, query_tickets, promote_ticket
+from tuckit.core.services.resolve import get_area, get_ticket, get_area_by_slug
 from tuckit.web.auth import get_current_org
 from tuckit.web.htmx import redirect_response, widget_oob
+
+_SLICE_STATUSES = ["planned", "building", "shipped"]
 
 
 def capture(request):
     """Global capture. Title is required; area/status/spec/tags are optional.
-    A bare title stays a quick Inbox capture (OOB toast bundle, modal keeps
-    capturing); any authored detail creates a full slice and redirects the
-    user into it. Bites live under a Slice's Plan section, where a human or an
-    agent can author them."""
+    A bare title stays a quick, unfiled Inbox capture — it becomes a Ticket, not
+    a Slice, since there's no "Inbox area" to place a Slice in. Any authored
+    detail (an area, a spec, tags, or a non-default status) requires an area and
+    creates a full Slice, redirecting the user into it. Bites live under a
+    Slice's Plan section, where a human or an agent can author them."""
     org = get_current_org(request)
 
     title = request.POST.get("title", "").strip()
     if not title:
         return HttpResponse("Title is required", status=400)
 
-    status = request.POST.get("status", "idea") or "idea"
+    status = request.POST.get("status", "planned") or "planned"
     spec = request.POST.get("spec", "").strip()
     tags = [t.strip() for t in request.POST.getlist("tags") if t.strip()]
 
@@ -36,60 +40,68 @@ def capture(request):
         except (NotFound, ValueError):
             raise Http404
 
-    triage = get_or_create_triage(org)
-    target_area = area or triage
-
     # "Rich" = the user authored beyond a bare title-into-Inbox capture.
-    rich = bool(
-        spec or tags
-        or (area is not None and not area.is_triage)
-        or status != "idea"
-    )
+    rich = bool(spec or tags or area is not None or status != "planned")
+
+    if not rich:
+        # Quick path: an unfiled Ticket — bundle out-of-band swaps: a
+        # confirmation toast, the live inbox count, and an OOB re-render of the
+        # Inbox list (lands only if that page is open; htmx ignores OOB targets
+        # absent from the current page, so one response fits every page).
+        create_ticket(org, title, source="human")
+        return render(request, "web/partials/_capture_result.html", {
+            "tickets": query_tickets(org),
+            "areas": list(list_areas(org)),
+            "statuses": _SLICE_STATUSES,
+        })
+
+    if area is None:
+        return HttpResponse("Choose an area to save more than a quick note.", status=400)
 
     try:
-        slice_ = create_slice(target_area, title, spec=spec, status=status, tags=tags, source="human")
+        slice_ = create_slice(area, title, spec=spec, status=status, tags=tags, source="human")
     except InvalidValue as e:
         return HttpResponse(str(e), status=400)
 
-    if rich:
-        # Land in the freshly authored slice to keep working (full navigation).
-        return redirect_response(request, "web:slice", org_slug=org.slug, slice_id=slice_.id)
-
-    # Quick path — bundle out-of-band swaps: a confirmation toast, the live
-    # count, and an OOB re-render of the Triage list (lands only if that page is
-    # open; htmx ignores OOB targets absent from the current page, so one
-    # response fits every page).
-    return render(request, "web/partials/_capture_result.html", {
-        "slices": list(list_slices(triage).prefetch_related("tags")),
-        "areas": [a for a in list_areas(org) if not a.is_triage],
-        "statuses": ["idea", "planned", "building", "shipped"],
-    })
+    # Land in the freshly authored slice to keep working (full navigation).
+    return redirect_response(request, "web:slice", org_slug=org.slug, slice_id=slice_.id)
 
 
-def triage_list(request):
+def inbox(request):
     org = get_current_org(request)
-    triage_area = get_or_create_triage(org)
-    return render(request, "web/triage.html", {
-        "slices": list(list_slices(triage_area).prefetch_related("tags")),
-        "areas": [a for a in list_areas(org) if not a.is_triage],
-        "statuses": ["idea", "planned", "building", "shipped"],
+    return render(request, "web/inbox.html", {
+        "tickets": query_tickets(org),
+        "areas": list(list_areas(org)),
+        "statuses": _SLICE_STATUSES,
     })
 
 
-def triage(request, slice_id):
+def ticket_promote(request, ticket_id):
+    """Promote an Inbox Ticket into a Slice, in one action: pick the area (and
+    optionally set an initial status other than the promoted default). Status
+    is validated before anything is mutated, so an invalid status 400s without
+    leaving the ticket half-promoted."""
+    from tuckit.core.models import Slice
+    from tuckit.core.services.validation import validate_choice
+
     org = get_current_org(request)
     area_id = request.POST.get("area_id")
+    status = request.POST.get("status")
     try:
-        slice_ = get_slice(org, slice_id)
+        ticket = get_ticket(org, ticket_id)
         area = get_area(org, int(area_id)) if area_id else None
     except NotFound:
         raise Http404
-    try:
-        set_slice_status(slice_, request.POST["status"])
-    except InvalidValue as e:
-        return HttpResponse(str(e), status=400)
-    if area_id:
-        set_slice_area(slice_, area)
+    if area is None:
+        return HttpResponse("Choose an area", status=400)
+    if status:
+        try:
+            validate_choice(status, Slice.STATUS_CHOICES, "status")
+        except InvalidValue as e:
+            return HttpResponse(str(e), status=400)
+    slice_ = promote_ticket(ticket, area=area, actor="human")
+    if status and status != slice_.status:
+        set_slice_status(slice_, status, actor="human")
     return HttpResponse(status=204)  # htmx removes the row via hx-swap
 
 
@@ -180,7 +192,7 @@ def area_slice_create(request, slug):
                 target = get_area(org, int(request.POST["area_id"]))
             except (NotFound, ValueError):
                 raise Http404
-        status = request.POST.get("status", "idea") or "idea"
+        status = request.POST.get("status", "planned") or "planned"
         spec = request.POST.get("spec", "").strip()
         tags = [t.strip() for t in request.POST.getlist("tags") if t.strip()]
         try:

@@ -45,7 +45,7 @@ def onboarding_state(org: Org) -> OnboardingState:
         .order_by("-id").values_list("id", flat=True).first()
     )
     return OnboardingState(
-        has_area=Area.objects.filter(org=org, is_triage=False).exists(),
+        has_area=Area.objects.filter(org=org).exists(),
         has_slice=Slice.objects.filter(area__org=org).exists(),
         has_plan=Plan.objects.filter(slice__area__org=org).exists(),
         has_bite=Bite.objects.filter(plan__slice__area__org=org).exists(),
