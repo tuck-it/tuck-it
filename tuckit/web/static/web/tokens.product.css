@@ -7,7 +7,7 @@
       that use it migrate to canonical names; delete this block when none remain. */
 
 :root {
-  --dot-idea: #8f948f;
+  --dot-open: #8f948f;
   --dot-planned: #5f86a0;
   --dot-building: #a0683b;
   --dot-shipped: #52745f;
@@ -55,7 +55,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --dot-idea: #8e918e;
+    --dot-open: #8e918e;
     --dot-planned: #7db2ce;
     --dot-building: #d39a68;
     --dot-shipped: #85aa8f;
@@ -65,7 +65,7 @@
 }
 
 :root[data-theme="dark"] {
-  --dot-idea: #8e918e;
+  --dot-open: #8e918e;
   --dot-planned: #7db2ce;
   --dot-building: #d39a68;
   --dot-shipped: #85aa8f;

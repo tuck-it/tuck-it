@@ -14,7 +14,7 @@ def test_ticket_defaults_and_slice_link():
     assert t.status == "open"
     assert t.source == "human"
     assert t.body == ""
-    assert t.closed_at is None
+    assert t.resolved_at is None
     assert t.created_by is None
     # area-less (Inbox) ticket is allowed
     inbox = Ticket.objects.create(org=org, area=None, title="Stray idea", rank="m")
@@ -40,7 +40,7 @@ def test_ref_and_resolution_prefers_slice():
 
 
 from tuckit.core.services.tickets import (
-    create_ticket, query_tickets, update_ticket, close_ticket,
+    create_ticket, query_tickets, ticket_queryset, update_ticket, resolve_ticket,
 )
 
 
@@ -56,29 +56,66 @@ def test_create_ticket_mints_shared_number_and_defaults_to_inbox():
 
 
 @pytest.mark.django_db
-def test_query_tickets_open_inbox_only():
+def test_create_ticket_external_key_is_idempotent():
     org = Org.objects.create(name="Acme", slug="acme")
-    area = create_area(org, "Backend")
-    open_t = create_ticket(org, "Open")
-    closed_t = create_ticket(org, "Closed")
-    close_ticket(closed_t)
-    # a promoted ticket has a linked slice -> excluded from the raw inbox
-    promoted = create_ticket(org, "Promoted")
-    Slice.objects.create(area=area, title="S", rank="m", number=promoted.number, ticket=promoted)
-    rows = query_tickets(org)
-    assert [t.title for t in rows] == ["Open"]
+    first = create_ticket(org, "From TODO", external_key="todo:auth.py:42")
+    again = create_ticket(org, "From TODO", external_key="todo:auth.py:42")
+    assert again.id == first.id                       # no duplicate on agent retry
+    assert Ticket.objects.filter(org=org).count() == 1
+    org.refresh_from_db()
+    assert org.next_slice_number == 2                 # and no number burned
 
 
 @pytest.mark.django_db
-def test_update_and_close_ticket():
+def test_query_tickets_is_open_only():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    create_ticket(org, "Open")
+    resolve_ticket(create_ticket(org, "Dismissed"), "dismissed")
+    promote_ticket(create_ticket(org, "Promoted", area=area))
+    # open IS the inbox now — no slice join, no "open but hidden" ghost state
+    assert [t.title for t in query_tickets(org)] == ["Open"]
+    assert ticket_queryset(org).count() == 1
+
+
+@pytest.mark.django_db
+def test_update_and_dismiss_ticket():
     org = Org.objects.create(name="Acme", slug="acme")
     t = create_ticket(org, "T")
     update_ticket(t, title="T2", body="details")
     t.refresh_from_db()
     assert t.title == "T2" and t.body == "details"
-    close_ticket(t)
+    resolve_ticket(t, "dismissed")
     t.refresh_from_db()
-    assert t.status == "closed" and t.closed_at is not None
+    assert t.status == "dismissed" and t.resolved_at is not None
+
+
+@pytest.mark.django_db
+def test_dismissed_and_promoted_are_distinguishable():
+    """The whole point of the split: 'we decided not to' must not look like
+    'it shipped'."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    dismissed = create_ticket(org, "Nope")
+    resolve_ticket(dismissed, "dismissed")
+    shipped_t = create_ticket(org, "Yep", area=area)
+    set_slice_status(promote_ticket(shipped_t), "shipped")
+    dismissed.refresh_from_db()
+    shipped_t.refresh_from_db()
+    assert dismissed.status == "dismissed"
+    assert shipped_t.status == "promoted"
+
+
+@pytest.mark.django_db
+def test_update_ticket_rejects_invalid_status_and_manual_promote():
+    org = Org.objects.create(name="Acme", slug="acme")
+    t = create_ticket(org, "T")
+    with pytest.raises(InvalidValue):
+        update_ticket(t, status="nonsense")
+    with pytest.raises(InvalidValue):
+        update_ticket(t, status="promoted")   # must go through promote_ticket
+    t.refresh_from_db()
+    assert t.status == "open"
 
 
 from tuckit.core.services.exceptions import InvalidValue
@@ -87,16 +124,40 @@ from tuckit.core.services.tickets import promote_ticket
 
 
 @pytest.mark.django_db
-def test_promote_inherits_number_and_links():
+def test_promote_inherits_number_body_and_ends_ticket_lifecycle():
     org = Org.objects.create(name="Acme", slug="acme")
     area = create_area(org, "Backend")
-    t = create_ticket(org, "Fix login", area=area)
+    t = create_ticket(org, "Fix login", body="the button is misaligned", area=area)
     s = promote_ticket(t)
     assert s.number == t.number          # same ref across promotion
+    assert s.spec == "the button is misaligned"   # captured context carries over
     assert s.status == "planned"
     assert s.ticket_id == t.id
     t.refresh_from_db()
-    assert t.status == "open"            # stays open while the Slice is in flight
+    assert t.status == "promoted" and t.resolved_at is not None
+
+
+@pytest.mark.django_db
+def test_promote_is_idempotent():
+    """A retried request (agent retry, double-submit) must not mint a second
+    slice or leave an orphan behind."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Fix login", area=area)
+    first = promote_ticket(t)
+    again = promote_ticket(t)
+    assert again.id == first.id
+    assert Slice.objects.filter(area__org=org).count() == 1
+
+
+@pytest.mark.django_db
+def test_promote_rejects_a_resolved_ticket():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Nope", area=area)
+    resolve_ticket(t, "dismissed")
+    with pytest.raises(InvalidValue):
+        promote_ticket(t)
 
 
 @pytest.mark.django_db
@@ -111,14 +172,33 @@ def test_promote_area_less_ticket_requires_area():
 
 
 @pytest.mark.django_db
-def test_shipping_slice_autocloses_ticket():
+def test_promote_rejects_cross_org_area():
+    org = Org.objects.create(name="Acme", slug="acme")
+    other = Org.objects.create(name="Other", slug="other")
+    t = create_ticket(org, "Stray")
+    with pytest.raises(InvalidValue):
+        promote_ticket(t, area=create_area(other, "Theirs"))
+
+
+@pytest.mark.django_db
+def test_slice_status_never_writes_back_to_the_ticket():
+    """The Ticket's lifecycle ends at promotion. Delivery is read off the slice,
+    so reopening a shipped slice cannot leave the two disagreeing."""
     org = Org.objects.create(name="Acme", slug="acme")
     area = create_area(org, "Backend")
     t = create_ticket(org, "Fix login", area=area)
     s = promote_ticket(t)
+    resolved_at = Ticket.objects.get(pk=t.pk).resolved_at
+
     set_slice_status(s, "shipped")
     t.refresh_from_db()
-    assert t.status == "closed" and t.closed_at is not None
+    assert t.status == "promoted" and t.resolved_at == resolved_at
+    assert t.slice.status == "shipped"          # delivery is derived, not stored
+
+    set_slice_status(s, "building")             # reopened — used to strand the ticket
+    t.refresh_from_db()
+    assert t.status == "promoted"
+    assert t.slice.status == "building"
 
 
 from datetime import timedelta
@@ -139,6 +219,27 @@ def test_slice_default_status_is_planned():
 def test_attention_flags_stale_open_tickets():
     org = Org.objects.create(name="Acme", slug="acme")
     t = create_ticket(org, "Old idea")
-    Ticket.objects.filter(pk=t.pk).update(updated_at=timezone.now() - timedelta(days=10))
+    Ticket.objects.filter(pk=t.pk).update(created_at=timezone.now() - timedelta(days=10))
     reasons = [it["reason"] for it in attention_items(org)]
     assert "ticket_stale" in reasons
+
+
+@pytest.mark.django_db
+def test_editing_a_stale_ticket_does_not_reset_the_timer():
+    """Staleness is measured from capture, not last touch — renaming or
+    reordering an untriaged ticket is not triage."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    t = create_ticket(org, "Old idea")
+    Ticket.objects.filter(pk=t.pk).update(created_at=timezone.now() - timedelta(days=10))
+    update_ticket(t.__class__.objects.get(pk=t.pk), title="Old idea, reworded")
+    assert "ticket_stale" in [it["reason"] for it in attention_items(org)]
+
+
+@pytest.mark.django_db
+def test_promoted_ticket_leaves_the_inbox_attention_list():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Old idea", area=area)
+    Ticket.objects.filter(pk=t.pk).update(created_at=timezone.now() - timedelta(days=10))
+    promote_ticket(Ticket.objects.get(pk=t.pk))
+    assert "ticket_stale" not in [it["reason"] for it in attention_items(org)]

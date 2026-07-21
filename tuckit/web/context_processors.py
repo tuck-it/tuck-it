@@ -14,14 +14,15 @@ def sidebar_areas(request):
 
 
 def inbox_count(request):
-    """Expose the org's open (unpromoted) Ticket count to every template so
-    the sidebar can show a muted count badge next to Inbox."""
-    from tuckit.core.services.tickets import query_tickets
+    """Expose the org's open (untriaged) Ticket count to every template so
+    the sidebar can show a muted count badge next to Inbox. Runs on every
+    request, so it counts in the DB rather than hydrating the rows."""
+    from tuckit.core.services.tickets import ticket_queryset
 
     org = current_org_or_fallback(request)
     if not org:
         return {}
-    return {"inbox_count": len(query_tickets(org))}
+    return {"inbox_count": ticket_queryset(org).count()}
 
 
 def attention_count(request):

@@ -302,8 +302,9 @@ async def list_tickets(
     query: str | None = None,
     limit: int | None = 50,
 ) -> list[dict]:
-    """List backlog tickets (default: open, not-yet-promoted = the Inbox). A
-    ticket is a lightweight capture upstream of a slice; promote one to start work."""
+    """List backlog tickets (default: open = the Inbox). A ticket is a lightweight
+    capture upstream of a slice; promote one to start work. status: 'open',
+    'promoted', 'dismissed', 'duplicate' — or '' for all."""
     org = await require_org(ctx)
 
     def _run():
@@ -315,15 +316,21 @@ async def list_tickets(
 
 
 @mcp.tool()
-async def create_ticket(ctx: Context, title: str, body: str = "", area_id: int | None = None) -> dict:
+async def create_ticket(
+    ctx: Context, title: str, body: str = "", area_id: int | None = None,
+    external_key: str = "",
+) -> dict:
     """Capture a backlog ticket (title + optional markdown body). Lands in the
-    Inbox (no area) unless area_id is given. Promote it later to create a slice."""
+    Inbox (no area) unless area_id is given. Promote it later to create a slice.
+    external_key makes re-runs idempotent — pass a stable id (e.g. the source
+    TODO or issue key) and a repeat call returns the same ticket."""
     org, user = await require_caller(ctx)
 
     def _run():
         area = get_area(org, area_id) if area_id is not None else None
         member = resolve_member(org, "me", caller_user=user) if user is not None else None
-        t = _create_ticket(org, title, body=body, area=area, source="agent", created_by=member)
+        t = _create_ticket(org, title, body=body, area=area, source="agent",
+                           created_by=member, external_key=external_key)
         return ticket_dict(t)
 
     return await sync_to_async(_run, thread_sensitive=True)()
@@ -350,8 +357,10 @@ async def update_ticket(
     status: str | None = None,
     area_id: int | None = None,
 ) -> dict:
-    """Update a ticket. status: 'open'/'closed' (closed = won't-do). area_id files
-    it under a project (omit to leave unchanged)."""
+    """Update a ticket. status: 'dismissed' (decided against) or 'duplicate' —
+    both end the ticket. Use promote_ticket to turn one into a slice; a ticket's
+    status never tracks delivery. area_id files it under a project (omit to
+    leave unchanged)."""
     org = await require_org(ctx)
 
     def _run():
@@ -366,8 +375,10 @@ async def update_ticket(
 
 @mcp.tool()
 async def promote_ticket(ctx: Context, ticket_id: int, area_id: int | None = None) -> dict:
-    """Promote a ticket into a planned slice (inherits the ticket's ref). area_id
-    is required only if the ticket has no area yet."""
+    """Promote a ticket into a planned slice (inherits the ticket's ref and body).
+    The ticket becomes 'promoted' and the slice owns progress from then on.
+    Idempotent — re-promoting returns the existing slice. area_id is required
+    only if the ticket has no area yet."""
     org = await require_org(ctx)
 
     def _run():

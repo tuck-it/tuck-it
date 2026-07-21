@@ -45,3 +45,60 @@ def test_bite_requires_plan(org):
     b = Bite.objects.create(plan=p, title="JWT", rank="a0")
     assert b.status == "todo"
     assert b.plan_id == p.id
+
+
+@pytest.mark.django_db
+def test_ticket_number_unique_per_org(org):
+    from tuckit.core.models import Ticket
+    Ticket.objects.create(org=org, title="A", rank="a0", number=5)
+    with pytest.raises(IntegrityError):
+        Ticket.objects.create(org=org, title="B", rank="a1", number=5)
+
+
+@pytest.mark.django_db
+def test_ticket_number_null_is_not_deduped(org):
+    """The uniqueness is conditional — unnumbered rows must not collide."""
+    from tuckit.core.models import Ticket
+    Ticket.objects.create(org=org, title="A", rank="a0", number=None)
+    Ticket.objects.create(org=org, title="B", rank="a1", number=None)
+
+
+@pytest.mark.django_db
+def test_ticket_external_key_unique_per_org_but_blank_is_free(org):
+    from tuckit.core.models import Ticket
+    Ticket.objects.create(org=org, title="A", rank="a0", number=1, external_key="todo:1")
+    with pytest.raises(IntegrityError):
+        Ticket.objects.create(org=org, title="B", rank="a1", number=2, external_key="todo:1")
+
+
+@pytest.mark.django_db
+def test_ticket_blank_external_keys_do_not_collide(org):
+    from tuckit.core.models import Ticket
+    Ticket.objects.create(org=org, title="A", rank="a0", number=1)
+    Ticket.objects.create(org=org, title="B", rank="a1", number=2)
+
+
+@pytest.mark.django_db
+def test_ticket_open_cannot_carry_a_resolved_at(org):
+    from django.utils import timezone
+    from tuckit.core.models import Ticket
+    with pytest.raises(IntegrityError):
+        Ticket.objects.create(org=org, title="A", rank="a0", number=1,
+                              status="open", resolved_at=timezone.now())
+
+
+@pytest.mark.django_db
+def test_ticket_resolved_requires_a_resolved_at(org):
+    from tuckit.core.models import Ticket
+    with pytest.raises(IntegrityError):
+        Ticket.objects.create(org=org, title="A", rank="a0", number=1,
+                              status="dismissed", resolved_at=None)
+
+
+@pytest.mark.django_db
+def test_ticket_status_whitelist_is_enforced_in_the_db(org):
+    """The check constraint doubles as a status whitelist — `choices` alone
+    never reaches the DB, so raw writes could store anything."""
+    from tuckit.core.models import Ticket
+    with pytest.raises(IntegrityError):
+        Ticket.objects.create(org=org, title="A", rank="a0", number=1, status="closed")
