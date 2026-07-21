@@ -128,13 +128,13 @@ from tuckit.core.services.tickets import promote_ticket
 
 
 @pytest.mark.django_db
-def test_promote_inherits_number_body_and_ends_ticket_lifecycle():
+def test_promote_inherits_number_and_ends_ticket_lifecycle():
     org = Org.objects.create(name="Acme", slug="acme")
     area = create_area(org, "Backend")
     t = create_ticket(org, "Fix login", body="the button is misaligned", area=area)
     s = promote_ticket(t)
     assert s.number == t.number          # same ref across promotion
-    assert s.spec == "the button is misaligned"   # captured context carries over
+    assert s.spec == ""                  # the body is linked, not copied
     assert s.status == "planned"
     t.refresh_from_db()
     assert t.slice_id == s.id
@@ -259,3 +259,21 @@ def test_slice_holds_many_tickets():
     t2 = Ticket.objects.create(org=org, area=area, title="T2", rank="n", number=2, slice=s)
     assert set(s.tickets.values_list("id", flat=True)) == {t1.id, t2.id}
     assert t1.slice == s and t2.slice == s
+
+
+@pytest.mark.django_db
+def test_promote_links_instead_of_copying_the_body():
+    """spec is the design-doc slot, and "spec is blank" is how the workflow
+    detects that a slice has not been designed yet. Seeding it with the capture
+    made every promoted slice look designed."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    t = create_ticket(org, "Fix login", body="Users get a 500 on submit.", area=area)
+
+    s = promote_ticket(t)
+    t.refresh_from_db()
+
+    assert s.spec == ""
+    assert t.slice_id == s.id                        # reachable through the link
+    assert t.body == "Users get a 500 on submit."    # the one copy, untouched
+    assert t.status == "promoted"

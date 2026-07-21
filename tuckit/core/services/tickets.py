@@ -144,6 +144,10 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> Slice:
     (status='promoted'); from here the Slice is the source of truth for progress
     — read `ticket.slice.status`, which cannot drift.
 
+    The Slice starts with an EMPTY spec. The body stays on the Ticket and the
+    two are joined by `ticket.slice`, so there is exactly one copy of the text —
+    the same argument this model already makes for status, applied to prose.
+
     Atomic and idempotent: the ticket row is locked for the whole promotion, so
     a retried request returns the slice the first call created rather than
     minting a second one (or leaving an orphan slice behind if the link fails)."""
@@ -166,8 +170,13 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> Slice:
         raise InvalidValue("Promoting a ticket needs an area")
     _same_org(ticket.org, target_area, "area")
 
+    # spec stays empty on purpose. It is the design-doc slot, and "spec is
+    # blank" is how the workflow tells that a slice has not been designed yet —
+    # seeding it with the capture makes every promoted slice look designed and
+    # sends the next reader straight to planning. The body stays on the Ticket
+    # and is reached through the link, so there is exactly one copy of the text.
     slice_ = create_slice(
-        target_area, ticket.title, spec=ticket.body, status="planned",
+        target_area, ticket.title, spec="", status="planned",
         source=actor, number=ticket.number,
     )
     ticket.slice = slice_
