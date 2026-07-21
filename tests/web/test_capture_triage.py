@@ -80,7 +80,8 @@ def test_ticket_promote_invalid_status_returns_400(client_local, org):
     # status is validated before anything mutates, so a bad status leaves the
     # ticket un-promoted rather than half-applied.
     t.refresh_from_db()
-    assert not Slice.objects.filter(ticket=t).exists() and t.status == "open"
+    t.refresh_from_db()
+    assert t.slice is None and t.status == "open"
 
 @pytest.mark.django_db
 def test_ticket_row_has_no_manual_caret_and_area_placeholder(client_local, org):
@@ -113,7 +114,8 @@ def test_ticket_promote_foreign_area_404s(client_local, org):
     )
     assert resp.status_code == 404
     t.refresh_from_db()
-    assert not Slice.objects.filter(ticket=t).exists() and t.status == "open"
+    t.refresh_from_db()
+    assert t.slice is None and t.status == "open"
 
 @pytest.mark.django_db
 def test_inbox_heading_and_agent_source_badge(client_local, org):

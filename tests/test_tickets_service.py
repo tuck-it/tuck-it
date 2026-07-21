@@ -19,8 +19,10 @@ def test_ticket_defaults_and_slice_link():
     # area-less (Inbox) ticket is allowed
     inbox = Ticket.objects.create(org=org, area=None, title="Stray idea", rank="m")
     assert inbox.area is None
-    # Slice can link back to a Ticket
-    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=1, ticket=t)
+    # A Ticket links forward to its Slice
+    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=1)
+    t.slice = s
+    t.save(update_fields=["slice"])
     assert t.slice == s
 
 
@@ -35,7 +37,9 @@ def test_ref_and_resolution_prefers_slice():
     # unpromoted -> ref resolves to the Ticket
     assert resolve_ref(org, "acme-42") == t
     # promote: a Slice inherits number 42 -> ref now resolves to the Slice
-    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=42, ticket=t)
+    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=42)
+    t.slice = s
+    t.save(update_fields=["slice"])
     assert resolve_ref(org, "acme-42") == s
 
 
@@ -132,8 +136,8 @@ def test_promote_inherits_number_body_and_ends_ticket_lifecycle():
     assert s.number == t.number          # same ref across promotion
     assert s.spec == "the button is misaligned"   # captured context carries over
     assert s.status == "planned"
-    assert s.ticket_id == t.id
     t.refresh_from_db()
+    assert t.slice_id == s.id
     assert t.status == "promoted" and t.resolved_at is not None
 
 
@@ -243,3 +247,15 @@ def test_promoted_ticket_leaves_the_inbox_attention_list():
     Ticket.objects.filter(pk=t.pk).update(created_at=timezone.now() - timedelta(days=10))
     promote_ticket(Ticket.objects.get(pk=t.pk))
     assert "ticket_stale" not in [it["reason"] for it in attention_items(org)]
+
+
+@pytest.mark.django_db
+def test_slice_holds_many_tickets():
+    """The fold triage actually performs is N:1 — a OneToOne cannot express it."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = Slice.objects.create(area=area, org=org, title="S", rank="m", number=1)
+    t1 = Ticket.objects.create(org=org, area=area, title="T1", rank="m", number=1, slice=s)
+    t2 = Ticket.objects.create(org=org, area=area, title="T2", rank="n", number=2, slice=s)
+    assert set(s.tickets.values_list("id", flat=True)) == {t1.id, t2.id}
+    assert t1.slice == s and t2.slice == s

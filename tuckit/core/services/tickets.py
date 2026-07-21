@@ -156,9 +156,8 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> Slice:
         .select_related("area", "org")
         .get(pk=ticket.pk)
     )
-    existing = Slice.objects.filter(ticket=ticket).first()
-    if existing is not None:
-        return existing
+    if ticket.slice_id is not None:
+        return ticket.slice
     if ticket.status != "open":
         raise InvalidValue(f"only open tickets can be promoted (status={ticket.status!r})")
 
@@ -171,8 +170,9 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> Slice:
         target_area, ticket.title, spec=ticket.body, status="planned",
         source=actor, number=ticket.number,
     )
-    slice_.ticket = ticket
-    slice_.save(update_fields=["ticket"])
+    ticket.slice = slice_
+    # _apply_status() below does a full save(), so the FK assignment rides along
+    # — no second write.
     # Record the stable ref, not the title: titles change and aren't unique.
     _apply_status(ticket, "promoted", actor=actor, to_value=slice_ref(slice_))
     return slice_
