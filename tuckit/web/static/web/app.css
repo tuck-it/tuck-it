@@ -177,11 +177,12 @@ body { padding: 0; }
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--dot-idea);
+  background: var(--dot-open);
 }
 
-.status-dot--idea {
-  background: var(--dot-idea);
+/* Untriaged Ticket — the Inbox's only dot. */
+.status-dot--open {
+  background: var(--dot-open);
 }
 
 .status-dot--planned {

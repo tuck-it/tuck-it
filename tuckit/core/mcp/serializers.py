@@ -43,6 +43,9 @@ def area_dict(area) -> dict:
 
 
 def ticket_dict(ticket) -> dict:
+    # A promoted ticket's delivery status is derived from its slice, never
+    # stored — expose it here so one read answers "where did this end up?".
+    promoted = getattr(ticket, "slice", None)
     return {
         "id": ticket.id,
         "ref": ticket_ref(ticket),
@@ -51,6 +54,8 @@ def ticket_dict(ticket) -> dict:
         "area_id": ticket.area_id,
         "created_by": (ticket.created_by.user.email if ticket.created_by_id else None),
         "source": ticket.source,
+        "slice_id": promoted.id if promoted else None,
+        "slice_status": promoted.status if promoted else None,
     }
 
 

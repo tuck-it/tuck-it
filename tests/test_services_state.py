@@ -123,7 +123,7 @@ def test_attention_flags_stale_ticket_and_stalled_building():
     fresh_ticket = create_ticket(org, "new capture")
     stalled = create_slice(backend, "in flight", status="building")
     old = timezone.now() - timedelta(days=STALE_DAYS + 1)
-    Ticket.objects.filter(pk=stale_ticket.pk).update(updated_at=old)
+    Ticket.objects.filter(pk=stale_ticket.pk).update(created_at=old)
     Slice.objects.filter(pk=stalled.pk).update(updated_at=old)
     items = attention_items(org)
     got = {
@@ -158,7 +158,7 @@ def test_attention_items_include_reason_and_days():
     org, _ = ensure_bootstrap()
     t = create_ticket(org, "Old capture")
     old = timezone.now() - timedelta(days=11)
-    Ticket.objects.filter(pk=t.pk).update(updated_at=old)
+    Ticket.objects.filter(pk=t.pk).update(created_at=old)
 
     items = attention_items(org)
     hit = [it for it in items if it.get("ticket") and it["ticket"].id == t.id]

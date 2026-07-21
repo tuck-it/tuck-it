@@ -99,7 +99,12 @@ def ticket_promote(request, ticket_id):
             validate_choice(status, Slice.STATUS_CHOICES, "status")
         except InvalidValue as e:
             return HttpResponse(str(e), status=400)
-    slice_ = promote_ticket(ticket, area=area, actor="human")
+    try:
+        # Idempotent for a double-submit; only a non-open ticket (already
+        # dismissed) reaches the error path.
+        slice_ = promote_ticket(ticket, area=area, actor="human")
+    except InvalidValue as e:
+        return HttpResponse(str(e), status=400)
     if status and status != slice_.status:
         set_slice_status(slice_, status, actor="human")
     return HttpResponse(status=204)  # htmx removes the row via hx-swap

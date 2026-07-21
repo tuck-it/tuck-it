@@ -6,13 +6,17 @@ class ActivityEvent(models.Model):
     VERB_CHOICES = [
         ("created", "created"),
         ("status_changed", "status changed"),
-        ("triaged", "triaged"),
         ("moved", "moved"),
         ("shipped", "shipped"),
         ("dropped", "dropped"),
         ("planned", "planned"),
         ("noted", "noted"),
         ("promoted", "promoted"),
+        ("dismissed", "dismissed"),
+        # LEGACY — never written by current code, kept so historical rows keep
+        # rendering. 'triaged' predates the Ticket model; 'closed' predates the
+        # promoted/dismissed split (it conflated "shipped" with "won't do").
+        ("triaged", "triaged"),
         ("closed", "closed"),
     ]
     TARGET_CHOICES = [("slice", "Slice"), ("bite", "Bite"), ("area", "Area"), ("ticket", "Ticket")]

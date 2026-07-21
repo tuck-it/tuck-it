@@ -55,9 +55,9 @@ def _area_state(area: Area) -> dict:
 
 
 def get_project_state(org: Org, area: Area | None = None, caller_user=None) -> dict:
-    from tuckit.core.services.tickets import query_tickets
+    from tuckit.core.services.tickets import ticket_queryset
     areas = [area] if area is not None else list(Area.objects.filter(org=org, archived=False))
-    inbox = query_tickets(org, limit=10)
+    inbox_qs = ticket_queryset(org)
     return {
         "caller": {
             "user_email": caller_user.email if caller_user is not None else None,
@@ -66,8 +66,9 @@ def get_project_state(org: Org, area: Area | None = None, caller_user=None) -> d
         },
         "org": {"name": org.name, "description": org.description},
         "inbox": {
-            "open_count": len(query_tickets(org)),
-            "recent": [{"id": t.id, "title": t.title} for t in inbox],
+            # One COUNT(*) + one 10-row fetch, not two full hydrations.
+            "open_count": inbox_qs.count(),
+            "recent": [{"id": t.id, "title": t.title} for t in inbox_qs[:10]],
         },
         "areas": [_area_state(a) for a in areas],
     }
@@ -100,7 +101,17 @@ def render_slice_markdown(slice_: Slice, with_activity: bool = False) -> str:
 
 
 def render_ticket_markdown(ticket) -> str:
-    lines = [f"# {ticket.title}", "", f"Status: {ticket.status}", ""]
+    """A ticket as markdown. For a promoted ticket the delivery status is read
+    live off the slice rather than stored here, so this is the one place an
+    agent needs to look to find out where a capture ended up."""
+    lines = [f"# {ticket.title}", "", f"Status: {ticket.status}"]
+    # Reverse OneToOne raises RelatedObjectDoesNotExist, which subclasses
+    # AttributeError — so getattr's default covers the unpromoted case.
+    promoted = getattr(ticket, "slice", None)
+    if promoted is not None:
+        from tuckit.core.services.refs import slice_ref
+        lines[-1] += f" → slice {slice_ref(promoted)} ({promoted.status})"
+    lines.append("")
     if ticket.body:
         lines += [ticket.body, ""]
     return "\n".join(lines).rstrip() + "\n"
@@ -202,16 +213,21 @@ def snapshot_today(org: Org, state: dict) -> dict:
 
 
 def attention_items(org: Org) -> list[dict]:
-    from tuckit.core.services.tickets import query_tickets
+    """Open tickets left untriaged too long, plus building slices that stopped
+    moving. Ticket staleness is measured from `created_at`, not `updated_at`:
+    editing a ticket's title or dragging it in the list is not triage, and
+    letting either reset the timer hides the backlog it is meant to surface."""
+    from tuckit.core.services.tickets import ticket_queryset
     now = timezone.now()
     cutoff = now - timedelta(days=STALE_DAYS)
     items: list[dict] = []
-    for t in query_tickets(org):
-        if t.updated_at < cutoff:
-            items.append({"ticket": t, "reason": "ticket_stale", "days": (now - t.updated_at).days})
+    for t in ticket_queryset(org).filter(created_at__lt=cutoff):
+        items.append({"ticket": t, "reason": "ticket_stale",
+                      "days": (now - t.created_at).days, "since": t.created_at})
     for s in Slice.objects.filter(area__org=org, status="building", updated_at__lt=cutoff).prefetch_related("tags"):
-        items.append({"slice": s, "reason": "building_stalled", "days": (now - s.updated_at).days})
-    items.sort(key=lambda it: (it.get("slice") or it.get("ticket")).updated_at)
+        items.append({"slice": s, "reason": "building_stalled",
+                      "days": (now - s.updated_at).days, "since": s.updated_at})
+    items.sort(key=lambda it: it["since"])
     return items
 
 

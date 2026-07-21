@@ -14,7 +14,7 @@ def test_home_and_attention_ok_with_stale_open_ticket(client_local, org):
 
     t = create_ticket(org, "Stale ticket")   # open, unpromoted, area-less
     stale = timezone.now() - timedelta(days=30)
-    Ticket.objects.filter(pk=t.pk).update(updated_at=stale)
+    Ticket.objects.filter(pk=t.pk).update(created_at=stale)
 
     home = client_local.get(f"/{org.slug}/")
     assert home.status_code == 200
