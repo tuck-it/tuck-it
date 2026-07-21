@@ -277,3 +277,102 @@ def test_promote_links_instead_of_copying_the_body():
     assert t.slice_id == s.id                        # reachable through the link
     assert t.body == "Users get a 500 on submit."    # the one copy, untouched
     assert t.status == "promoted"
+
+
+from tuckit.core.services.tickets import absorb_ticket, origin_ticket, release_ticket
+
+
+@pytest.mark.django_db
+def test_origin_is_the_number_matching_ticket():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    origin = create_ticket(org, "Origin", area=area)
+    s = promote_ticket(origin)
+    absorb_ticket(create_ticket(org, "Extra", area=area), s)
+
+    assert s.tickets.count() == 2
+    assert origin_ticket(s) == origin
+
+
+@pytest.mark.django_db
+def test_origin_is_none_for_a_directly_created_slice():
+    from tuckit.core.services.slices import create_slice
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    assert origin_ticket(create_slice(create_area(org, "Backend"), "Direct")) is None
+
+
+@pytest.mark.django_db
+def test_absorb_links_without_moving_the_number():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = promote_ticket(create_ticket(org, "Origin", area=area))
+    extra = create_ticket(org, "Extra", area=area)
+    before = extra.number
+
+    absorb_ticket(extra, s)
+    extra.refresh_from_db()
+
+    assert extra.slice_id == s.id
+    assert extra.status == "promoted"
+    assert extra.number == before      # absorb never hands over a ref
+    assert s.number != extra.number
+
+
+@pytest.mark.django_db
+def test_absorb_rejects_resolved_and_cross_org_tickets():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = promote_ticket(create_ticket(org, "Origin", area=area))
+
+    dismissed = create_ticket(org, "Gone", area=area)
+    resolve_ticket(dismissed, "dismissed")
+    with pytest.raises(InvalidValue):
+        absorb_ticket(dismissed, s)
+
+    other = Org.objects.create(name="Beta", slug="beta")
+    foreign = create_ticket(other, "Foreign", area=create_area(other, "X"))
+    with pytest.raises(InvalidValue):
+        absorb_ticket(foreign, s)
+
+
+@pytest.mark.django_db
+def test_absorb_is_idempotent():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = promote_ticket(create_ticket(org, "Origin", area=area))
+    extra = create_ticket(org, "Extra", area=area)
+    absorb_ticket(extra, s)
+    absorb_ticket(extra, s)
+    assert s.tickets.count() == 2
+
+
+@pytest.mark.django_db
+def test_release_returns_an_absorbed_ticket_to_the_inbox():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = promote_ticket(create_ticket(org, "Origin", area=area))
+    extra = create_ticket(org, "Extra", area=area)
+    absorb_ticket(extra, s)
+
+    release_ticket(extra)
+    extra.refresh_from_db()
+
+    assert extra.slice is None
+    assert extra.status == "open"
+    assert extra.resolved_at is None
+    assert s.tickets.count() == 1
+
+
+@pytest.mark.django_db
+def test_release_refuses_the_origin_ticket():
+    """The slice carries the origin's number. Detaching it would orphan the ref
+    and block re-promotion, since the slice already occupies that number."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    origin = create_ticket(org, "Origin", area=area)
+    promote_ticket(origin)
+    origin.refresh_from_db()
+
+    with pytest.raises(InvalidValue):
+        release_ticket(origin)

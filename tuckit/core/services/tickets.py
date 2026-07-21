@@ -185,3 +185,47 @@ def promote_ticket(ticket: Ticket, *, area=None, actor: str = "human") -> Slice:
     # Record the stable ref, not the title: titles change and aren't unique.
     _apply_status(ticket, "promoted", actor=actor, to_value=slice_ref(slice_))
     return slice_
+
+
+def origin_ticket(slice_) -> Ticket | None:
+    """The Ticket that gave `slice_` its ref, or None for a directly-created
+    slice. Derived rather than stored: promotion reuses the origin's number, and
+    uniq_ticket_number_per_org means at most one linked ticket can match."""
+    return slice_.tickets.filter(number=slice_.number).first()
+
+
+@transaction.atomic
+def absorb_ticket(ticket: Ticket, into: Slice, *, actor: str = "human") -> Ticket:
+    """Fold an open Ticket into an EXISTING Slice instead of minting a new one.
+
+    Differs from promote_ticket in exactly two ways: no Slice is created, and no
+    number changes hands — the absorbed ticket keeps its own ref while the work
+    moves under the slice's.
+
+    The status becomes 'promoted' because the ticket's one question ("are we
+    doing this?") is answered yes. 'duplicate' would describe a merge as a
+    coincidence, which is what made hand-folding lose information."""
+    if ticket.slice_id == into.pk:
+        return ticket
+    if ticket.status != "open":
+        raise InvalidValue(f"only open tickets can be absorbed (status={ticket.status!r})")
+    _same_org(ticket.org, into, "slice")
+    ticket.slice = into
+    # _apply_status() does a full save(), so the FK assignment rides along.
+    return _apply_status(ticket, "promoted", actor=actor, to_value=slice_ref(into))
+
+
+@transaction.atomic
+def release_ticket(ticket: Ticket, *, actor: str = "human") -> Ticket:
+    """Detach an absorbed Ticket from its Slice and return it to the Inbox.
+
+    Absorbed tickets only. The origin gave the Slice its number, so releasing it
+    would orphan the ref and block re-promotion — the Slice already occupies
+    that number under uniq_slice_number_per_org. Undoing a promote means
+    dropping the Slice, the same distinction reopen_ticket already draws."""
+    if ticket.slice_id is None:
+        return ticket
+    if origin_ticket(ticket.slice) == ticket:
+        raise InvalidValue("the origin ticket cannot be released — drop the slice instead")
+    ticket.slice = None
+    return _apply_status(ticket, "open", actor=actor)
