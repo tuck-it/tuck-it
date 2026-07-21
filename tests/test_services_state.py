@@ -359,3 +359,37 @@ def test_project_state_names_the_org_not_a_product(org):
     state = get_project_state(org)
     assert "product" not in state
     assert state["org"] == {"name": org.name, "description": "our company"}
+
+
+@pytest.mark.django_db
+def test_slice_markdown_lists_provenance_with_origin_first():
+    from tuckit.core.models import Org
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.state import render_slice_markdown
+    from tuckit.core.services.tickets import absorb_ticket, create_ticket, promote_ticket
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    origin = create_ticket(org, "Origin", area=area)
+    s = promote_ticket(origin)
+    extra = create_ticket(org, "Extra", area=area)
+    absorb_ticket(extra, s)
+
+    md = render_slice_markdown(s)
+    line = next(l for l in md.splitlines() if l.startswith("From:"))
+    assert f"acme-{origin.number} (origin)" in line
+    assert f"acme-{extra.number}" in line
+    # origin leads, so the ref that names the slice reads first
+    assert line.index(f"acme-{origin.number}") < line.index(f"acme-{extra.number}")
+
+
+@pytest.mark.django_db
+def test_slice_markdown_omits_provenance_when_unlinked():
+    from tuckit.core.models import Org
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.state import render_slice_markdown
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    s = create_slice(create_area(org, "Backend"), "Direct")
+    assert "From:" not in render_slice_markdown(s)

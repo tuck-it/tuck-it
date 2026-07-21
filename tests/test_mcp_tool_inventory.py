@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_registered_tools_are_exactly_the_nineteen():
+async def test_registered_tools_are_exactly_the_twenty_one():
     from tuckit.core.mcp.server import mcp
 
     tools = {t.name for t in await mcp.list_tools()}
@@ -11,7 +11,8 @@ async def test_registered_tools_are_exactly_the_nineteen():
         "list_slices", "get_slice", "create_slice", "update_slice", "add_note",
         "list_plans", "create_plan", "update_plan",
         "list_bites", "add_bites", "update_bite",
-        "list_tickets", "create_ticket", "get_ticket", "update_ticket", "promote_ticket",
+        "list_tickets", "create_ticket", "get_ticket", "update_ticket",
+        "promote_ticket", "absorb_ticket", "release_ticket",
     }
     assert tools == expected
 
