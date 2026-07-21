@@ -190,3 +190,54 @@ def test_create_slice_external_key_scoped_per_org():
     s1 = create_slice(create_area(o1, "X"), "one", external_key="k")
     s2 = create_slice(create_area(o2, "Y"), "two", external_key="k")
     assert s1.id != s2.id                 # same key in different orgs -> distinct
+
+
+# --- Slice.org + per-org number uniqueness (0035) ---
+
+
+@pytest.mark.django_db
+def test_create_slice_denormalizes_org_from_area():
+    org = Org.objects.create(name="Acme", slug="acme")
+    area = create_area(org, "Backend")
+    s = create_slice(area, "S")
+    assert s.org_id == org.id
+
+
+@pytest.mark.django_db
+def test_duplicate_number_in_one_org_is_rejected():
+    from django.db import IntegrityError, transaction
+
+    from tuckit.core.models import Slice
+
+    org = Org.objects.create(name="Acme", slug="acme")
+    a1 = create_area(org, "Backend")
+    a2 = create_area(org, "Frontend")
+    Slice.objects.create(area=a1, org=org, title="A", rank="m", number=7)
+    # atomic() so the failed INSERT does not poison the test's outer transaction.
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Slice.objects.create(area=a2, org=org, title="B", rank="n", number=7)
+
+
+@pytest.mark.django_db
+def test_same_number_in_different_orgs_is_allowed():
+    from tuckit.core.models import Slice
+
+    o1 = Org.objects.create(name="Acme", slug="acme")
+    o2 = Org.objects.create(name="Beta", slug="beta")
+    Slice.objects.create(area=create_area(o1, "X"), org=o1, title="A", rank="m", number=7)
+    Slice.objects.create(area=create_area(o2, "Y"), org=o2, title="B", rank="m", number=7)
+    assert Slice.objects.filter(number=7).count() == 2
+
+
+@pytest.mark.django_db
+def test_set_slice_area_still_refuses_cross_org_move():
+    """The denormalized Slice.org is only safe because a slice's org cannot
+    change. This guard predates the column — pin it so a future edit that
+    relaxes it fails here instead of silently corrupting org."""
+    from tuckit.core.services.exceptions import InvalidValue
+
+    o1 = Org.objects.create(name="Acme", slug="acme")
+    o2 = Org.objects.create(name="Beta", slug="beta")
+    s = create_slice(create_area(o1, "X"), "S")
+    with pytest.raises(InvalidValue):
+        set_slice_area(s, create_area(o2, "Y"))

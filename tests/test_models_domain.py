@@ -14,7 +14,7 @@ def test_area_slug_unique_per_org(org):
 @pytest.mark.django_db
 def test_slice_defaults(org):
     area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
-    s = Slice.objects.create(area=area, title="Auth", rank="a0")
+    s = Slice.objects.create(area=area, org=org, title="Auth", rank="a0")
     assert s.status == "planned"
     assert s.spec == ""
     assert s.source == "human"
@@ -24,7 +24,7 @@ def test_slice_defaults(org):
 @pytest.mark.django_db
 def test_slice_tags_are_org_tags(org):
     area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
-    s = Slice.objects.create(area=area, title="Auth", rank="a0")
+    s = Slice.objects.create(area=area, org=org, title="Auth", rank="a0")
     tag = Tag.objects.create(org=org, name="bug")
     s.tags.add(tag)
     assert list(s.tags.all()) == [tag]
@@ -40,7 +40,7 @@ def test_tag_unique_per_org(org):
 @pytest.mark.django_db
 def test_bite_requires_plan(org):
     area = Area.objects.create(org=org, name="Backend", slug="backend", rank="a0")
-    s = Slice.objects.create(area=area, title="Auth", rank="a0")
+    s = Slice.objects.create(area=area, org=org, title="Auth", rank="a0")
     p = Plan.objects.create(slice=s, title="Plan")
     b = Bite.objects.create(plan=p, title="JWT", rank="a0")
     assert b.status == "todo"

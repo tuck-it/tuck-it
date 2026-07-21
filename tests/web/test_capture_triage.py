@@ -80,7 +80,8 @@ def test_ticket_promote_invalid_status_returns_400(client_local, org):
     # status is validated before anything mutates, so a bad status leaves the
     # ticket un-promoted rather than half-applied.
     t.refresh_from_db()
-    assert not Slice.objects.filter(ticket=t).exists() and t.status == "open"
+    t.refresh_from_db()
+    assert t.slice is None and t.status == "open"
 
 @pytest.mark.django_db
 def test_ticket_row_has_no_manual_caret_and_area_placeholder(client_local, org):
@@ -113,7 +114,8 @@ def test_ticket_promote_foreign_area_404s(client_local, org):
     )
     assert resp.status_code == 404
     t.refresh_from_db()
-    assert not Slice.objects.filter(ticket=t).exists() and t.status == "open"
+    t.refresh_from_db()
+    assert t.slice is None and t.status == "open"
 
 @pytest.mark.django_db
 def test_inbox_heading_and_agent_source_badge(client_local, org):
@@ -313,3 +315,122 @@ def test_ticket_actions_close_the_modal(client_local, org):
     t = create_ticket(org, "Going")
     out = client_local.post(f"{p}/tickets/{t.id}/dismiss", HTTP_HX_REQUEST="true").content.decode()
     assert 'hx-swap-oob="innerHTML:#ticket-modal"' in out
+
+
+# --- merge: the human path for absorb_ticket ---
+
+
+@pytest.mark.django_db
+def test_ticket_merge_absorbs_into_the_chosen_slice(client_local, org):
+    from tuckit.core.services.tickets import promote_ticket
+    p = f"/{org.slug}"
+    area = create_area(org, "Backend")
+    target = promote_ticket(create_ticket(org, "Parent", area=area))
+    t = create_ticket(org, "Child", area=area)
+
+    client_local.post(f"{p}/tickets/{t.id}/merge", {"slice_id": target.id},
+                      HTTP_HX_REQUEST="true")
+    t.refresh_from_db()
+    assert t.slice_id == target.id and t.status == "promoted"
+
+
+@pytest.mark.django_db
+def test_ticket_merge_rejects_a_slice_from_another_org(client_local, org):
+    p = f"/{org.slug}"
+    other = Org.objects.create(name="Beta", slug="beta")
+    foreign = create_slice(create_area(other, "X"), "Foreign")
+    t = create_ticket(org, "Child", area=create_area(org, "Backend"))
+
+    resp = client_local.post(f"{p}/tickets/{t.id}/merge", {"slice_id": foreign.id},
+                             HTTP_HX_REQUEST="true")
+    t.refresh_from_db()
+    assert resp.status_code == 404
+    assert t.slice_id is None
+
+
+@pytest.mark.django_db
+def test_slice_options_are_scoped_to_the_chosen_area(client_local, org):
+    p = f"/{org.slug}"
+    backend = create_area(org, "Backend")
+    frontend = create_area(org, "Frontend")
+    create_slice(backend, "In backend")
+    create_slice(frontend, "In frontend")
+
+    # merge_area_id, not area_id: HTMX serializes the whole form on hx-get, so
+    # reusing the promote form's field name would collide.
+    body = client_local.get(f"{p}/tickets/slice-options",
+                            {"merge_area_id": backend.id}).content.decode()
+    assert "In backend" in body and "In frontend" not in body
+
+
+@pytest.mark.django_db
+def test_merge_control_only_offered_on_open_tickets(client_local, org):
+    from tuckit.core.services.tickets import promote_ticket
+    p = f"/{org.slug}"
+    area = create_area(org, "Backend")
+    open_t = create_ticket(org, "Still open", area=area)
+    promoted_t = create_ticket(org, "Already promoted", area=area)
+    promote_ticket(promoted_t)
+
+    assert "Merge into" in client_local.get(f"{p}/tickets/{open_t.id}/").content.decode()
+    assert "Merge into" not in client_local.get(f"{p}/tickets/{promoted_t.id}/").content.decode()
+
+
+# --- release: undo a merge from the modal ---
+
+
+@pytest.mark.django_db
+def test_release_returns_an_absorbed_ticket_to_the_inbox(client_local, org):
+    from tuckit.core.services.tickets import absorb_ticket, promote_ticket
+    p = f"/{org.slug}"
+    area = create_area(org, "Backend")
+    target = promote_ticket(create_ticket(org, "Parent", area=area))
+    t = create_ticket(org, "Child", area=area)
+    absorb_ticket(t, target)
+
+    client_local.post(f"{p}/tickets/{t.id}/release", HTTP_HX_REQUEST="true")
+    t.refresh_from_db()
+    assert t.slice is None and t.status == "open"
+
+
+@pytest.mark.django_db
+def test_origin_ticket_modal_offers_no_release(client_local, org):
+    """release_ticket() refuses the origin, so the control would be a dead end."""
+    from tuckit.core.services.tickets import absorb_ticket, promote_ticket
+    p = f"/{org.slug}"
+    area = create_area(org, "Backend")
+    origin = create_ticket(org, "Parent", area=area)
+    target = promote_ticket(origin)
+    child = create_ticket(org, "Child", area=area)
+    absorb_ticket(child, target)
+
+    assert "Release to Inbox" not in client_local.get(f"{p}/tickets/{origin.id}/").content.decode()
+    assert "Release to Inbox" in client_local.get(f"{p}/tickets/{child.id}/").content.decode()
+
+
+@pytest.mark.django_db
+def test_releasing_the_origin_over_http_is_refused(client_local, org):
+    from tuckit.core.services.tickets import promote_ticket
+    p = f"/{org.slug}"
+    origin = create_ticket(org, "Parent", area=create_area(org, "Backend"))
+    promote_ticket(origin)
+
+    resp = client_local.post(f"{p}/tickets/{origin.id}/release", HTTP_HX_REQUEST="true")
+    origin.refresh_from_db()
+    assert resp.status_code == 400
+    assert origin.slice is not None and origin.status == "promoted"
+
+
+@pytest.mark.django_db
+def test_merge_area_select_declares_its_own_hx_swap(client_local, org):
+    """htmx inherits hx-swap from ancestors, and this select lives inside a form
+    carrying hx-swap="none" for its own submit. Without an explicit swap the
+    options request fires, returns 200, and is silently discarded — the select
+    stays empty and merging is impossible. Found in the browser; no endpoint
+    test can see it, because the endpoint is fine."""
+    t = create_ticket(org, "Open one", area=create_area(org, "Backend"))
+    body = client_local.get(f"/{org.slug}/tickets/{t.id}/").content.decode()
+
+    start = body.index('name="merge_area_id"')
+    select_tag = body[start:body.index(">", start)]
+    assert 'hx-swap="innerHTML"' in select_tag

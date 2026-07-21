@@ -4,6 +4,7 @@ from asgiref.sync import sync_to_async
 
 from tuckit.core.mcp.server import (
     create_ticket, list_tickets, get_ticket, update_ticket, promote_ticket,
+    absorb_ticket, release_ticket, get_slice,
     get_project_state,
 )
 from tuckit.core.models import Org
@@ -89,3 +90,47 @@ async def test_promoted_ticket_reports_live_slice_status_not_a_stored_copy():
     await sync_to_async(set_slice_status)(slice_obj, "building")   # reopened
     md = await get_ticket(ctx, t["id"])
     assert "Status: promoted → slice acme-1 (building)" in md
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_absorb_and_release_round_trip_over_mcp():
+    """The fold an agent actually performs during triage, end to end."""
+    _org, raw, area_id = await _seed()
+    ctx = make_ctx(raw)
+
+    parent = await create_ticket(ctx, "Parent", area_id=area_id)
+    s = await promote_ticket(ctx, parent["id"])
+    child = await create_ticket(ctx, "Child", body="a facet of the same thing", area_id=area_id)
+
+    absorbed = await absorb_ticket(ctx, child["id"], s["ref"])
+    assert absorbed["status"] == "promoted"
+    assert absorbed["ref"] == child["ref"]          # keeps its own ref
+
+    md = await get_slice(ctx, s["ref"])
+    assert f"{parent['ref']} (origin)" in md
+    assert child["ref"] in md
+    # the body was never copied into the slice's spec
+    assert "a facet of the same thing" not in md
+
+    released = await release_ticket(ctx, child["id"])
+    assert released["status"] == "open"
+    md_after = await get_slice(ctx, s["ref"])
+    assert child["ref"] not in md_after
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_promoted_slice_starts_with_an_empty_spec():
+    """The blank spec is the signal an agent reads to decide whether the next
+    step is designing or planning."""
+    _org, raw, area_id = await _seed()
+    ctx = make_ctx(raw)
+    t = await create_ticket(ctx, "Fix login", body="users get a 500", area_id=area_id)
+    s = await promote_ticket(ctx, t["id"])
+
+    md = await get_slice(ctx, s["ref"])
+    assert "users get a 500" not in md      # not copied
+    assert f"{t['ref']} (origin)" in md     # but reachable
+    body = await get_ticket(ctx, t["id"])
+    assert "users get a 500" in body        # the one copy still lives here

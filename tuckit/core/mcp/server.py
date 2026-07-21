@@ -34,6 +34,8 @@ from tuckit.core.services.tickets import (
     query_tickets as _query_tickets,
     update_ticket as _update_ticket,
     promote_ticket as _promote_ticket,
+    absorb_ticket as _absorb_ticket,
+    release_ticket as _release_ticket,
 )
 
 # FastMCP's Streamable HTTP transport enables DNS-rebinding protection (Host/Origin
@@ -375,16 +377,48 @@ async def update_ticket(
 
 @mcp.tool()
 async def promote_ticket(ctx: Context, ticket_id: int, area_id: int | None = None) -> dict:
-    """Promote a ticket into a planned slice (inherits the ticket's ref and body).
-    The ticket becomes 'promoted' and the slice owns progress from then on.
-    Idempotent — re-promoting returns the existing slice. area_id is required
-    only if the ticket has no area yet."""
+    """Promote a ticket into a planned slice (inherits the ticket's ref).
+    The slice starts with an EMPTY spec: that blank is how the workflow knows the
+    work has not been designed yet, so write the design doc into it before
+    planning. The ticket keeps its body — read it via get_ticket, or the 'From:'
+    line on the slice. The ticket becomes 'promoted' and the slice owns progress
+    from then on. Idempotent — re-promoting returns the existing slice. area_id
+    is required only if the ticket has no area yet."""
     org = await require_org(ctx)
 
     def _run():
         t = _resolve_ticket(org, ticket_id)
         area = get_area(org, area_id) if area_id is not None else None
         return slice_dict(_promote_ticket(t, area=area, actor="agent"))
+
+    return await sync_to_async(_run, thread_sensitive=True)()
+
+
+@mcp.tool()
+async def absorb_ticket(ctx: Context, ticket_id: int, into_slice: int | str) -> dict:
+    """Fold an open ticket into an EXISTING slice instead of giving it its own.
+    Use when a capture turns out to be part of work already planned. The ticket
+    becomes 'promoted' and keeps its own ref; no slice is created and no number
+    changes hands. `into_slice` may be an id or a ref."""
+    org = await require_org(ctx)
+
+    def _run():
+        t = _resolve_ticket(org, ticket_id)
+        s = _resolve_slice_flexible(org, into_slice)
+        return ticket_dict(_absorb_ticket(t, s, actor="agent"))
+
+    return await sync_to_async(_run, thread_sensitive=True)()
+
+
+@mcp.tool()
+async def release_ticket(ctx: Context, ticket_id: int) -> dict:
+    """Undo an absorb: detach the ticket from its slice and return it to the
+    Inbox. Absorbed tickets only — the origin ticket gave the slice its ref and
+    cannot be released; drop the slice instead."""
+    org = await require_org(ctx)
+
+    def _run():
+        return ticket_dict(_release_ticket(_resolve_ticket(org, ticket_id), actor="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 
