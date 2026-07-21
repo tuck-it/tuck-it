@@ -1,0 +1,4 @@
+{% comment %}Options for the merge select. A separate partial so the area select
+can swap it in via hx-get without re-rendering the whole modal.{% endcomment %}
+<option value="" selected disabled>Choose slice</option>
+{% for s in slices %}<option value="{{ s.id }}">{{ s.title }}</option>{% endfor %}

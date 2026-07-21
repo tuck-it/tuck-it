@@ -43,6 +43,17 @@
       <span>Promoted → {{ promoted_slice.area.name }} · {{ promoted_slice.status }}</span>
       <span class="row-arrow" aria-hidden="true">{% icon "chevron" "icon" %}</span>
     </a>
+    {% if not is_origin %}
+      {% comment %}
+        Absorbed tickets only. The origin gave the slice its ref, so
+        release_ticket() refuses it and the control would be a dead end —
+        undoing a promote means dropping the slice.
+      {% endcomment %}
+      <div class="ticket-actions">
+        <button class="ghost" type="button"
+                hx-post="{% wurl 'web:ticket_release' ticket.id %}" hx-swap="none">Release to Inbox</button>
+      </div>
+    {% endif %}
   {% elif ticket.status == "open" %}
     <form class="ticket-actions" hx-post="{% wurl 'web:ticket_promote' ticket.id %}" hx-swap="none">
       <label class="ticket-field">Promote to
@@ -54,6 +65,36 @@
       <button class="button button-small" type="submit">Promote</button>
       <button class="ghost" type="button"
               hx-post="{% wurl 'web:ticket_dismiss' ticket.id %}" hx-swap="none">Dismiss</button>
+    </form>
+    {% comment %}
+      Merge folds this capture into work already planned instead of minting a
+      new slice. The slice select is scoped by area rather than being a search
+      box: it mirrors the Promote row above, and an org-wide slice dropdown
+      would be unusable within months.
+
+      The area field is `merge_area_id`, not `area_id` — htmx serializes the
+      whole form on hx-get, so reusing the Promote form's name would collide.
+    {% endcomment %}
+    <form class="ticket-actions" hx-post="{% wurl 'web:ticket_merge' ticket.id %}" hx-swap="none">
+      <label class="ticket-field">Merge into
+        {% comment %}
+          hx-swap is declared here on purpose. htmx INHERITS attributes from
+          ancestors, and this select sits inside a form carrying hx-swap="none"
+          for its own submit — without an explicit swap the options request
+          fires, returns 200, and is then thrown away.
+        {% endcomment %}
+        <select name="merge_area_id" class="ticket-select"
+                hx-get="{% wurl 'web:ticket_slice_options' %}"
+                hx-target="#merge-slice-{{ ticket.id }}"
+                hx-swap="innerHTML" hx-trigger="change">
+          <option value="" selected disabled>Choose area</option>
+          {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <select id="merge-slice-{{ ticket.id }}" name="slice_id" class="ticket-select" required>
+        <option value="" selected disabled>Choose slice</option>
+      </select>
+      <button class="button button-small" type="submit">Merge</button>
     </form>
   {% else %}
     <div class="ticket-actions">

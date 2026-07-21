@@ -13,7 +13,9 @@ from tuckit.core.services.tickets import (
     resolve_ticket, update_ticket,
 )
 from tuckit.web.panel import render_markdown_html
-from tuckit.core.services.resolve import get_area, get_ticket, get_area_by_slug
+from tuckit.core.services.resolve import get_area, get_ticket, get_area_by_slug, get_slice
+from tuckit.core.services.slices import query_slices
+from tuckit.core.services.tickets import absorb_ticket, origin_ticket, release_ticket
 from tuckit.web.auth import get_current_org
 from tuckit.web.htmx import redirect_response, widget_oob
 
@@ -128,6 +130,9 @@ def _ticket_modal(request, org, ticket):
         "areas": list(list_areas(org)),
         "body_html": render_markdown_html(ticket.body),
         "promoted_slice": getattr(ticket, "slice", None),
+        # Release is offered only on absorbed tickets: the origin gave the
+        # slice its ref and release_ticket() refuses it.
+        "is_origin": ticket.slice is not None and origin_ticket(ticket.slice) == ticket,
     })
 
 
@@ -156,6 +161,9 @@ def ticket_edit(request, ticket_id):
         "areas": list(list_areas(org)),
         "body_html": render_markdown_html(ticket.body),
         "promoted_slice": getattr(ticket, "slice", None),
+        # Release is offered only on absorbed tickets: the origin gave the
+        # slice its ref and release_ticket() refuses it.
+        "is_origin": ticket.slice is not None and origin_ticket(ticket.slice) == ticket,
     }, request=request)
     # The row behind the modal shows title and a body preview — keep it in step.
     return HttpResponse(html + render_to_string(
@@ -320,3 +328,46 @@ def area_slice_create(request, slug):
         "has_any_slice": has_any_slice,
     }, request=request)
     return HttpResponse(html + widget_oob(request))
+
+
+def ticket_slice_options(request):
+    """`<option>` list for the merge select, scoped to one area. An org-wide
+    slice dropdown would be unusable within months; scoping keeps it bounded
+    without introducing a search widget."""
+    org = get_current_org(request)
+    area_id = request.GET.get("merge_area_id")
+    slices = []
+    if area_id:
+        try:
+            # query_slices takes org first; `area` is keyword-only.
+            slices = list(query_slices(org, area=get_area(org, int(area_id))))
+        except (NotFound, ValueError):
+            slices = []
+    return render(request, "web/partials/_slice_options.html", {"slices": slices})
+
+
+def ticket_merge(request, ticket_id):
+    """Fold this ticket into an existing slice instead of promoting it into a
+    new one — the human path for what absorb_ticket does over MCP."""
+    org = get_current_org(request)
+    try:
+        ticket = get_ticket(org, ticket_id)
+        target = get_slice(org, int(request.POST["slice_id"]))
+    except (NotFound, KeyError, ValueError):
+        raise Http404
+    try:
+        absorb_ticket(ticket, target, actor="human")
+    except InvalidValue as e:
+        return HttpResponse(str(e), status=400)
+    return _inbox_result(request, org, "Merged.")
+
+
+def ticket_release(request, ticket_id):
+    """Undo a merge: detach an absorbed ticket and send it back to the Inbox."""
+    org = get_current_org(request)
+    ticket = _ticket_or_404(org, ticket_id)
+    try:
+        release_ticket(ticket, actor="human")
+    except InvalidValue as e:
+        return HttpResponse(str(e), status=400)
+    return _inbox_result(request, org, "Released to Inbox.")
