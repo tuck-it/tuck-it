@@ -7,9 +7,19 @@ from tuckit.core.services.plans import list_plans
 from tuckit.core.services.tickets import origin_ticket
 
 
+# One list, every markdown surface. Slice specs, ticket bodies, plan
+# overview/constraints and bite bodies all render through the function below,
+# so an extension turned on here is on everywhere.
+#   tables     — pipe tables. Agents write these constantly; without the
+#                extension they rendered as a paragraph of pipes.
+#   sane_lists — a "-" list directly after a "1." list must not be swallowed
+#                into it as item 2.
+_MD_EXTENSIONS = ["fenced_code", "tables", "sane_lists"]
+
+
 def render_markdown_html(text: str) -> str:
     """Render untrusted markdown (human- or agent-written) to sanitized HTML."""
-    return nh3.clean(md.markdown(text or "", extensions=["fenced_code"]))
+    return nh3.clean(md.markdown(text or "", extensions=_MD_EXTENSIONS))
 
 
 # Back-compat alias (slice spec uses the same sanitizer).

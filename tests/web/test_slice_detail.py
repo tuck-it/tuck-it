@@ -348,3 +348,14 @@ def test_slice_with_a_spec_shows_no_empty_state(client_local, org):
     assert "No design doc yet" not in body
     assert "Click to add a spec" not in body
     assert "From:" in body      # provenance stays regardless
+
+
+@pytest.mark.django_db
+def test_slice_spec_table_reaches_the_page(client_local, org):
+    """The renderer is unit-tested; this proves the rendered table actually
+    survives the template + autoescaping path onto the page."""
+    a = create_area(org, "Backend")
+    s = create_slice(a, "Has a table", spec="| col | val |\n| --- | --- |\n| a | 1 |")
+    body = client_local.get(f"/{org.slug}/slices/{s.id}/").content.decode()
+    assert "<table>" in body
+    assert "<th>col</th>" in body

@@ -1071,6 +1071,34 @@ body { padding: 0; }
 .spec :is(h3, h4, h5, h6),
 .bite-body-md :is(h3, h4, h5, h6) { font-size: 13px; }
 
+/* Markdown tables. `display: block` makes the table its own scroll container
+   so a wide table inside a 900px modal scrolls itself instead of pushing the
+   whole document sideways — python-markdown emits no wrapper element to hang
+   overflow on. Column alignment (|:---:|) is lost on purpose: markdown emits
+   it as inline `style`, which nh3 strips, and opening `style` to untrusted
+   input to win text-align is not a trade worth making. */
+.spec table, .bite-body-md table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: var(--space-4) 0;
+  font-size: var(--text-sm);
+}
+.spec table:first-child, .bite-body-md table:first-child { margin-top: 0; }
+.spec table:last-child, .bite-body-md table:last-child { margin-bottom: 0; }
+.spec :is(th, td), .bite-body-md :is(th, td) {
+  border: 1px solid var(--line);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: top;
+}
+.spec th, .bite-body-md th {
+  background: var(--paper-deep);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Plan block — a header (Plan eyebrow + name) sits ABOVE its card, the same
    "label above a box" rhythm as the Spec section, so the two read consistently.
    The card is ONE bordered box; its parts are named (Overview / Constraints /
