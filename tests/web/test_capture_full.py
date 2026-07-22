@@ -109,18 +109,27 @@ def test_capture_foreign_area_404s(client_local, org):
     assert not Ticket.objects.filter(title="cross tenant").exists()
 
 
+def _capture_form(page_html):
+    """Just the capture <form>. The assertions below are about absence, and the
+    shell renders other forms that legitimately DO carry status/tags — the
+    onboarding widget embeds the new-Slice dialog on every page. Scanning the
+    whole document would test those instead."""
+    start = page_html.index('class="capture-modal capture-modal--full"')
+    return page_html[start:page_html.index("</form>", start)]
+
+
 @pytest.mark.django_db
 def test_capture_modal_offers_no_slice_only_fields(client_local, org):
     """Ticket에 없는 필드는 폼에도 없다. status/tags를 내주는 것이 애초에
     'area를 고르면 planned가 된다'를 만든 원인이었다."""
     create_area(org, "Backend")
-    body = client_local.get(f"{P(org)}/inbox/").content.decode()
-    assert 'name="title"' in body
-    assert 'name="spec"' in body
-    assert 'name="area_id"' in body
-    assert 'name="status"' not in body
-    assert 'name="tags"' not in body
+    form = _capture_form(client_local.get(f"{P(org)}/inbox/").content.decode())
+    assert 'name="title"' in form
+    assert 'name="spec"' in form
+    assert 'name="area_id"' in form
+    assert 'name="status"' not in form
+    assert 'name="tags"' not in form
     # Inbox는 Area와 같은 층위가 아니다 — 드롭다운의 선택지가 될 수 없다.
-    assert ">Unfiled<" in body
-    assert ">Inbox<" not in body
-    assert "Backend" in body
+    assert ">Unfiled<" in form
+    assert ">Inbox<" not in form
+    assert "Backend" in form

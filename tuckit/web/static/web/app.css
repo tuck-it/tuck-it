@@ -629,7 +629,10 @@ body { padding: 0; }
 .overlay:empty { display: none; }
 
 /* Capture modal — plain overlay, no gradient/shadow. Placement from .overlay. */
-.capture-overlay { --overlay-top: 20vh; }
+/* 10vh, not 20vh: the compose body is 240px tall, so a 20vh offset pushed the
+   card past the fold on a laptop viewport. Still top-aligned — this is a
+   launcher you open to type into, not a detail view. */
+.capture-overlay { --overlay-top: 10vh; }
 
 .capture-modal {
   background: var(--surface);
@@ -678,7 +681,10 @@ body { padding: 0; }
 }
 
 /* Full capture modal — quiet optional authoring block beneath the title. */
-.capture-modal--full { width: 480px; display: flex; flex-direction: column; gap: 10px; }
+/* 720px: the audience arrives from GitHub Issues, where the body field is the
+   whole column. 480px made a markdown body feel like a comment box. */
+.capture-modal--full { width: 720px; display: flex; flex-direction: column; gap: var(--space-5); }
+.capture-head { display: flex; flex-direction: column; gap: var(--space-1); }
 .capture-opts {
   display: flex;
   flex-direction: column;
@@ -699,11 +705,13 @@ body { padding: 0; }
   border: 1px solid var(--line-control);
   border-radius: var(--radius-small);
   color: var(--text);
-  font: inherit;
-  font-size: 12px;
+  font-family: inherit;
+  font-size: var(--text-sm);
   padding: 4px 6px;
 }
-.capture-spec { font-size: 13px; padding: 6px 8px; resize: none; }
+/* Last user is _slice_fields.html; it moves to .spec-edit in the next commit,
+   and this rule goes with it. */
+.capture-spec { font-size: var(--text-base); padding: 6px 8px; resize: none; }
 .capture-select:focus,
 .capture-spec:focus,
 .capture-bite-input:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--accent); }
@@ -711,7 +719,10 @@ body { padding: 0; }
 .capture-bites { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
 .capture-bite { display: flex; align-items: center; gap: 4px; width: 100%; }
 .capture-bite-input { flex: 1; }
-.capture-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.capture-actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-4); }
+/* The keyboard hint sits opposite the buttons rather than under the field: it
+   documents the whole form, not one input. */
+.capture-actions .capture-keys { margin: 0; margin-right: auto; }
 
 [x-cloak] {
   display: none !important;
