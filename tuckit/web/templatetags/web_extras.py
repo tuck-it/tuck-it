@@ -130,14 +130,6 @@ _ICON_PATHS = {
 
 
 @register.simple_tag
-def attention_label(item):
-    days = item.get("days", 0)
-    if item.get("reason") == "ticket_stale":
-        return f"Inbox {days}d"
-    return f"{days}d idle"
-
-
-@register.simple_tag
 def icon(name, cls="icon"):
     """A decorative inline SVG.
 
