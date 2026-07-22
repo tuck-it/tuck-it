@@ -22,10 +22,15 @@
         document.documentElement.classList.add("sidebar-collapsed");
       }
       /* The onboarding guide reserves a gutter in .main rather than floating
-         over it; set the class before paint so the page doesn't jump. */
+         over it; set the class before paint so the page doesn't jump. Gate it on
+         the widget actually rendering: once onboarding is finished the widget is
+         gone, and only its own toggle ever writes "0", so an ungated class left a
+         360px dead gutter on the right of every screen, forever. */
+      {% if show_get_started %}
       if (localStorage.getItem("ob-open") !== "0") {
         document.documentElement.classList.add("ob-open");
       }
+      {% endif %}
       var sw = parseInt(localStorage.getItem("sidebar-width"), 10);
       if (sw >= 180 && sw <= 420) {
         document.documentElement.style.setProperty("--sidebar-w", sw + "px");

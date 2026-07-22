@@ -32,10 +32,11 @@ body { padding: 0; }
   font-size: 13px;             /* Linear-dense chrome; labels drop from inherited 16px */
 }
 
+/* Full-bleed: the main column fills whatever the sidebar leaves. No reading-width
+   cap — screens that need one set it on their own inner container. */
 .main {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 1320px;
   padding: var(--main-pad-y) var(--main-pad-x) var(--main-pad-b);
 }
 
@@ -703,7 +704,10 @@ body { padding: 0; }
   display: none !important;
 }
 
-/* Settings — a quiet, consistently-sized stack of bordered sections. */
+/* Settings — a quiet, consistently-sized stack of bordered sections. It keeps a
+   reading-width cap even though the rest of the app is full-bleed: these are
+   label/value rows, and stretching them to a wide viewport parks the value at
+   the far edge, miles from its label. */
 .settings-page { max-width: 760px; }
 .settings-page .page-head { margin-bottom: 20px; }
 .settings-page > .hint { margin: -10px 0 20px; }
@@ -966,7 +970,6 @@ body { padding: 0; }
   padding-top: 13px;
   border-top: 1px solid var(--line);
 }
-.group--inbox { max-width: 1080px; }
 
 /* Collapsed state groups (shipped / dropped) use a native <details>. */
 .group-fold-summary { cursor: pointer; list-style: none; margin-bottom: 0; }
@@ -1766,7 +1769,7 @@ html.sidebar-collapsed .side-resize { display: none; }
     position: fixed; inset: 0; z-index: 30;
     background: var(--overlay);
   }
-  .main { max-width: none; padding: var(--space-6) var(--space-7); }
+  .main { padding: var(--space-6) var(--space-7); }
   .side-collapse { display: none; }
   .side-resize { display: none; }
 }
@@ -1976,7 +1979,7 @@ html.sidebar-collapsed .side-resize { display: none; }
 .gs-done-note { margin: 0; color: var(--good); font-size: 13px; }
 
 /* --- Org home (/<org>/) --- */
-.orghome { padding: 24px; max-width: 960px; }
+.orghome { padding: 24px; }
 .orghome-bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 20px; }
 .orghome-id { display: flex; align-items: center; gap: 10px; }
 .orghome-name { font-size: 22px; font-weight: 650; margin: 0; }
