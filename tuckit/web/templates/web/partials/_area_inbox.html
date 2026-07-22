@@ -1,0 +1,34 @@
+{% load web_extras %}
+{% comment %}
+  Untriaged tickets filed to this Area. Deliberately OUTSIDE the board, not a
+  column in it: a Ticket has not been committed to, and a "Triage" column next
+  to Planned would collapse the Ticket/Slice distinction back into one lane.
+
+  Rows only open the existing ticket modal — promote/dismiss/merge live there.
+  Duplicating triage controls into a third surface is how they drift apart.
+
+  Rendered only when there is something to triage; an empty-state line here
+  would be noise on top of the board that is the page's real content.
+{% endcomment %}
+<details class="area-inbox" open>
+  <summary class="area-inbox-head">
+    <span class="area-inbox-label">Inbox</span>
+    <span class="area-inbox-count">{{ area_tickets|length }} untriaged</span>
+  </summary>
+  <div class="area-inbox-rows">
+    {% for ticket in area_tickets %}
+      {% comment %}
+        hx-swap is declared explicitly. htmx INHERITS hx-swap from ancestors, so
+        without it a future wrapper carrying hx-swap="none" would make this
+        request 200 and then be silently thrown away.
+      {% endcomment %}
+      <button class="area-inbox-row" type="button"
+              hx-get="{% wurl 'web:ticket' ticket.id %}" hx-target="#detail-modal"
+              hx-swap="innerHTML" hx-push-url="{% detail_push_url 'ticket' ticket.id %}">
+        <span class="area-inbox-ref">{{ current_org.slug }}-{{ ticket.number }}</span>
+        <span class="row-title">{{ ticket.title }}</span>
+        {% if ticket.body %}<span class="row-desc">{{ ticket.body|spec_summary }}</span>{% endif %}
+      </button>
+    {% endfor %}
+  </div>
+</details>
