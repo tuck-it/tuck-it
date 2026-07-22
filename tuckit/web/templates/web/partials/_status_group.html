@@ -1,7 +1,7 @@
 <section class="group">
   {% include "web/partials/_group_label.html" with label=label count=slices|length %}
   {% if slices %}
-    <div class="panel">
+    <div class="list-card">
       {% for slice in slices %}{% include "web/partials/_slice_row.html" %}{% endfor %}
     </div>
   {% else %}

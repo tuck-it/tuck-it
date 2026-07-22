@@ -6,7 +6,7 @@
   <section class="group">
     <div class="group-label">Doing</div>
     {% if state.bites %}
-      <div class="panel">
+      <div class="list-card">
         {% for bite in state.bites %}
           <a class="slice-row" href="{% wurl 'web:slice' bite.plan.slice.id %}"
              hx-get="{% wurl 'web:slice' bite.plan.slice.id %}?panel=1" hx-target="#panel" hx-push-url="true">

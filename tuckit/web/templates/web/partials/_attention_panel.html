@@ -1,6 +1,6 @@
 {% load web_extras %}
 {% if items %}
-  <div class="panel">
+  <div class="list-card">
     {% for it in items %}
       {% attention_label it as lbl %}
       {% if it.slice %}
@@ -24,7 +24,7 @@
     {% endfor %}
   </div>
 {% else %}
-  <div class="panel">
+  <div class="list-card">
     <div class="all-clear">{% icon "check" "icon icon-clear" %}<span>Nothing needs your attention right now.</span></div>
   </div>
 {% endif %}

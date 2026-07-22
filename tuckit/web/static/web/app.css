@@ -490,7 +490,7 @@ body { padding: 0; }
 }
 .slice-add-input:focus { border-color: var(--blue); outline: 2px solid var(--blue); outline-offset: 1px; }
 
-/* Triage row — bare flex row inside .panel (which supplies surface + dividers);
+/* Triage row — bare flex row inside .list-card (which supplies surface + dividers);
    the Area/Status selects are quiet until the row is hovered/focused. */
 .ticket-row {
   line-height: 1.5;
@@ -732,7 +732,7 @@ body { padding: 0; }
 }
 .settings-title.danger { color: var(--warn); }
 .settings-section + .settings-title { margin-top: 22px; }
-.settings-section .panel {
+.settings-section .list-card {
   background: none;
   border: 0;
   border-radius: 0;
@@ -871,7 +871,7 @@ body { padding: 0; }
   align-items: center;
   gap: 4px 12px;
 }
-.panel .token-row:last-child { border-bottom: 0; }
+.list-card .token-row:last-child { border-bottom: 0; }
 
 .token-main {
   display: flex;
@@ -1195,23 +1195,23 @@ body { padding: 0; }
 
 
 /* Unified list panel: one surface, hairline dividers, 14px radius. */
-.panel {
+.list-card {
   background: var(--paper-raised);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
 }
-.panel .slice-row,
-.panel .ticket-row {
+.list-card .slice-row,
+.list-card .ticket-row {
   border-bottom: 1px solid var(--line);
   border-radius: 0;
 }
-.panel .slice-row:last-child,
-.panel .ticket-row:last-child { border-bottom: 0; }
+.list-card .slice-row:last-child,
+.list-card .ticket-row:last-child { border-bottom: 0; }
 
 /* Inbox is an operation queue. Preserve the row scanline while making each
    assignment control feel like an intentional decision, not stray metadata. */
-.group--inbox .panel { box-shadow: 0 1px 2px var(--shadow); }
+.group--inbox .list-card { box-shadow: 0 1px 2px var(--shadow); }
 .ticket-row { min-height: 62px; }
 .ticket-row:hover { background: var(--paper-deep); }
 .ticket-controls { margin-left: auto; }
@@ -1284,7 +1284,7 @@ body { padding: 0; }
   display: flex;
   align-items: center;
   gap: 8px;
-  /* Lives inside a .panel now, so it carries the panel's own inner padding
+  /* Lives inside a .list-card now, so it carries the panel's own inner padding
      rather than floating as bare text under the label. */
   padding: 14px 16px;
   color: var(--ink-faint);
@@ -1313,7 +1313,7 @@ body { padding: 0; }
   font-weight: 600;
 }
 
-/* Generic bordered row inside a .panel (member row, org row, ...). */
+/* Generic bordered row inside a .list-card (member row, org row, ...). */
 .field {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -1322,7 +1322,7 @@ body { padding: 0; }
   justify-content: space-between;
   gap: 12px;
 }
-.panel .field:last-child { border-bottom: 0; }
+.list-card .field:last-child { border-bottom: 0; }
 
 .avatar {
   width: 24px;

@@ -68,7 +68,7 @@ def test_home_attention_shows_reason_label(client_local, org):
     Slice.objects.filter(pk=s.pk).update(updated_at=timezone.now() - timedelta(days=9))
     body = client_local.get(f"/{org.slug}/").content.decode()
     assert "9d idle" in body
-    assert 'class="panel"' in body           # rows are in a unified panel
+    assert 'class="list-card"' in body       # rows are in a unified list card
 
 
 @pytest.mark.django_db
