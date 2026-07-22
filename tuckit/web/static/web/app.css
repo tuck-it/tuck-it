@@ -1820,12 +1820,14 @@ html.sidebar-collapsed .side-resize { display: none; }
 }
 .band-more:hover { color: var(--ink); }
 /* Unread marker for "since you were away". A dot, not a highlight — the row
-   still has to read as a log entry once it goes stale. */
+   still has to read as a log entry once it goes stale. It sits INSIDE the
+   row's own left padding: .panel is overflow:hidden, so anything hung off the
+   row's left edge gets sliced in half by the panel border. */
 .activity-row.is-new { position: relative; }
 .activity-row.is-new::before {
   content: "";
   position: absolute;
-  left: calc(var(--space-2) * -1);
+  left: var(--space-2);
   top: 50%;
   width: var(--space-3);
   height: var(--space-3);
