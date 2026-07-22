@@ -150,3 +150,16 @@ def test_modal_openers_do_not_get_the_progress_cursor():
     css = _read("static/web/app.css")
     assert '[hx-target="#detail-modal"].htmx-request' in css
     assert ".htmx-request, .htmx-request * { cursor: progress; }" in css
+
+
+def test_escape_only_dismisses_the_topmost_layer():
+    """Quick capture / the palette / the create dialogs stack ABOVE the detail
+    modal and all listen on window. Without a guard one Esc closed the dialog
+    and the modal underneath it in the same keystroke (caught in the browser,
+    not by any endpoint test)."""
+    html = _read("templates/web/base.html")
+    assert "function dialogAboveDetail(" in html
+    esc = [ln for ln in html.splitlines() if "keydown.escape.window" in ln and "closeDetail" in ln]
+    assert esc, "the detail modal must close on window-level Escape"
+    assert "!dialogAboveDetail()" in esc[0], \
+        "Escape must not reach the modal while a dialog sits on top of it"
