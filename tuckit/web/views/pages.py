@@ -59,20 +59,6 @@ def home(request):
     })
 
 
-def attention(request):
-    org = get_current_org(request)
-    return render(request, "web/attention.html", {
-        "items": attention_items(org) if org else [],
-    })
-
-
-def in_progress(request):
-    org = get_current_org(request)
-    return render(request, "web/in_progress.html", {
-        "state": in_progress_state(org) if org else {"slices": [], "bites": []},
-    })
-
-
 def roadmap(request):
     org = get_current_org(request)
     status = request.GET.get("status")
