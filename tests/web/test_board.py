@@ -133,7 +133,7 @@ def test_board_caps_shipped_and_links_to_all(client_local, org):
     create_slice(a, "shipped two", status="shipped")
     body = client_local.get(f"{p}/roadmap/").content.decode()
     assert "View all shipped (2)" in body
-    assert 'href="?view=list&status=shipped"' in body
+    assert 'href="?status=shipped"' in body
 
 
 @pytest.mark.django_db
@@ -201,3 +201,17 @@ def test_board_days_mode_shipped_outside_window_still_counts_as_slice(client_loc
     body = client_local.get(f"{p}/roadmap/").content.decode()
     assert "Nothing here yet — add a slice" not in body
     assert "View all shipped (1)" in body
+
+
+@pytest.mark.django_db
+def test_roadmap_status_filter_uses_shared_partial(client_local, org):
+    """roadmap.html and area.html render the same single-status surface. The
+    back-link is the only per-page difference, supplied as back_url."""
+    p = f"/{org.slug}"
+    a = create_area(org, "Design")
+    create_slice(a, "shipped one", status="shipped")
+    body = client_local.get(f"{p}/roadmap/?status=shipped").content.decode()
+    assert "← Board" in body
+    assert f'href="/{org.slug}/roadmap/"' in body
+    assert "shipped one" in body
+    assert 'id="board"' not in body

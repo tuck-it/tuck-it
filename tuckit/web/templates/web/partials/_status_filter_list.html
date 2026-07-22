@@ -1,0 +1,22 @@
+{% comment %}
+  One status, flat. The "view all" / archive surface behind ?status=<key>,
+  shared by the Roadmap tab and an Area page — the two differ only in where
+  "← Board" goes, so the caller sets `back_url` before including:
+
+      {% wurl 'web:roadmap' as back_url %}
+      {% include "web/partials/_status_filter_list.html" %}
+
+  Context: filter_status (str), filter_slices (list), back_url (str),
+  show_area (bool, optional — set on org-wide surfaces only).
+{% endcomment %}
+<header class="page-head">
+  <div class="page-head-l"><h1 class="page-title">{{ filter_status|capfirst }}</h1></div>
+  <div class="view-toggle">
+    <a class="view-toggle-link" href="{{ back_url }}">← Board</a>
+  </div>
+</header>
+{% if filter_slices %}
+  <div class="panel">{% for slice in filter_slices %}{% include "web/partials/_slice_row.html" %}{% endfor %}</div>
+{% else %}
+  <div class="empty muted">Nothing here yet.</div>
+{% endif %}
