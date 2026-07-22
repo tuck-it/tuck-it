@@ -1,8 +1,8 @@
 {% load web_extras %}
-<div class="panel-inner" x-data="{editTitle:false, editSpec:false}">
-  <div class="panel-crumb">
+<div class="detail-body" x-data="{editTitle:false, editSpec:false}">
+  <div class="detail-crumb">
     <a class="area-chip" href="{% wurl 'web:area' slice.area.slug %}">{% icon "area" "icon area-chip-icon" %}{{ slice.area.name }}</a>
-    {% if is_panel %}
+    {% if is_modal %}
     <button class="ghost crumb-close" type="button" aria-label="Close panel"
             hx-on:click="closePanel(document.getElementById('panel'))">{% icon "close" "icon" %}</button>
     {% endif %}
@@ -13,12 +13,12 @@
      Drop the slice and Delete its plan but could not edit the title, spec,
      overview or constraints — every destructive action reachable, every
      authoring action not (WCAG 2.1.1). {% endcomment %}
-  <div class="panel-titlebar">
-    <button type="button" class="panel-title edit-surface" id="panel-title" x-show="!editTitle"
+  <div class="detail-titlebar">
+    <button type="button" class="detail-title edit-surface" id="detail-title" x-show="!editTitle"
             x-on:click="editTitle=true; $nextTick(() => focusEnd($refs.titleInput))">{{ slice.title }}<span class="edit-hint">Edit</span></button>
     <input name="title" value="{{ slice.title }}" class="title-edit" x-ref="titleInput" x-show="editTitle" x-cloak
-           hx-post="{% wurl 'web:slice_edit' slice.id %}{{ panel_qs }}" hx-trigger="blur, keydown[key=='Enter']"
-           hx-target="closest .panel-inner" hx-swap="outerHTML"
+           hx-post="{% wurl 'web:slice_edit' slice.id %}{{ modal_qs }}" hx-trigger="blur, keydown[key=='Enter']"
+           hx-target="closest .detail-body" hx-swap="outerHTML"
            aria-label="Slice title"
            {# Esc cancels the edit instead of bubbling up and closing the whole panel. #}
            x-on:keydown.escape.stop="editTitle=false; $el.value = $el.defaultValue">
@@ -34,8 +34,8 @@
           {% for st in statuses %}
           <button type="button" class="status-opt {% if st == slice.status %}status-opt--on{% endif %}" role="menuitem"
                   x-on:click="open=false"
-                  hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "{{ st }}"}'
-                  hx-target="closest .panel-inner" hx-swap="outerHTML">
+                  hx-post="{% wurl 'web:slice_status' slice.id %}{{ modal_qs }}" hx-vals='{"status": "{{ st }}"}'
+                  hx-target="closest .detail-body" hx-swap="outerHTML">
             <span class="status-dot status-dot--{{ st }}"></span>{{ st }}{% if st == slice.status %}<span class="status-check">✓</span>{% endif %}
           </button>
           {% endfor %}
@@ -52,8 +52,8 @@
           {% for a in areas %}
           <button type="button" class="area-opt {% if a.id == slice.area_id %}area-opt--on{% endif %}" role="menuitem"
                   x-on:click="open=false"
-                  hx-post="{% wurl 'web:slice_reassign' slice.id %}{{ panel_qs }}" hx-vals='{"area_id": "{{ a.id }}"}'
-                  hx-target="closest .panel-inner" hx-swap="outerHTML">
+                  hx-post="{% wurl 'web:slice_reassign' slice.id %}{{ modal_qs }}" hx-vals='{"area_id": "{{ a.id }}"}'
+                  hx-target="closest .detail-body" hx-swap="outerHTML">
             {{ a.name }}{% if a.id == slice.area_id %}<span class="status-check">✓</span>{% endif %}
           </button>
           {% endfor %}
@@ -107,8 +107,8 @@
     <div class="section-label">Spec</div>
     <button type="button" class="spec edit-surface" x-show="!editSpec" aria-label="Edit spec"
          x-on:click="editSpec=true; $nextTick(()=>{ $refs.specEdit.focus(); autosize($refs.specEdit); })">{% if slice.spec %}{{ spec_html|safe }}{% elif origin_ticket %}<span class="muted">No design doc yet. The original capture is in {{ org_slug_ref }}{{ origin_ticket.number }}.</span>{% else %}<span class="muted">Add a spec…</span>{% endif %}</button>
-    <form x-show="editSpec" x-cloak hx-post="{% wurl 'web:slice_edit' slice.id %}{{ panel_qs }}"
-          hx-target="closest .panel-inner" hx-swap="outerHTML">
+    <form x-show="editSpec" x-cloak hx-post="{% wurl 'web:slice_edit' slice.id %}{{ modal_qs }}"
+          hx-target="closest .detail-body" hx-swap="outerHTML">
       <textarea name="spec" class="spec-edit" x-ref="specEdit" rows="2"
                 x-on:input="autosize($event.target)"
                 x-on:keydown.escape.stop="editSpec=false"
@@ -132,8 +132,8 @@
         <div class="plan-name">{{ entry.plan.title|default:"Untitled plan" }}</div>
       </div>
       <button class="ghost plan-del" type="button"
-              hx-post="{% wurl 'web:plan_delete' entry.plan.id %}{{ panel_qs }}"
-              hx-target="closest .panel-inner" hx-swap="outerHTML"
+              hx-post="{% wurl 'web:plan_delete' entry.plan.id %}{{ modal_qs }}"
+              hx-target="closest .detail-body" hx-swap="outerHTML"
               hx-disabled-elt="this"
               hx-confirm="Delete the plan &quot;{{ entry.plan.title|default:'Untitled plan' }}&quot; and its {{ entry.bites|length }} bite{{ entry.bites|length|pluralize }}? This cannot be undone.">Delete plan</button>
     </div>
@@ -143,8 +143,8 @@
       <div class="section-label">Overview</div>
       <button type="button" class="spec edit-surface" x-show="!editBody" aria-label="Edit plan overview"
            x-on:click="editBody=true; $nextTick(()=>{ $refs.body.focus(); autosize($refs.body); })">{% if entry.plan.body %}{{ entry.plan_html|safe }}{% else %}<span class="muted">Add an overview…</span>{% endif %}</button>
-      <form x-show="editBody" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
-            hx-target="closest .panel-inner" hx-swap="outerHTML">
+      <form x-show="editBody" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ modal_qs }}"
+            hx-target="closest .detail-body" hx-swap="outerHTML">
         <textarea name="body" class="spec-edit" x-ref="body" rows="2"
                   x-on:input="autosize($event.target)"
                   x-on:keydown.escape.stop="editBody=false"
@@ -158,8 +158,8 @@
       <div class="section-label">Constraints</div>
       <button type="button" class="spec edit-surface" x-show="!editCons" aria-label="Edit plan constraints"
            x-on:click="editCons=true; $nextTick(()=>{ $refs.cons.focus(); autosize($refs.cons); })">{% if entry.plan.constraints %}{{ entry.constraints_html|safe }}{% else %}<span class="muted">Add constraints…</span>{% endif %}</button>
-      <form x-show="editCons" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ panel_qs }}"
-            hx-target="closest .panel-inner" hx-swap="outerHTML">
+      <form x-show="editCons" x-cloak hx-post="{% wurl 'web:plan_edit' entry.plan.id %}{{ modal_qs }}"
+            hx-target="closest .detail-body" hx-swap="outerHTML">
         <textarea name="constraints" class="spec-edit" x-ref="cons" rows="2"
                   x-on:input="autosize($event.target)"
                   x-on:keydown.escape.stop="editCons=false"
@@ -174,8 +174,8 @@
       {% if not entry.bites %}
         <div class="plan-bites-empty muted">No bites yet. Add the first step, or let your agent fill these in.</div>
       {% endif %}
-      <form class="bite-add-row" hx-post="{% wurl 'web:bite_create' entry.plan.id %}{{ panel_qs }}"
-            hx-target="closest .panel-inner" hx-swap="outerHTML">
+      <form class="bite-add-row" hx-post="{% wurl 'web:bite_create' entry.plan.id %}{{ modal_qs }}"
+            hx-target="closest .detail-body" hx-swap="outerHTML">
         <input name="title" class="bite-add" placeholder="Add a step — e.g. &quot;Write the retry unit test&quot;" autocomplete="off" required
                x-init="{% if focus == 'bite' and forloop.last %}$nextTick(() => $el.focus()){% endif %}">
         <button class="ghost" type="submit">＋ Add bite</button>
@@ -186,8 +186,8 @@
   {% endfor %}
 
   <div class="desc-block">
-    <form class="plan-add" hx-post="{% wurl 'web:plan_create' slice.id %}{{ panel_qs }}"
-          hx-target="closest .panel-inner" hx-swap="outerHTML">
+    <form class="plan-add" hx-post="{% wurl 'web:plan_create' slice.id %}{{ modal_qs }}"
+          hx-target="closest .detail-body" hx-swap="outerHTML">
       <input name="title" placeholder="Plan title — e.g. &quot;v1 approach&quot;" class="bite-add" autocomplete="off"
              x-init="{% if focus == 'plan' %}$nextTick(() => $el.focus()){% endif %}">
       <button class="ghost" type="submit">＋ Add plan</button>
@@ -210,17 +210,17 @@
   <div class="action-bar">
     {% if slice.status == 'dropped' %}
       <span class="dropped-tag">dropped</span>
-      <button class="ghost" hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "planned"}'
-              hx-target="closest .panel-inner" hx-swap="outerHTML">Restore</button>
+      <button class="ghost" hx-post="{% wurl 'web:slice_status' slice.id %}{{ modal_qs }}" hx-vals='{"status": "planned"}'
+              hx-target="closest .detail-body" hx-swap="outerHTML">Restore</button>
     {% else %}
-      <button class="ghost action-drop" hx-post="{% wurl 'web:slice_status' slice.id %}{{ panel_qs }}" hx-vals='{"status": "dropped"}'
-              hx-target="closest .panel-inner" hx-swap="outerHTML">Drop slice</button>
+      <button class="ghost action-drop" hx-post="{% wurl 'web:slice_status' slice.id %}{{ modal_qs }}" hx-vals='{"status": "dropped"}'
+              hx-target="closest .detail-body" hx-swap="outerHTML">Drop slice</button>
     {% endif %}
     <span class="action-spacer"></span>
     <button class="ghost" type="button" x-data="{copied:false}"
             x-on:click="copyText(window.location.origin + '{% wurl 'web:slice' slice.id %}').then(ok => { copied = ok; setTimeout(()=>copied=false,1500) })"
             x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
-    {% if is_panel %}
+    {% if is_modal %}
     <a class="ghost" href="{% wurl 'web:slice' slice.id %}">Open full page →</a>
     {% endif %}
   </div>

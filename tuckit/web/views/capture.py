@@ -14,7 +14,7 @@ from tuckit.core.services.tickets import (
     create_ticket, query_tickets, ticket_queryset, promote_ticket, reopen_ticket,
     resolve_ticket, update_ticket,
 )
-from tuckit.web.panel import render_markdown_html
+from tuckit.web.detail import render_markdown_html
 from tuckit.core.services.resolve import get_area, get_ticket, get_area_by_slug, get_slice
 from tuckit.core.services.slices import query_slices
 from tuckit.core.services.tickets import absorb_ticket, origin_ticket, release_ticket

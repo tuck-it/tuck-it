@@ -6,7 +6,7 @@ from tuckit.core.services.resolve import get_area_by_slug, get_slice
 from tuckit.core.services.slices import list_slices
 from tuckit.core.services.state import AREA_STATUS_KEYS, area_board_view
 from tuckit.web.auth import get_current_org
-from tuckit.web.panel import slice_panel_context
+from tuckit.web.detail import slice_detail_context
 
 
 def area_view(request, slug):
@@ -44,8 +44,8 @@ def slice_detail(request, slice_id):
         slice_ = get_slice(org, slice_id)
     except NotFound:
         raise Http404
-    is_panel = request.GET.get("panel") == "1" and bool(request.headers.get("HX-Request"))
-    ctx = slice_panel_context(slice_, is_panel=is_panel)
+    is_modal = request.GET.get("modal") == "1" and bool(request.headers.get("HX-Request"))
+    ctx = slice_detail_context(slice_, is_modal=is_modal)
     ctx["focus"] = request.GET.get("focus", "")
-    template = "web/partials/_slice_panel.html" if is_panel else "web/slice_detail.html"
+    template = "web/partials/_slice_detail.html" if is_modal else "web/slice_detail.html"
     return render(request, template, ctx)

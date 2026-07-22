@@ -1,4 +1,4 @@
-"""The slice detail page (panel + full page share _slice_panel.html) labels the
+"""The slice detail page (panel + full page share _slice_detail.html) labels the
 spec field "Spec" and uses English UI copy — no leftover Korean."""
 import pytest
 
@@ -35,7 +35,7 @@ def test_add_plan_and_bite_inputs_show_examples(client_local, org):
     a = create_area(org, "Backend")
     s = create_slice(a, "Retry webhooks")
     create_plan(s, title="v1")  # a plan exists → the add-bite row renders
-    body = client_local.get(f"/{org.slug}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"/{org.slug}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     # add-plan input carries an example, not a bare "Plan title…"
     assert "v1 approach" in body
     # add-bite input carries an example step

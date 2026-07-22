@@ -44,7 +44,7 @@ def test_board_cards_are_links_not_divs(client_local, org):
 
 
 @pytest.mark.django_db
-def test_slice_panel_edit_surfaces_are_buttons(client_local, org):
+def test_slice_detail_edit_surfaces_are_buttons(client_local, org):
     """Title/spec/overview/constraints were <span>/<div> with x-on:click, so a
     keyboard user could Drop the slice and Delete its plan but could not edit
     any of its text — every destructive action reachable, no authoring one."""
@@ -55,9 +55,9 @@ def test_slice_panel_edit_surfaces_are_buttons(client_local, org):
 
     for label in ("Edit spec", "Edit plan overview", "Edit plan constraints"):
         assert re.search(rf'<button[^>]*aria-label="{label}"', body), f"{label} must be a button"
-    assert re.search(r'<button[^>]*class="panel-title edit-surface"', body), \
+    assert re.search(r'<button[^>]*class="detail-title edit-surface"', body), \
         "the slice title must be focusable"
-    assert not re.search(r'<span class="panel-title"[^>]*x-on:click', body)
+    assert not re.search(r'<span class="detail-title"[^>]*x-on:click', body)
     assert not re.search(r'<div class="spec"[^>]*x-on:click', body)
 
 

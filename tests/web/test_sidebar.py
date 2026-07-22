@@ -163,7 +163,7 @@ def test_sidebar_and_panel_density_tightened():
     assert re.search(r"\.util-btn\s*\{[^}]*min-height:\s*30px", css), ".util-btn must be 30px"
     assert "min-height: 40px" not in css    # no 40px sidebar rows remain
     # slice-panel frame stepped down (reading body untouched)
-    assert ".panel-titlebar .panel-title { font-size: 20px;" in css
+    assert ".detail-titlebar .detail-title { font-size: 20px;" in css
     assert ".section-label { font-size: 11px;" in css
 
 

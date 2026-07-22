@@ -985,7 +985,7 @@ body { padding: 0; }
 .seg-item--on { background: var(--paper-deep); color: var(--ink); font-weight: 500; }
 
 /* Slice slide-over — fixed right-side panel, flat surface, hairline border.
-   #panel is an empty <div> until htmx swaps a .panel-inner into it, so it
+   #panel is an empty <div> until htmx swaps a .detail-body into it, so it
    collapses to nothing (no stray fixed box) until there is content. */
 #panel:empty {
   display: none;
@@ -1033,11 +1033,11 @@ body { padding: 0; }
 .modal-card-row:first-of-type { border-top: 0; padding-top: 0; }
 
 /* Same partial also renders as ordinary page content on the full slice page
-   (web/slice_detail.html), so panel-inner itself carries no positioning. */
-.panel-inner { display: flex; flex-direction: column; gap: 20px; padding: 22px; }
-.panel-head { display: flex; align-items: flex-start; gap: 10px; }
-.panel-head-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.panel-title { font-size: 17px; font-weight: 600; line-height: 1.4; letter-spacing: -0.02em; cursor: text; }
+   (web/slice_detail.html), so detail-body itself carries no positioning. */
+.detail-body { display: flex; flex-direction: column; gap: 20px; padding: 22px; }
+.detail-head { display: flex; align-items: flex-start; gap: 10px; }
+.detail-head-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.detail-title { font-size: 17px; font-weight: 600; line-height: 1.4; letter-spacing: -0.02em; cursor: text; }
 
 .meta { font-size: 12px; color: var(--ink-faint); }
 
@@ -1908,7 +1908,7 @@ html.sidebar-collapsed .side-resize { display: none; }
 .shipped-chip .chip-area { color: var(--ink-faint); font-size: 11px; }
 
 /* --- Slice panel redesign --- */
-.panel-crumb { display: flex; align-items: center; gap: 8px; }
+.detail-crumb { display: flex; align-items: center; gap: 8px; }
 .area-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
   background: var(--paper-deep); border: 1px solid var(--line); border-radius: 20px;
   color: var(--ink-soft); font-size: 12px; text-decoration: none; width: max-content; }
@@ -1916,8 +1916,8 @@ html.sidebar-collapsed .side-resize { display: none; }
 .area-chip-icon { width: 13px; height: 13px; }
 .crumb-close { margin-left: auto; color: var(--ink-faint); padding: 3px; line-height: 0; }
 
-.panel-titlebar { display: flex; align-items: flex-start; gap: 10px; }
-.panel-titlebar .panel-title { font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em; cursor: text; }
+.detail-titlebar { display: flex; align-items: flex-start; gap: 10px; }
+.detail-titlebar .detail-title { font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em; cursor: text; }
 
 .bites-block { display: flex; flex-direction: column; gap: 4px; }
 .bites-head { display: flex; align-items: center; gap: 10px; }
@@ -2241,7 +2241,7 @@ html.sidebar-collapsed .side-resize { display: none; }
   text-align: left;
   cursor: text;
 }
-.edit-surface.panel-title { cursor: text; }
+.edit-surface.detail-title { cursor: text; }
 .spec.edit-surface { cursor: text; }
 /* Hovering an editable field hints that it is editable before the click. */
 .edit-surface:hover .edit-hint { opacity: 1; }

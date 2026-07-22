@@ -8,7 +8,7 @@ from tuckit.core.services.bites import create_bite, delete_bite, set_bite_status
 from tuckit.core.services.plans import create_plan, delete_plan, update_plan
 from tuckit.web.auth import get_current_org
 from tuckit.web.htmx import widget_oob
-from tuckit.web.panel import slice_panel_context
+from tuckit.web.detail import slice_detail_context
 
 
 def _slice_or_404(request, slice_id):
@@ -25,13 +25,13 @@ def _plan_or_404(request, plan_id):
         raise Http404
 
 
-def _panel(request, slice_):
-    is_panel = request.GET.get("panel") == "1"
+def _detail(request, slice_):
+    is_modal = request.GET.get("modal") == "1"
     resp = render(
-        request, "web/partials/_slice_panel.html",
-        slice_panel_context(slice_, is_panel=is_panel),
+        request, "web/partials/_slice_detail.html",
+        slice_detail_context(slice_, is_modal=is_modal),
     )
-    # Append the onboarding widget OOB so panel-level mutations (add plan/bite,
+    # Append the onboarding widget OOB so detail-level mutations (add plan/bite,
     # etc.) tick the matching onboarding step immediately. Empty when the widget
     # is hidden, so this is a no-op once onboarding is done or dismissed.
     resp.write(widget_oob(request))
@@ -44,7 +44,7 @@ def slice_status(request, slice_id):
         set_slice_status(slice_, request.POST["status"])
     except InvalidValue as e:
         return HttpResponse(str(e), status=400)
-    return _panel(request, slice_)
+    return _detail(request, slice_)
 
 
 def slice_edit(request, slice_id):
@@ -53,7 +53,7 @@ def slice_edit(request, slice_id):
     if "title" in request.POST: kwargs["title"] = request.POST["title"]
     if "spec" in request.POST: kwargs["spec"] = request.POST["spec"]
     update_slice(slice_, **kwargs)
-    return _panel(request, slice_)
+    return _detail(request, slice_)
 
 
 def slice_reassign(request, slice_id):
@@ -63,13 +63,13 @@ def slice_reassign(request, slice_id):
     except (NotFound, ValueError, KeyError):
         raise Http404
     set_slice_area(slice_, area)
-    return _panel(request, slice_)
+    return _detail(request, slice_)
 
 
 def plan_create(request, slice_id):
     slice_ = _slice_or_404(request, slice_id)
     create_plan(slice_, title=request.POST.get("title", "").strip(), actor="human")
-    return _panel(request, slice_)
+    return _detail(request, slice_)
 
 
 def plan_edit(request, plan_id):
@@ -79,14 +79,14 @@ def plan_edit(request, plan_id):
     if "body" in request.POST: kwargs["body"] = request.POST["body"]
     if "constraints" in request.POST: kwargs["constraints"] = request.POST["constraints"]
     update_plan(plan, **kwargs)
-    return _panel(request, plan.slice)
+    return _detail(request, plan.slice)
 
 
 def plan_delete(request, plan_id):
     plan = _plan_or_404(request, plan_id)
     slice_ = plan.slice
     delete_plan(plan)
-    return _panel(request, slice_)
+    return _detail(request, slice_)
 
 
 def slice_tags(request, slice_id):
@@ -126,7 +126,7 @@ def bite_create(request, plan_id):
     if not title:
         return HttpResponse("Title is required", status=400)
     create_bite(plan, title, source="human")
-    return _panel(request, plan.slice)
+    return _detail(request, plan.slice)
 
 
 def bite_edit(request, bite_id):
@@ -136,7 +136,7 @@ def bite_edit(request, bite_id):
         raise Http404
     if "title" in request.POST:
         update_bite(bite, title=request.POST["title"])
-    return _panel(request, bite.plan.slice)
+    return _detail(request, bite.plan.slice)
 
 
 def bite_delete(request, bite_id):
@@ -146,4 +146,4 @@ def bite_delete(request, bite_id):
         raise Http404
     slice_ = bite.plan.slice
     delete_bite(bite)
-    return _panel(request, slice_)
+    return _detail(request, slice_)

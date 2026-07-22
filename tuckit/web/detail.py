@@ -26,7 +26,7 @@ def render_markdown_html(text: str) -> str:
 render_spec_html = render_markdown_html
 
 
-def slice_panel_context(slice_, is_panel: bool = False) -> dict:
+def slice_detail_context(slice_, is_modal: bool = False) -> dict:
     done, total = bite_progress(slice_)
     plans = [
         {
@@ -51,8 +51,10 @@ def slice_panel_context(slice_, is_panel: bool = False) -> dict:
         "spec_html": render_markdown_html(slice_.spec),
         "statuses": ["planned", "building", "shipped"],
         "activity": slice_activity(slice_),
-        "is_panel": is_panel,
-        "panel_qs": "?panel=1" if is_panel else "",
+        "is_modal": is_modal,
+        # Appended to every mutation URL fired from inside the modal so the
+        # re-render comes back as a card, not a full page.
+        "modal_qs": "?modal=1" if is_modal else "",
         "bites_done": done,
         "bites_total": total,
         "bites_pct": round(done / total * 100) if total else 0,

@@ -88,7 +88,7 @@ def test_bite_row_has_rename_and_delete_controls(client_local, org):
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "B"), "x")
     b = create_bite(create_plan(s, title="Plan"), "step")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert f"/bites/{b.id}/edit" in body
     assert f"/bites/{b.id}/delete" in body
 
@@ -97,7 +97,7 @@ def test_bite_row_has_rename_and_delete_controls(client_local, org):
 def test_panel_shows_plan_empty_state_when_no_plan(client_local, org):
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "B"), "x")  # no plan
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "No plan yet" in body            # teaching empty state
     assert f"/slices/{s.id}/plans" in body  # add-plan form always present
 
@@ -108,7 +108,7 @@ def test_panel_shows_add_bite_form_inside_plan(client_local, org):
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "B"), "x")
     plan_ = create_plan(s, title="Plan")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert f"/plans/{plan_.id}/bites" in body       # add-bite form target
     assert "let your agent fill these in" in body   # empty-bites copy signals both authors
 
@@ -149,7 +149,7 @@ def test_status_control_is_dropdown(client_local, org):
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Product"), "X", status="building")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="status-menu"' in body           # status control re-rendered after change
     assert "status-opt--on" in body                # active option marked
 
@@ -177,7 +177,7 @@ def test_bite_body_is_sanitized(client_local, org):
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Product"), "Slice")
     b = create_bite(create_plan(s, title="Plan"), "Risk", body="<script>alert(1)</script>ok")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "<script>" not in body
     assert "ok" in body
 
@@ -198,21 +198,21 @@ def test_slice_tag_add_then_remove(client_local, org):
     assert s.tags.count() == 0
 
 @pytest.mark.django_db
-def test_slice_panel_active_shows_drop_control(client_local, org):
+def test_slice_detail_active_shows_drop_control(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Product"), "In-progress item", status="building")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "Drop" in body
 
 @pytest.mark.django_db
-def test_slice_panel_dropped_shows_restore(client_local, org):
+def test_slice_detail_dropped_shows_restore(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Product"), "Dropped item", status="dropped")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "Restore" in body
     # restoring puts it back into the flow
     resp = client_local.post(f"{p}/slices/{s.id}/status", {"status": "planned"}, HTTP_HX_REQUEST="true")
@@ -221,12 +221,12 @@ def test_slice_panel_dropped_shows_restore(client_local, org):
     assert s.status == "planned"
 
 @pytest.mark.django_db
-def test_slice_panel_shows_byline(client_local, org):
+def test_slice_detail_shows_byline(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Product"), "Meta check")  # default source=human
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="props"' in body
     assert "Created" in body
     assert "Updated" in body
@@ -244,7 +244,7 @@ def test_bite_source_time_renders_english(client_local, org):
     s = create_slice(create_area(org, "Product"), "Slice")
     b = create_bite(create_plan(s, title="Plan"), "Note bite", body="## Note")
     Bite.objects.filter(pk=b.pk).update(updated_at=timezone.now() - timedelta(hours=2, minutes=30))
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     # timesince now renders in English, not Korean
     assert "hours" in body and "minutes" in body
 
@@ -280,5 +280,5 @@ def test_panel_shows_area_reassign_control(client_local, org):
     a = create_area(org, "A")
     create_area(org, "B")
     s = create_slice(a, "s", source="human")
-    body = client_local.get(f"/{org.slug}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"/{org.slug}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert f"/slices/{s.id}/reassign" in body

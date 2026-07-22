@@ -14,8 +14,8 @@
             hx-on:click="closeTicketModal()">{% icon "close" "icon" %}</button>
   </div>
 
-  <div class="panel-titlebar">
-    <button type="button" class="panel-title edit-surface" id="ticket-modal-title" x-show="!editTitle"
+  <div class="detail-titlebar">
+    <button type="button" class="detail-title edit-surface" id="ticket-modal-title" x-show="!editTitle"
           x-on:click="editTitle=true; $nextTick(() => focusEnd($refs.t))">{{ ticket.title }}<span class="edit-hint">Edit</span></button>
     <input name="title" value="{{ ticket.title }}" class="title-edit" x-ref="t" x-show="editTitle" x-cloak
            aria-label="Ticket title"

@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from tuckit.core.services import bites as bites_svc
-from tuckit.web.panel import render_markdown_html
+from tuckit.web.detail import render_markdown_html
 
 register = template.Library()
 
@@ -23,11 +23,11 @@ def wurl_tag(context, name, *args, **kwargs):
 @register.simple_tag(name="slice_push_url", takes_context=True)
 def slice_push_url(context, slice_id):
     """Path (no host) for the current page with `slice=<id>` merged into the query,
-    dropping any existing `slice`/`panel` params. htmx pushes this so a refresh
+    dropping any existing `slice`/`modal` params. htmx pushes this so a refresh
     restores the same list page with the slide-over reopened."""
     request = context["request"]
     parts = urlsplit(request.get_full_path())
-    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in ("slice", "panel")]
+    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in ("slice", "modal")]
     query.append(("slice", str(slice_id)))
     return urlunsplit(("", "", parts.path, urlencode(query), ""))
 

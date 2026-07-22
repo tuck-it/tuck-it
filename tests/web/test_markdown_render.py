@@ -5,7 +5,7 @@ the app (slice spec, ticket body, plan overview/constraints, bite body) funnels
 through render_markdown_html, so proving it here proves it everywhere.
 """
 
-from tuckit.web.panel import render_markdown_html
+from tuckit.web.detail import render_markdown_html
 
 
 def test_pipe_table_renders_as_a_table():

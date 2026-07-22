@@ -22,11 +22,11 @@ def test_slice_full_page_renders_spec_and_bites(client_local, org):
 
 
 @pytest.mark.django_db
-def test_slice_panel_is_partial(client_local, org):
+def test_slice_detail_is_partial(client_local, org):
     p = f"/{org.slug}"
     a = create_area(org, "Backend")
     s = create_slice(a, "X")
-    resp = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true")
+    resp = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true")
     body = resp.content.decode()
     assert "<!doctype html>" not in body.lower()   # partial, not full page
     assert "X" in body
@@ -66,7 +66,7 @@ def test_slice_other_workspace_404(client_local, org):
 
 
 @pytest.mark.django_db
-def test_slice_panel_shows_its_activity_thread(client_local, org):
+def test_slice_detail_shows_its_activity_thread(client_local, org):
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice, set_slice_status
     from tuckit.core.services.bites import create_bite
@@ -76,15 +76,15 @@ def test_slice_panel_shows_its_activity_thread(client_local, org):
     s = create_slice(a, "Thread slice", status="planned")   # logs created (slice)
     set_slice_status(s, "building")                          # logs status_changed (slice)
     create_bite(create_plan(s, title="Plan"), "First bite")                             # logs created (bite)
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="slice-activity"' in body                  # thread section present
     assert body.count('class="activity-row"') >= 3           # slice + status + bite events
     assert "First bite" in body                              # bite event joined into the slice thread
 
 
 @pytest.mark.django_db
-def test_slice_panel_context_flags_and_progress(org):
-    from tuckit.web.panel import slice_panel_context
+def test_slice_detail_context_flags_and_progress(org):
+    from tuckit.web.detail import slice_detail_context
     from tuckit.core.services.areas import create_area
     from tuckit.core.services.slices import create_slice
     from tuckit.core.services.bites import create_bite
@@ -94,14 +94,14 @@ def test_slice_panel_context_flags_and_progress(org):
     create_bite(p, "a", status="done")
     create_bite(p, "b")  # 1 of 2 done -> 50%
 
-    panel = slice_panel_context(s, is_panel=True)
-    assert panel["is_panel"] is True
-    assert panel["panel_qs"] == "?panel=1"
+    panel = slice_detail_context(s, is_modal=True)
+    assert panel["is_modal"] is True
+    assert panel["modal_qs"] == "?modal=1"
     assert (panel["bites_done"], panel["bites_total"], panel["bites_pct"]) == (1, 2, 50)
 
-    page = slice_panel_context(s)  # default is_panel=False
-    assert page["is_panel"] is False
-    assert page["panel_qs"] == ""
+    page = slice_detail_context(s)  # default is_modal=False
+    assert page["is_modal"] is False
+    assert page["modal_qs"] == ""
 
 
 @pytest.mark.django_db
@@ -113,7 +113,7 @@ def test_panel_header_title_and_status_tabs(client_local, org):
     s = create_slice(a, "Dark mode policy", status="building")
 
     # panel context
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="area-chip"' in body
     assert f'href="/{org.slug}/areas/{a.slug}/"' in body   # chip links to area
     assert "Design" in body
@@ -135,7 +135,7 @@ def test_full_page_hides_panel_only_chrome(client_local, org):
     p = f"/{org.slug}"
     a = create_area(org, "Design")
     s = create_slice(a, "Full page")
-    body = client_local.get(f"{p}/slices/{s.id}/").content.decode()   # full page, no panel=1
+    body = client_local.get(f"{p}/slices/{s.id}/").content.decode()   # full page, no modal=1
     assert "crumb-close" not in body        # no close button on the full page
     assert "Open full page" not in body     # no self-link on the full page
     assert 'class="area-chip"' in body     # breadcrumb chip still shown on full page
@@ -152,7 +152,7 @@ def test_bites_progress_and_empty_state(client_local, org):
     s = create_slice(a, "S")
 
     # empty: PLAN empty-state shown, no count
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "No plan yet" in body
     assert 'class="row-prog-track"' not in body   # no progress bar when there are no bites
 
@@ -160,7 +160,7 @@ def test_bites_progress_and_empty_state(client_local, org):
     plan_ = create_plan(s, title="Plan")
     create_bite(plan_, "a", status="done")
     create_bite(plan_, "b")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert "No plan yet" not in body
     assert "1/2" in body
     assert 'class="row-prog-track"' in body
@@ -173,7 +173,7 @@ def test_action_bar_has_copy_and_drop(client_local, org):
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Design"), "Action", status="building")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="action-bar"' in body
     assert "Copy link" in body
     assert "Drop slice" in body
@@ -185,7 +185,7 @@ def test_tags_live_in_properties_not_a_context_section(client_local, org):
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Design"), "Tag")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="section-label">Context' not in body   # standalone Context section removed
     assert '<span class="prop-key">Tags' in body          # tags now a property row
     assert "Add tag" in body
@@ -199,7 +199,7 @@ def test_activity_timeline_has_nodes(client_local, org):
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Design"), "Timeline", status="planned")
     set_slice_status(s, "building")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="timeline"' in body
     assert 'class="tl-node"' in body      # a node marker per activity row
 
@@ -226,7 +226,7 @@ def test_spec_is_boxed_inline_edit(client_local, org):
     from tuckit.core.services.slices import create_slice
     p = f"/{org.slug}"
     s = create_slice(create_area(org, "Design"), "spec slice")
-    body = client_local.get(f"{p}/slices/{s.id}/?panel=1", HTTP_HX_REQUEST="true").content.decode()
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
     assert 'class="section-label">Spec' in body          # labeled section
     assert 'class="spec-edit"' in body                   # inline editor present
     assert 'rows="6"' not in body                        # no big fixed textarea jump
@@ -236,7 +236,7 @@ def test_spec_is_boxed_inline_edit(client_local, org):
 
 
 @pytest.mark.django_db
-def test_slice_panel_shows_plans_and_add_plan(client_local, org):
+def test_slice_detail_shows_plans_and_add_plan(client_local, org):
     from tuckit.core.services.plans import create_plan
     from tuckit.core.services.bites import create_bite
     a = create_area(org, "B"); s = create_slice(a, "S")

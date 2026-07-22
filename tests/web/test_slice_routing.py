@@ -16,8 +16,8 @@ def test_slice_push_url_preserves_other_query_and_replaces_slice():
     assert out == "/acme/main/board?view=board&slice=42"
 
 
-def test_slice_push_url_drops_panel_param():
-    assert slice_push_url(_ctx("/acme/main/home?panel=1"), 7) == "/acme/main/home?slice=7"
+def test_slice_push_url_drops_modal_param():
+    assert slice_push_url(_ctx("/acme/main/home?modal=1"), 7) == "/acme/main/home?slice=7"
 
 
 @pytest.mark.django_db
@@ -28,7 +28,7 @@ def test_page_with_slice_param_autoloads_panel(client_local, org):
     s = create_slice(create_area(org, "Design"), "Restore")
     body = client_local.get(f"{p}/?slice={s.id}").content.decode()   # home is /{org}/
     assert 'hx-trigger="load"' in body
-    assert f'/slices/{s.id}/?panel=1' in body    # panel endpoint wired into #panel
+    assert f'/slices/{s.id}/?modal=1' in body    # panel endpoint wired into #panel
 
 
 @pytest.mark.django_db
