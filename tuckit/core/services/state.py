@@ -7,7 +7,7 @@ from tuckit.core.services.activity import slice_activity
 from tuckit.core.services.bites import list_bites, slice_bites
 from tuckit.core.services.plans import list_plans
 from tuckit.core.services.refs import ticket_ref
-from tuckit.core.services.slices import list_slices, stage_of
+from tuckit.core.services.slices import grouped_slices, list_slices, stage_of
 from tuckit.core.services.tickets import origin_ticket
 
 _OPEN_BITE_STATUSES = ["todo", "doing"]
@@ -301,6 +301,44 @@ def roadmap_board_view(org: Org) -> dict:
         "groups": [(status, capped[status]) for status in ROADMAP_BOARD_ORDER],
         "shipped_total": total,
         "shipped_hidden": total - len(visible),
+    }
+
+
+AREA_BOARD_ORDER = ["planned", "building", "shipped"]
+AREA_STATUS_KEYS = ROADMAP_STATUS_KEYS | {"dropped"}
+
+
+def area_board_view(area: Area) -> dict:
+    """Capped kanban groups + overflow meta for one Area's board — the
+    area-scoped mirror of roadmap_board_view.
+
+    `dropped` is deliberately absent from the columns and reported as a count
+    instead: the board is the surface for work that is still flowing, and every
+    mature kanban tool keeps cancelled work off it while still offering a route
+    to it. The page turns that count into a ?status=dropped link.
+    """
+    grouped = dict(grouped_slices(area))
+    # grouped_slices orders by rank; cap_shipped's count mode assumes the list
+    # is recency-sorted (see its docstring). Sorting here is load-bearing —
+    # without it the column keeps top-ranked shipped slices, not recent ones.
+    shipped = sorted(
+        grouped.get("shipped", []),
+        key=lambda s: (s.completed_at or s.updated_at),
+        reverse=True,
+    )
+    visible, total = cap_shipped(area.org, shipped)
+    columns = {status: grouped.get(status, []) for status in AREA_BOARD_ORDER}
+    columns["shipped"] = visible
+    dropped_count = len(grouped.get("dropped", []))
+    return {
+        "groups": [(status, columns[status]) for status in AREA_BOARD_ORDER],
+        "shipped_total": total,
+        "shipped_hidden": total - len(visible),
+        "dropped_count": dropped_count,
+        # A capped-out or dropped slice still means "this area is not empty".
+        "has_any_slice": bool(columns["planned"] or columns["building"])
+        or total > 0
+        or dropped_count > 0,
     }
 
 

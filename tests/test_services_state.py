@@ -9,6 +9,8 @@ from tuckit.core.services.plans import create_plan
 from tuckit.core.services.slices import create_slice
 from tuckit.core.services.tickets import create_ticket
 from tuckit.core.services.state import (
+    AREA_STATUS_KEYS,
+    area_board_view,
     attention_items,
     cap_shipped,
     home_state,
@@ -425,3 +427,60 @@ def test_shipped_slice_markdown_does_not_ask_for_a_design_doc():
     md = render_slice_markdown(s)
     assert "Stage: shipped" in md
     assert "needs_design" not in md
+
+
+@pytest.mark.django_db
+def test_area_board_view_excludes_dropped_and_counts_it(product_org):
+    a = create_area(product_org, "A")
+    create_slice(a, "live one", status="building")
+    create_slice(a, "gone one", status="dropped")
+    view = area_board_view(a)
+    assert "dropped" not in dict(view["groups"])
+    titles = {s.title for _, group in view["groups"] for s in group}
+    assert titles == {"live one"}
+    assert view["dropped_count"] == 1
+
+
+@pytest.mark.django_db
+def test_area_board_view_caps_shipped_by_recency_not_rank(product_org):
+    """cap_shipped's count mode assumes a recency-sorted list, but
+    grouped_slices orders by rank. Without an explicit sort the board keeps
+    the top-ranked shipped slice instead of the most recently completed one."""
+    product_org.shipped_board_mode = "count"
+    product_org.shipped_board_limit = 1
+    product_org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
+    a = create_area(product_org, "A")
+    first = create_slice(a, "older", status="shipped")
+    create_slice(a, "newer", status="shipped")
+    first.completed_at = timezone.now() - timedelta(days=5)
+    first.save(update_fields=["completed_at"])
+    view = area_board_view(a)
+    shipped = dict(view["groups"])["shipped"]
+    assert [s.title for s in shipped] == ["newer"]
+    assert view["shipped_total"] == 2
+    assert view["shipped_hidden"] == 1
+
+
+@pytest.mark.django_db
+def test_area_board_view_has_any_slice_counts_capped_and_dropped(product_org):
+    """A slice that exists but is not rendered in a column still means the
+    area is not empty — otherwise the board shows "No slices yet." next to a
+    "View all shipped" or "Dropped" link, which contradicts itself."""
+    product_org.shipped_board_mode = "count"
+    product_org.shipped_board_limit = 0
+    product_org.save(update_fields=["shipped_board_mode", "shipped_board_limit", "updated_at"])
+    a = create_area(product_org, "A")
+    create_slice(a, "capped out", status="shipped")
+    assert area_board_view(a)["has_any_slice"] is True
+
+    b = create_area(product_org, "B")
+    create_slice(b, "dropped only", status="dropped")
+    assert area_board_view(b)["has_any_slice"] is True
+
+    c = create_area(product_org, "C")
+    assert area_board_view(c)["has_any_slice"] is False
+
+
+@pytest.mark.django_db
+def test_area_status_keys_include_dropped(product_org):
+    assert AREA_STATUS_KEYS == {"planned", "building", "shipped", "dropped"}
