@@ -228,6 +228,64 @@ def snapshot_today(org: Org, state: dict) -> dict:
     }
 
 
+def your_turn(org: Org) -> list[dict]:
+    """Work that cannot move without a human decision.
+
+    Deliberately narrow:
+
+    - `needs_plan` / `needs_bites` are excluded because an agent can do them —
+      create_plan and add_bites exist for exactly that. Including them turns
+      this band into a daily nag.
+    - `planned` slices with an empty spec are excluded because promote never
+      copies a ticket body, so every freshly promoted slice is specless.
+      Including them would empty the whole backlog onto Home.
+    - Open tickets collapse to ONE aggregate row. The Inbox is already a
+      dedicated surface with its own badge; repeating twelve rows here is
+      duplication, and a long list of things you haven't triaged reads as
+      accusation rather than information.
+
+    Staleness is not an inclusion rule — it is the sort key. A "stale" section
+    is a guilt list: it only grows, and it can never be cleared.
+    """
+    from tuckit.core.services.slices import annotate_stage_counts, stage_of
+    from tuckit.core.services.tickets import ticket_queryset
+
+    now = timezone.now()
+    # order_by is explicit: annotate_stage_counts adds a GROUP BY and Django
+    # drops Meta.ordering from aggregate queries. sqlite hands back rowid order
+    # anyway, so without this the sort looks fine locally and is undefined on
+    # Postgres.
+    qs = (
+        annotate_stage_counts(
+            Slice.objects.filter(area__org=org, status="building")
+            .select_related("area")
+        )
+        .prefetch_related("tags")
+        .order_by("updated_at")
+    )
+    _ACTIONS = {"needs_design": "write the spec", "ready_to_ship": "verify and ship"}
+    items: list[dict] = []
+    for s in qs:
+        action = _ACTIONS.get(stage_of(s))
+        if action is None:
+            continue
+        items.append({
+            "slice": s,
+            "action": action,
+            "days": (now - s.updated_at).days,
+            "since": s.updated_at,
+        })
+    items.sort(key=lambda it: it["since"])
+
+    open_tickets = ticket_queryset(org).count()
+    if open_tickets:
+        items.append({
+            "tickets": open_tickets,
+            "action": f"{open_tickets} waiting for triage",
+        })
+    return items
+
+
 def attention_items(org: Org) -> list[dict]:
     """Open tickets left untriaged too long, plus building slices that stopped
     moving. Ticket staleness is measured from `created_at`, not `updated_at`:

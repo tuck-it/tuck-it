@@ -20,6 +20,7 @@ from tuckit.core.services.state import (
     STALE_DAYS,
     get_project_state,
     render_slice_markdown,
+    your_turn,
 )
 
 
@@ -484,3 +485,87 @@ def test_area_board_view_has_any_slice_counts_capped_and_dropped(product_org):
 @pytest.mark.django_db
 def test_area_status_keys_include_dropped(product_org):
     assert AREA_STATUS_KEYS == {"planned", "building", "shipped", "dropped"}
+
+
+@pytest.mark.django_db
+def test_your_turn_includes_specless_building_slice():
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    s = create_slice(a, "started but undesigned", status="building")  # spec=""
+    items = your_turn(org)
+    hit = [it for it in items if it.get("slice") and it["slice"].id == s.id]
+    assert hit, "a building slice with no spec is blocked on a human"
+    assert hit[0]["action"] == "write the spec"
+
+
+@pytest.mark.django_db
+def test_your_turn_includes_slice_whose_bites_are_all_done():
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    s = create_slice(a, "finished work", status="building", spec="designed")
+    p = create_plan(s, title="Plan")
+    create_bite(p, "one", status="done")
+    items = your_turn(org)
+    hit = [it for it in items if it.get("slice") and it["slice"].id == s.id]
+    assert hit
+    assert hit[0]["action"] == "verify and ship"
+
+
+@pytest.mark.django_db
+def test_your_turn_excludes_stages_an_agent_can_do():
+    """needs_plan and needs_bites are agent work — create_plan and add_bites
+    exist for exactly that. Listing them here would nag daily."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    needs_plan = create_slice(a, "designed, unplanned", status="building", spec="designed")
+    needs_bites = create_slice(a, "planned, unbitten", status="building", spec="designed")
+    create_plan(needs_bites, title="Empty plan")
+    ids = {it["slice"].id for it in your_turn(org) if it.get("slice")}
+    assert needs_plan.id not in ids
+    assert needs_bites.id not in ids
+
+
+@pytest.mark.django_db
+def test_your_turn_excludes_specless_planned_slices():
+    """promote never copies the ticket body, so EVERY freshly promoted slice is
+    specless. Including planned ones would dump the whole backlog here."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    p = create_slice(a, "just captured", status="planned")
+    ids = {it["slice"].id for it in your_turn(org) if it.get("slice")}
+    assert p.id not in ids
+
+
+@pytest.mark.django_db
+def test_your_turn_aggregates_open_tickets_into_one_row():
+    org = Org.objects.create(name="Acme", slug="acme")
+    for i in range(3):
+        create_ticket(org, f"capture {i}")
+    rows = [it for it in your_turn(org) if "tickets" in it]
+    assert len(rows) == 1, "the Inbox already lists tickets individually"
+    assert rows[0]["tickets"] == 3
+    assert rows[0]["action"] == "3 waiting for triage"
+    assert "tickets" in your_turn(org)[-1], "the aggregate row sorts last"
+
+
+@pytest.mark.django_db
+def test_your_turn_sorts_longest_blocked_first():
+    """Staleness is the sort key, never an inclusion rule — a 'stale' section
+    would be a guilt list that only ever grows."""
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    recent = create_slice(a, "recent", status="building")
+    old = create_slice(a, "old", status="building")
+    Slice.objects.filter(pk=old.pk).update(updated_at=timezone.now() - timedelta(days=30))
+    titles = [it["slice"].title for it in your_turn(org) if it.get("slice")]
+    assert titles == ["old", "recent"]
+    assert recent.id  # referenced so the fixture reads as intentional
+
+
+@pytest.mark.django_db
+def test_your_turn_is_empty_when_nothing_is_blocked():
+    org = Org.objects.create(name="Acme", slug="acme")
+    a = create_area(org, "Backend")
+    s = create_slice(a, "moving along", status="building", spec="designed")
+    create_bite(create_plan(s, title="Plan"), "in flight", status="todo")
+    assert your_turn(org) == []
