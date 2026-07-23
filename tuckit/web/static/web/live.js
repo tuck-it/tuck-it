@@ -64,5 +64,31 @@
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) { interval = FAST; schedule(); }
   });
+
+  function typingInMain(main) {
+    var a = document.activeElement;
+    if (!a || !main.contains(a)) return false;
+    var tag = a.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || a.isContentEditable;
+  }
+
+  /* Refresh only #main-content on live screens. htmx inherits hx-swap/hx-target
+     from ancestors, so we use the JS API with explicit options instead of
+     attributes. #detail-modal is a sibling of #main-content and is never swapped. */
+  window.__liveOnEvents = function (events) {
+    var main = document.getElementById("main-content");
+    if (!main || !main.hasAttribute("data-live-refresh")) return;
+    if (typingInMain(main)) return;         // never clobber in-progress typing; next poll retries
+    var scrollY = window.scrollY;
+    htmx.ajax("GET", location.pathname + location.search, {
+      target: "#main-content",
+      select: "#main-content",
+      swap: "outerHTML"
+    }).then(function () {
+      window.scrollTo(0, scrollY);          // preserve viewport across the swap
+      document.body.dispatchEvent(new CustomEvent("tuckit:live-refreshed", { detail: { events: events } }));
+    });
+  };
+
   schedule();
 })();
