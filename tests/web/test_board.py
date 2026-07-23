@@ -111,7 +111,7 @@ def test_roadmap_tab_defaults_to_cross_area_board(client_local, org):
     assert 'id="board"' in body
     assert 'data-stage="executing"' in body
     assert 'data-stage="needs_design"' in body
-    assert 'class="card-area"' in body
+    assert "card-sub" in body                       # area now lives in the meta line
     assert "Design" in body and "Core" in body
 
 
@@ -325,5 +325,17 @@ def test_shipped_is_offboard_not_a_column(client_local, org):
     assert 'data-stage="shipped"' not in body      # no shipped column
     assert 'href="?status=shipped"' in body        # off-board filter link
     assert "Shipped (1)" in body                    # with total count
+
+
+@pytest.mark.django_db
+def test_card_is_title_centric_no_pills(client_local, org):
+    p = f"/{org.slug}"
+    a = create_area(org, "Core")
+    create_slice(a, "spec only", spec="s")          # needs_plan
+    body = client_local.get(f"{p}/roadmap/?view=board").content.decode()
+    assert "card-topline" not in body               # no nested pill row
+    assert 'class="card-badge"' not in body         # stage is text, not a pill
+    assert "card-sub" in body                        # the single meta line
+    assert "needs plan" in body                      # stage hint as text
 
 

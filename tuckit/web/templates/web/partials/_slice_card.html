@@ -1,28 +1,30 @@
 {% load web_extras %}
 {% comment %}
-  A board card. The title is a real <a> (keyboard-reachable, opens the detail
-  modal). The board is a read-only stage X-ray: cards are not draggable — a
-  card moves columns when its content changes (spec written, plan/bites added).
-  The only manual actions are Ship (ready_to_ship only) and Drop, both posting a
-  status to web:slice_move, which refresh_rollup turns into an HX-Refresh so the
-  card visibly lands in its new column. slice.stage is attached by
-  roadmap_board_view / area_board_view.
+  A board card (시안 B): one surface, title-centric. The title is a real <a>
+  (keyboard-reachable, opens the detail modal). The board is a read-only stage
+  X-ray: cards are not draggable — a card moves columns when its content changes
+  (spec written, plan/bites added). The only manual actions are Ship
+  (ready_to_ship only) and Drop, both posting a status to web:slice_move, which
+  refresh_rollup turns into an HX-Refresh so the card visibly lands in its new
+  column. slice.stage is attached by roadmap_board_view / area_board_view.
+
+  The meta line (.card-sub) is one row: area · (stage hint | bite count). The
+  needs_plan/needs_bites distinction is text here, not a pill — a Plan is the
+  container its Bites live in, so "no plan" and "empty plan" are one unfinished
+  moment the label tells apart. Tags live in the detail modal, not on the card.
 {% endcomment %}
 <div class="slice-card" data-slice-id="{{ slice.id }}">
   <a class="slice-card-link" href="{% wurl 'web:slice' slice.id %}"
      hx-get="{% wurl 'web:slice' slice.id %}?modal=1" hx-target="#detail-modal" hx-push-url="{% detail_push_url 'slice' slice.id %}">
-    {% if show_area or slice.stage == "needs_plan" or slice.stage == "needs_bites" %}
-      <span class="card-topline">
-        {% if show_area %}<span class="card-area">{{ slice.area.name }}</span>{% endif %}
-        {% if slice.stage == "needs_plan" %}<span class="card-badge">needs plan</span>
-        {% elif slice.stage == "needs_bites" %}<span class="card-badge">needs bites</span>{% endif %}
-      </span>
-    {% endif %}
     <span class="card-title">{{ slice.title }}</span>
-    <span class="card-meta">
-      {% include "web/partials/_tag_text.html" %}
-      <span class="card-bites">{% bite_progress slice %}</span>
+    {% if show_area or slice.stage != "needs_design" %}
+    <span class="card-sub">
+      {% if show_area %}<span>{{ slice.area.name }}</span>{% endif %}
+      {% if slice.stage == "needs_plan" %}<span>needs plan</span>
+      {% elif slice.stage == "needs_bites" %}<span>needs bites</span>
+      {% elif slice.stage != "needs_design" %}<span>{% bite_progress slice %}</span>{% endif %}
     </span>
+    {% endif %}
   </a>
   {% if slice.stage != "shipped" and slice.stage != "dropped" %}
   <div class="card-actions">
