@@ -337,7 +337,7 @@ def roadmap_board_view(org: Org) -> dict:
         .prefetch_related("tags")
         .order_by("area__name", "rank")
     )
-    columns: dict[str, list] = {key: [] for key in STAGE_BOARD_ORDER}
+    columns: dict[str, list] = {key: [] for key in STAGE_BOARD_ORDER if key != "shipped"}
     dropped_count = 0
     shipped: list = []
     for s in qs:
@@ -384,7 +384,7 @@ def area_board_view(area: Area) -> dict:
         .prefetch_related("tags")
         .order_by("rank")  # explicit: annotate_stage_counts drops Meta.ordering
     )
-    columns: dict[str, list] = {key: [] for key in STAGE_BOARD_ORDER}
+    columns: dict[str, list] = {key: [] for key in STAGE_BOARD_ORDER if key != "shipped"}
     dropped_count = 0
     shipped: list = []
     for s in qs:

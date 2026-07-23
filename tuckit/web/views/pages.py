@@ -98,7 +98,6 @@ def areas(request):
     cards = []
     if org:
         from tuckit.core.services.areas import list_areas
-        from tuckit.core.models import Slice
         for a in list_areas(org):
             counts = {}
             for s in Slice.objects.filter(area=a).exclude(status="dropped").values_list("status", flat=True):
