@@ -11,9 +11,13 @@
 <div class="slice-card" data-slice-id="{{ slice.id }}">
   <a class="slice-card-link" href="{% wurl 'web:slice' slice.id %}"
      hx-get="{% wurl 'web:slice' slice.id %}?modal=1" hx-target="#detail-modal" hx-push-url="{% detail_push_url 'slice' slice.id %}">
-    {% if show_area %}<span class="card-area">{{ slice.area.name }}</span>{% endif %}
-    {% if slice.stage == "needs_plan" %}<span class="card-badge">needs plan</span>
-    {% elif slice.stage == "needs_bites" %}<span class="card-badge">needs bites</span>{% endif %}
+    {% if show_area or slice.stage == "needs_plan" or slice.stage == "needs_bites" %}
+      <span class="card-topline">
+        {% if show_area %}<span class="card-area">{{ slice.area.name }}</span>{% endif %}
+        {% if slice.stage == "needs_plan" %}<span class="card-badge">needs plan</span>
+        {% elif slice.stage == "needs_bites" %}<span class="card-badge">needs bites</span>{% endif %}
+      </span>
+    {% endif %}
     <span class="card-title">{{ slice.title }}</span>
     <span class="card-meta">
       {% include "web/partials/_tag_text.html" %}

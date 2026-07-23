@@ -352,9 +352,9 @@ body { padding: 0; }
    background while individual work remains on raised cards. */
 .board {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-6);
   align-items: start;
-  overflow-x: auto;
   margin-top: 20px;
   padding: var(--space-6);
   background: var(--paper-deep);
@@ -362,13 +362,32 @@ body { padding: 0; }
   border-radius: var(--radius);
 }
 
+/* Active stage columns share the top row and flex to fill it — no fixed width,
+   so four columns never force a horizontal scroll (they wrap on narrow
+   viewports instead). */
 .board-col {
-  flex: 0 0 260px;
-  min-width: 260px;
+  flex: 1 1 200px;
+  min-width: 180px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
+}
+
+/* Shipped is the archive, not a pipeline stage — drop it to its own full-width
+   row below the four active columns and lay its cards out as a wrapping strip. */
+.board-col[data-stage="shipped"] {
+  flex-basis: 100%;
+}
+.board-col[data-stage="shipped"] .board-col-cards {
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-height: 0;
+}
+.board-col[data-stage="shipped"] .slice-card {
+  flex: 1 1 220px;
+  max-width: 300px;
+  min-height: 0;
 }
 
 .board-col-cards {
@@ -432,6 +451,19 @@ body { padding: 0; }
   padding: var(--space-1) var(--space-3);
   margin-bottom: var(--space-3);
 }
+
+/* Area + stage badge share one compact row instead of each stretching to a
+   full-width line (the card link is a flex column, whose default stretch made
+   them full-width pills). */
+.card-topline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-bottom: var(--space-2);
+}
+.card-topline .card-area { margin-bottom: 0; flex: 0 1 auto; min-width: 0; }
+.card-topline .card-badge { margin-bottom: 0; flex: 0 0 auto; }
 .card-actions {
   display: flex;
   align-items: center;
@@ -498,18 +530,11 @@ body { padding: 0; }
 .board-col-more { padding-left: 8px; }
 .board-col-more:hover, .group-more:hover { color: var(--ink); }
 
-/* Mobile: narrower columns; the desktop rule is already flex + overflow-x. */
+/* Mobile: the desktop rule already wraps, so stack every column full-width
+   instead of scrolling sideways. */
 @media (max-width: 767px) {
-  .board {
-    padding: var(--space-4);
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-  }
-  .board-col {
-    flex-basis: min(78vw, 260px);
-    min-width: min(78vw, 260px);
-    scroll-snap-align: start;
-  }
+  .board { padding: var(--space-4); }
+  .board-col { flex-basis: 100%; min-width: 0; }
 }
 
 /* Inline "+ Area" add form in the sidebar. */
