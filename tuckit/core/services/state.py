@@ -7,7 +7,9 @@ from tuckit.core.services.activity import slice_activity
 from tuckit.core.services.bites import list_bites, slice_bites
 from tuckit.core.services.plans import list_plans
 from tuckit.core.services.refs import ticket_ref
-from tuckit.core.services.slices import grouped_slices, list_slices, stage_of
+from tuckit.core.services.slices import (
+    annotate_stage_counts, grouped_slices, list_slices, stage_column, stage_of,
+)
 from tuckit.core.services.tickets import origin_ticket
 
 _OPEN_BITE_STATUSES = ["todo", "doing"]
@@ -304,6 +306,7 @@ def roadmap_state(org: Org) -> dict:
 
 ROADMAP_BOARD_ORDER = ["planned", "building", "shipped"]
 ROADMAP_STATUS_KEYS = {"planned", "building", "shipped"}
+STAGE_BOARD_ORDER = ["needs_design", "needs_plan", "executing", "ready_to_ship", "shipped"]
 
 
 def cap_shipped(org: Org, shipped: list) -> tuple[list, int]:
@@ -319,15 +322,45 @@ def cap_shipped(org: Org, shipped: list) -> tuple[list, int]:
 
 
 def roadmap_board_view(org: Org) -> dict:
-    """Capped kanban groups + shipped overflow meta for the org Board tab."""
-    state = roadmap_state(org)
-    visible, total = cap_shipped(org, state["shipped"])
-    capped = {**state, "shipped": visible}
+    """Kanban groups keyed by derived stage (not stored status) + shipped
+    overflow + dropped count, for the org Board tab.
+
+    Each slice carries a `.stage` attribute so the card can badge needs_plan vs
+    needs_bites and show the Ship button only on ready_to_ship."""
+    # annotate_stage_counts adds a GROUP BY; Django then drops Meta.ordering, so
+    # the explicit order_by is load-bearing (undefined order on Postgres without
+    # it). area__name, rank matches roadmap_state's within-column order.
+    qs = (
+        annotate_stage_counts(
+            Slice.objects.filter(area__org=org).select_related("area")
+        )
+        .prefetch_related("tags")
+        .order_by("area__name", "rank")
+    )
+    columns: dict[str, list] = {key: [] for key in STAGE_BOARD_ORDER}
+    dropped_count = 0
+    shipped: list = []
+    for s in qs:
+        stage = stage_of(s)
+        s.stage = stage
+        if stage == "dropped":
+            dropped_count += 1
+            continue
+        if stage == "shipped":
+            shipped.append(s)
+            continue
+        columns[stage_column(stage)].append(s)
+
+    # shipped column: recency-sorted then capped (cap_shipped count mode assumes
+    # a recency-sorted list — see its docstring).
+    shipped.sort(key=lambda s: (s.completed_at or s.updated_at), reverse=True)
+    visible, total = cap_shipped(org, shipped)
+    columns["shipped"] = visible
     return {
-        "state": capped,
-        "groups": [(status, capped[status]) for status in ROADMAP_BOARD_ORDER],
+        "groups": [(key, columns[key]) for key in STAGE_BOARD_ORDER],
         "shipped_total": total,
         "shipped_hidden": total - len(visible),
+        "dropped_count": dropped_count,
     }
 
 

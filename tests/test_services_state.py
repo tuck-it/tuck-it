@@ -232,6 +232,51 @@ def test_roadmap_board_view_reports_overflow(product_org):
     assert len(shipped_group) == 1
 
 
+@pytest.mark.django_db
+def test_roadmap_board_view_buckets_by_stage(product_org):
+    from tuckit.core.services.plans import create_plan
+    from tuckit.core.services.bites import create_bite
+
+    a = create_area(product_org, "Backend")
+    create_slice(a, "no spec")                                   # needs_design
+    create_slice(a, "spec only", spec="s")                      # needs_plan
+    empty = create_slice(a, "empty plan", spec="s")
+    create_plan(empty, title="P")                               # needs_bites → needs_plan col
+    ex = create_slice(a, "in progress", spec="s")
+    create_bite(create_plan(ex, title="P"), "b", status="doing")  # executing
+    rts = create_slice(a, "all done", spec="s")
+    create_bite(create_plan(rts, title="P"), "b", status="done")  # ready_to_ship
+    create_slice(a, "done", status="shipped")                   # shipped
+    create_slice(a, "abandoned", status="dropped")              # dropped (counted, not shown)
+
+    view = roadmap_board_view(product_org)
+    groups = dict(view["groups"])
+
+    assert [k for k, _ in view["groups"]] == [
+        "needs_design", "needs_plan", "executing", "ready_to_ship", "shipped",
+    ]
+    assert [s.title for s in groups["needs_design"]] == ["no spec"]
+    assert {s.title for s in groups["needs_plan"]} == {"spec only", "empty plan"}
+    assert [s.title for s in groups["executing"]] == ["in progress"]
+    assert [s.title for s in groups["ready_to_ship"]] == ["all done"]
+    assert [s.title for s in groups["shipped"]] == ["done"]
+    assert view["dropped_count"] == 1
+
+
+@pytest.mark.django_db
+def test_roadmap_board_view_attaches_raw_stage_to_each_slice(product_org):
+    from tuckit.core.services.plans import create_plan
+
+    a = create_area(product_org, "Backend")
+    create_slice(a, "spec only", spec="s")                      # needs_plan
+    empty = create_slice(a, "empty plan", spec="s")
+    create_plan(empty, title="P")                               # needs_bites
+
+    groups = dict(roadmap_board_view(product_org)["groups"])
+    by_title = {s.title: s.stage for s in groups["needs_plan"]}
+    assert by_title == {"spec only": "needs_plan", "empty plan": "needs_bites"}
+
+
 def test_snapshot_today_still_accrues_history(product_org):
     """Nothing renders these numbers now. The row is still written so the daily
     history keeps accruing for a future metrics screen — a gap no backfill can
