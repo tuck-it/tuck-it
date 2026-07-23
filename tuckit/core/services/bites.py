@@ -99,6 +99,7 @@ def reorder_bite(bite: Bite, *, before: Bite | None = None, after: Bite | None =
 
 
 def delete_bite(bite: Bite) -> None:
+    record_activity(bite.plan.slice.area.org, actor="human", verb="deleted", target=bite)
     bite.delete()
 
 

@@ -129,7 +129,7 @@ async def create_area(ctx: Context, name: str, description: str = "") -> dict:
     org = await require_org(ctx)
 
     def _run():
-        return area_dict(_create_area(org, name, description=description))
+        return area_dict(_create_area(org, name, description=description, source="agent"))
 
     return await sync_to_async(_run, thread_sensitive=True)()
 

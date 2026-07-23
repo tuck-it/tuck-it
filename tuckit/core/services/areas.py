@@ -2,6 +2,7 @@ from django.db.models import QuerySet
 from django.utils.text import slugify
 
 from tuckit.core.models import Area, Org
+from tuckit.core.services.activity import record_activity
 from tuckit.core.services.ranking_helpers import rank_for
 from tuckit.core.services.exceptions import InvalidValue
 
@@ -23,12 +24,15 @@ def _unique_slug(org: Org, name: str) -> str:
     return slug
 
 
-def create_area(org: Org, name: str, description: str = "", slug: str | None = None) -> Area:
+def create_area(org: Org, name: str, description: str = "", slug: str | None = None,
+                *, source: str = "human") -> Area:
     slug = slug or _unique_slug(org, name)
     rank = rank_for(Area, {"org": org})
-    return Area.objects.create(
+    area = Area.objects.create(
         org=org, name=name, description=description, slug=slug, rank=rank
     )
+    record_activity(org, actor=source, verb="created", target=area)
+    return area
 
 
 def update_area(area: Area, *, name: str | None = None, description: str | None = None) -> Area:
@@ -47,6 +51,9 @@ def update_area(area: Area, *, name: str | None = None, description: str | None 
 
 
 def delete_area(area: Area) -> None:
+    # Record before the cascade removes the row and its children; target_label is
+    # denormalized so the log renders after the area is gone.
+    record_activity(area.org, actor="human", verb="deleted", target=area)
     area.delete()  # cascades to slices/bites via FK on_delete=CASCADE
 
 

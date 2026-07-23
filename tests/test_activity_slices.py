@@ -13,7 +13,7 @@ def test_create_slice_records_created_with_source_actor():
     org = _org()
     a = create_area(org, "Backend")
     create_slice(a, "Payment", status="planned", source="agent")
-    e = ActivityEvent.objects.get(verb="created")
+    e = ActivityEvent.objects.get(verb="created", target_type="slice")
     assert e.actor == "agent" and e.target_type == "slice" and e.target_label == "Payment"
 
 

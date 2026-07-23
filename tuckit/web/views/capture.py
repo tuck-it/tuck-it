@@ -223,7 +223,7 @@ def ticket_promote(request, ticket_id):
 
 def area_create(request):
     org = get_current_org(request)
-    create_area(org, request.POST["name"], description=request.POST.get("description", ""))
+    create_area(org, request.POST["name"], description=request.POST.get("description", ""), source="human")
     # OOB-swap the sidebar Areas list instead of a full-page reload; the
     # sidebar_areas context processor supplies the refreshed `areas`. Also
     # OOB-refresh the onboarding widget so its Step-1 checkbox ticks live.
