@@ -26,7 +26,7 @@ def test_roadmap_page_shows_distribution_and_slices(client_local, org):
     p = f"/{org.slug}"
     body = client_local.get(f"{p}/roadmap/").content.decode()
     assert "Roadmap item" in body
-    assert 'data-status="planned"' in body   # rendered in its status column
+    assert 'data-stage="needs_design"' in body   # rendered in its stage column
     assert "Dropped item" not in body   # dropped slices excluded from the board
 
 

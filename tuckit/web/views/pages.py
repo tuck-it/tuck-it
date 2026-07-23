@@ -13,6 +13,7 @@ from tuckit.core.services.state import (
     snapshot_today,
 )
 from tuckit.web.auth import get_current_org
+from tuckit.core.models import Slice
 
 
 def home(request):
@@ -53,29 +54,42 @@ def home(request):
 def roadmap(request):
     org = get_current_org(request)
     status = request.GET.get("status")
-    if org and status in ROADMAP_STATUS_KEYS:
+    if org and (status in ROADMAP_STATUS_KEYS or status == "dropped"):
         # Focused single-status flat list — the "view all" / archive surface.
-        state = roadmap_state(org)
+        if status == "dropped":
+            filter_slices = list(
+                Slice.objects.filter(area__org=org, status="dropped")
+                .select_related("area").prefetch_related("tags")
+                .order_by("area__name", "rank")
+            )
+        else:
+            filter_slices = roadmap_state(org).get(status, [])
         return render(request, "web/roadmap.html", {
             "filter_status": status,
-            "filter_slices": state.get(status, []),
+            "filter_slices": filter_slices,
             "show_area": True,
         })
 
     view = "list" if request.GET.get("view") == "list" else "board"
     board = roadmap_board_view(org) if org else {
-        "state": {}, "groups": [], "shipped_total": 0, "shipped_hidden": 0,
+        "groups": [], "shipped_total": 0, "shipped_hidden": 0, "dropped_count": 0,
     }
+    groups = board["groups"]
+    has_any = (
+        any(slices for _, slices in groups)
+        or board["shipped_total"] > 0
+        or board["dropped_count"] > 0
+    )
     return render(request, "web/roadmap.html", {
-        "state": board["state"],
-        "groups": board["groups"],
+        "groups": groups,
         "view": view,
-        "has_any_slice": any(v for k, v in board["state"].items() if k != "shipped") or board["shipped_total"] > 0,
+        "has_any_slice": has_any,
         # Board tab spans every area, so surface each slice's area on its card/row.
         "show_area": True,
         "board_scope": True,
         "shipped_total": board["shipped_total"],
         "shipped_hidden": board["shipped_hidden"],
+        "dropped_count": board["dropped_count"],
     })
 
 

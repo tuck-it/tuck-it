@@ -16,15 +16,25 @@
     </header>
     {% if view == "list" %}
       <div class="roadmap-dist">
-        <span class="rm-seg">Planned {{ state.planned|length }}</span>
-        <span class="rm-seg rm-building">Building {{ state.building|length }}</span>
-        <span class="rm-seg rm-shipped">Shipped {{ shipped_total }}</span>
+        {% for key, slices in groups %}
+          <span class="rm-seg">{{ key|board_label }} {{ slices|length }}</span>
+        {% endfor %}
       </div>
-      {% include "web/partials/_status_group.html" with label="Building" slices=state.building empty_text="Nothing here yet" %}
-      {% include "web/partials/_status_group.html" with label="Planned" slices=state.planned empty_text="Nothing here yet" %}
-      {% include "web/partials/_status_group.html" with label="Shipped" slices=state.shipped empty_text="Nothing here yet" more_url="?view=list&status=shipped" more_count=shipped_total more_label="shipped" more_hidden=shipped_hidden %}
+      {% for key, slices in groups %}
+        {% if key == "shipped" %}
+          {% include "web/partials/_status_group.html" with label="Shipped" slices=slices empty_text="Nothing here yet" more_url="?view=list&status=shipped" more_count=shipped_total more_label="shipped" more_hidden=shipped_hidden %}
+        {% else %}
+          {% include "web/partials/_status_group.html" with label=key|board_label slices=slices empty_text="Nothing here yet" %}
+        {% endif %}
+      {% endfor %}
+      {% if dropped_count %}
+        <a class="group-more" href="?view=list&status=dropped">Dropped ({{ dropped_count }}) →</a>
+      {% endif %}
     {% else %}
       {% include "web/partials/_board.html" %}
+      {% if dropped_count %}
+        <a class="group-more" href="?status=dropped">Dropped ({{ dropped_count }}) →</a>
+      {% endif %}
       {% if not has_any_slice %}
         <div class="empty muted">Nothing here yet — add a slice in any area and it shows up on the board.</div>
       {% endif %}

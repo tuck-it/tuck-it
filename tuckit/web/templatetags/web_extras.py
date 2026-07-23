@@ -74,6 +74,21 @@ def bite_bar_tag(slice):
     )
 
 
+_BOARD_LABELS = {
+    "needs_design": "Needs design",
+    "needs_plan": "Needs plan",
+    "executing": "Executing",
+    "ready_to_ship": "Ready to ship",
+    "shipped": "Shipped",
+}
+
+
+@register.filter
+def board_label(key):
+    """Human label for a board stage-column key ('needs_design' → 'Needs design')."""
+    return _BOARD_LABELS.get(key, key)
+
+
 @register.filter(name="spec_summary")
 def spec_summary(spec, limit=100):
     """First meaningful line of a slice's spec, as a one-line row caption.

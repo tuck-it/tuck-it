@@ -16,6 +16,7 @@ def test_board_has_swap_target_id(client_local, org):
     body = client_local.get(f"{p}/areas/{a.slug}/").content.decode()
     assert 'id="board"' in body
     assert 'class="board"' in body
+    assert 'data-stage="needs_design"' in body   # "one" slice has no spec
 
 @pytest.mark.django_db
 def test_board_view_renders_columns(client_local, org):
@@ -215,6 +216,43 @@ def test_roadmap_status_filter_uses_shared_partial(client_local, org):
     assert f'href="/{org.slug}/roadmap/"' in body
     assert "shipped one" in body
     assert 'id="board"' not in body
+
+
+@pytest.mark.django_db
+def test_board_renders_stage_columns_and_labels(client_local, org):
+    from tuckit.core.services.plans import create_plan
+    from tuckit.core.services.bites import create_bite
+    p = f"/{org.slug}"
+    a = create_area(org, "Core")
+    create_slice(a, "no spec")                                   # needs_design
+    rts = create_slice(a, "all done", spec="s")
+    create_bite(create_plan(rts, title="P"), "b", status="done")  # ready_to_ship
+    body = client_local.get(f"{p}/roadmap/").content.decode()
+    assert 'data-stage="needs_design"' in body
+    assert 'data-stage="ready_to_ship"' in body
+    assert "Needs design" in body
+    assert "Ready to ship" in body
+
+
+@pytest.mark.django_db
+def test_board_dropped_link_appears_with_count(client_local, org):
+    p = f"/{org.slug}"
+    a = create_area(org, "Core")
+    create_slice(a, "live one")
+    create_slice(a, "gone", status="dropped")
+    body = client_local.get(f"{p}/roadmap/").content.decode()
+    assert "Dropped (1)" in body
+    assert 'href="?status=dropped"' in body
+
+
+@pytest.mark.django_db
+def test_roadmap_dropped_status_filter_lists_dropped(client_local, org):
+    p = f"/{org.slug}"
+    a = create_area(org, "Core")
+    create_slice(a, "gone one", status="dropped")
+    body = client_local.get(f"{p}/roadmap/?status=dropped").content.decode()
+    assert "gone one" in body
+    assert 'id="board"' not in body     # flat filter list, not the kanban
 
 
 @pytest.mark.django_db
