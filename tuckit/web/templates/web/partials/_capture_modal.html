@@ -5,28 +5,77 @@
   it needs its own dialog semantics and focus handling: role/aria-modal so it is
   announced as a dialog at all, a Tab trap so focus cannot land on a control
   behind the scrim, and dialogSync to hand focus back to whatever opened it.
+
+  This dialog creates a TICKET, always. Area is filing ("which part of the
+  product"), not commitment ("are we doing this") — two different axes. It used
+  to include _slice_fields.html, where the Area select doubled as a Ticket/Slice
+  fork: picking an area produced a `planned` Slice, so there was no way to park
+  an idea you had already filed. Status and Tags are gone with it; a Ticket has
+  neither, and offering them is what created the fork in the first place.
 {% endcomment %}
 <div class="overlay capture-overlay" x-show="cap" x-cloak
-     role="dialog" aria-modal="true" aria-label="Quick capture"
+     role="dialog" aria-modal="true" aria-labelledby="capture-heading"
      x-effect="dialogSync($el, cap)"
      x-on:keydown.escape.window="cap=false"
      x-on:keydown.tab="trapOverlay($event, $el)"
      x-on:click.self="cap=false">
+  {% comment %}
+    reset() puts the <select> back to the server-rendered `selected` option —
+    the current Area on an Area page, Unfiled everywhere else. So a run of
+    captures keeps the destination the screen implies, and only a choice you
+    made by hand this time is discarded. That is also why the select carries no
+    x-model: Alpine state would survive the reset and drift from the DOM.
+  {% endcomment %}
   <form class="capture-modal capture-modal--full" hx-post="{% wurl 'web:capture' %}" hx-swap="none"
-        x-data="{ tags: [], tagDraft: '' }"
-        hx-on::after-request="if (event.detail.successful && !event.detail.xhr.getResponseHeader('HX-Redirect')) { this.reset(); tags=[]; tagDraft=''; this.querySelector('.capture-input').focus() }">
-    <input name="title" class="capture-input" placeholder="What happened, or what needs doing?"
-           aria-label="Capture title" x-ref="captureInput"
-           required autocomplete="off" x-on:keydown.escape="cap=false" autofocus>
-    {% comment %} Keyboard affordances live outside the placeholder: a placeholder vanishes
-       the moment you type, i.e. exactly when you might reach for the shortcut. {% endcomment %}
-    <p class="capture-keys"><kbd class="nav-kbd">Enter</kbd> save · <kbd class="nav-kbd">Esc</kbd> close</p>
+        hx-on::after-request="if (event.detail.successful) { this.reset(); this.querySelector('.capture-input').focus() }">
+    <div class="capture-head">
+      <div class="ac-title" id="capture-heading">New ticket</div>
+      <p class="ac-sub">아직 하기로 정하지 않은 것. Inbox에서 분류합니다.</p>
+    </div>
 
-    {% include "web/partials/_slice_fields.html" %}
+    <label class="capture-field">
+      <span class="capture-lbl">Title</span>
+      <input name="title" class="capture-input" placeholder="What happened, or what needs doing?"
+             x-ref="captureInput" required autocomplete="off"
+             x-on:keydown.escape="cap=false" autofocus>
+    </label>
+
+    {% comment %}
+      Enter submits from the title (quick capture is the common case) but must
+      NOT submit from the textarea, where it is a newline. A lone <input> in a
+      form submits on Enter implicitly; the textarea needs the explicit
+      Cmd/Ctrl+Enter escape hatch, advertised in the footer rather than in a
+      placeholder — a placeholder vanishes the moment you type, i.e. exactly
+      when you might reach for the shortcut.
+    {% endcomment %}
+    <label class="capture-field">
+      <span class="capture-lbl">Description</span>
+      <textarea name="spec" class="spec-edit spec-edit--tall"
+                placeholder="What you saw and why it matters — enough to decide on later."
+                x-on:input="autosize($event.target)"
+                x-on:keydown.enter.meta="$el.form.requestSubmit()"
+                x-on:keydown.enter.ctrl="$el.form.requestSubmit()"></textarea>
+      <span class="capture-hint">Markdown supported</span>
+    </label>
+
+    {% comment %}
+      Area is optional and NEVER changes what gets created. "Unfiled" rather
+      than "Inbox": the Inbox is every untriaged ticket regardless of area, so
+      it is a different axis, not one of the choices on this one.
+    {% endcomment %}
+    <label class="capture-field capture-field--inline">
+      <span class="capture-lbl">Area <span class="capture-hint">(optional)</span></span>
+      <span class="capture-hint">제품의 어느 부분인가. 고른다고 착수한 것은 아닙니다.</span>
+      <select name="area_id" class="capture-select">
+        <option value=""{% if not capture_area %} selected{% endif %}>Unfiled</option>
+        {% for a in areas %}<option value="{{ a.id }}"{% if capture_area and capture_area.id == a.id %} selected{% endif %}>{{ a.name }}</option>{% endfor %}
+      </select>
+    </label>
 
     <div class="capture-actions">
+      <p class="capture-keys"><kbd class="nav-kbd">⌘</kbd><kbd class="nav-kbd">↵</kbd> to create · <kbd class="nav-kbd">Esc</kbd> close</p>
       <button class="ghost" type="button" x-on:click="cap=false">Cancel</button>
-      <button class="button button-primary" type="submit">Create</button>
+      <button class="button button-primary" type="submit">Create ticket</button>
     </div>
   </form>
 </div>

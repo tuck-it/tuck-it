@@ -141,3 +141,20 @@ def test_dead_lens_count_processors_are_gone(client_local, org):
     assert resp.status_code == 200
     assert "attention_count" not in resp.context
     assert "in_progress_count" not in resp.context
+
+
+@pytest.mark.django_db
+def test_capture_modal_preselects_the_area_you_are_standing_on(client_local, org):
+    """Area 페이지에서 C를 누르면 그 area가 골라져 있다. 모달은 base.html에
+    상주해 페이지 컨텍스트를 못 보므로 context processor로만 가능하다."""
+    from tuckit.core.services.areas import create_area
+    area = create_area(org, "Backend")
+    p = f"/{org.slug}"
+
+    body = client_local.get(f"{p}/areas/{area.slug}/").content.decode()
+    assert f'<option value="{area.id}" selected>Backend</option>' in body
+    assert '<option value="" selected>Unfiled</option>' not in body
+
+    # 다른 페이지에서는 Unfiled가 기본이다
+    body = client_local.get(f"{p}/inbox/").content.decode()
+    assert '<option value="" selected>Unfiled</option>' in body

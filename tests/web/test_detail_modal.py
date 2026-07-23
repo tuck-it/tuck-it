@@ -200,3 +200,23 @@ def test_history_restore_reconciles_the_modal_against_the_url():
     assert 'classList.remove("modal-open")' in handler
     assert 'classList.add("modal-open")' in handler
     assert 'innerHTML = ""' in handler
+
+
+@pytest.mark.django_db
+def test_long_form_editors_get_the_tall_modifier(client_local, org):
+    """장문을 쓰는 면(티켓 본문, 슬라이스 spec)만 .spec-edit--tall을 받는다.
+    bite body / plan constraints는 한 줄짜리라 받지 않는다 — 240px 빈 상자로
+    열리는 것은 개선이 아니다."""
+    from tuckit.core.services.areas import create_area
+    from tuckit.core.services.slices import create_slice
+    from tuckit.core.services.tickets import create_ticket
+
+    p = f"/{org.slug}"
+    t = create_ticket(org, "a ticket")
+    body = client_local.get(f"{p}/tickets/{t.id}/", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="spec-edit spec-edit--tall"' in body
+
+    area = create_area(org, "Backend")
+    s = create_slice(area, "a slice")
+    body = client_local.get(f"{p}/slices/{s.id}/?modal=1", HTTP_HX_REQUEST="true").content.decode()
+    assert 'class="spec-edit spec-edit--tall"' in body

@@ -344,6 +344,8 @@ def area_board_view(area: Area) -> dict:
     mature kanban tool keeps cancelled work off it while still offering a route
     to it. The page turns that count into a ?status=dropped link.
     """
+    from tuckit.core.services.tickets import ticket_queryset
+
     grouped = dict(grouped_slices(area))
     # grouped_slices orders by rank; cap_shipped's count mode assumes the list
     # is recency-sorted (see its docstring). Sorting here is load-bearing —
@@ -362,6 +364,10 @@ def area_board_view(area: Area) -> dict:
         "shipped_total": total,
         "shipped_hidden": total - len(visible),
         "dropped_count": dropped_count,
+        # Untriaged tickets filed to this area. NOT a board column: a Ticket has
+        # not been committed to, and putting it next to Planned collapses the
+        # very distinction the strip exists to show.
+        "tickets": list(ticket_queryset(area.org, status="open", area=area)),
         # A capped-out or dropped slice still means "this area is not empty".
         "has_any_slice": bool(columns["planned"] or columns["building"])
         or total > 0

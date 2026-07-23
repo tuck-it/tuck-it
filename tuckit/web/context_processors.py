@@ -72,6 +72,35 @@ def auth_chrome(request):
     }
 
 
+def capture_area(request):
+    """Preselect the Area a capture lands in when the user is standing on an
+    Area page.
+
+    The capture modal lives in base.html, so it never sees the page view's
+    context — a template variable set by area_view() would be invisible to it.
+    Resolved from request.resolver_match rather than by parsing the path, the
+    same way onboarding() decides whether you are already on the newest slice.
+
+    Filing a capture is not the same as committing to it: the preselected area
+    only labels the Ticket, it does not turn it into a Slice.
+    """
+    from tuckit.core.services.exceptions import NotFound
+    from tuckit.core.services.resolve import get_area_by_slug
+
+    match = getattr(request, "resolver_match", None)
+    if not match or match.url_name != "area":
+        return {}
+    org = current_org_or_fallback(request)
+    if not org:
+        return {}
+    try:
+        return {"capture_area": get_area_by_slug(org, match.kwargs["slug"])}
+    except (NotFound, KeyError):
+        # A 404-ing slug still renders the shell; falling back to Unfiled is
+        # right, and raising here would turn a bad URL into a 500.
+        return {}
+
+
 def onboarding(request):
     """Expose onboarding state to every template so the floating Get-started
     widget renders on all pages — and make completion sticky so deleting an
