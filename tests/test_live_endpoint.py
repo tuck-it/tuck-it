@@ -36,6 +36,9 @@ def test_live_returns_new_events_and_cursor(client, member):
     verbs = {e["verb"] for e in data["events"]}
     assert "created" in verbs
     assert all(e["id"] > cursor for e in data["events"])
+    # Cursor must be the newest DELIVERED event id (not a max read before the
+    # fetch), so the next poll can't re-deliver an event already sent.
+    assert data["cursor"] == max(e["id"] for e in data["events"])
 
 
 @pytest.mark.django_db

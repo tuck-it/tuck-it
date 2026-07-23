@@ -12,8 +12,7 @@ def live(request):
         since = int(request.GET.get("since", 0))
     except (TypeError, ValueError):
         since = 0
-    latest = latest_activity_id(org)
-    if latest <= since:
+    if latest_activity_id(org) <= since:
         return HttpResponse(status=204)
     events = [
         {
@@ -26,4 +25,9 @@ def live(request):
         }
         for e in events_since(org, since)
     ]
-    return JsonResponse({"cursor": latest, "events": events})
+    # Advance the cursor to the newest event actually DELIVERED, not a max read
+    # before the fetch: an event inserted between the two reads is included in
+    # `events` but would be re-delivered next poll (duplicate toast/refresh) if
+    # the cursor lagged behind it. `events` is non-empty here (latest > since
+    # guarantees at least one qualifying row) and ascending, so [-1] is the max.
+    return JsonResponse({"cursor": events[-1]["id"], "events": events})

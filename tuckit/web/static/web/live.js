@@ -78,7 +78,11 @@
   window.__liveOnEvents = function (events) {
     var main = document.getElementById("main-content");
     if (!main || !main.hasAttribute("data-live-refresh")) return;
-    if (typingInMain(main)) return;         // never clobber in-progress typing; next poll retries
+    // Never clobber in-progress typing. The cursor already advanced in poll(),
+    // so these events won't re-deliver — the background stays as-is until the
+    // NEXT activity batch triggers a refresh (after typing has moved on). The
+    // toast for this batch already fired, so nothing is silently lost.
+    if (typingInMain(main)) return;
     var scrollY = window.scrollY;
     htmx.ajax("GET", location.pathname + location.search, {
       target: "#main-content",
