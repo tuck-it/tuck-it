@@ -183,12 +183,18 @@ def test_area_delete_confirm_counts_what_it_destroys(client_local, org):
 # --- Drag alternatives (WCAG 2.5.7) ----------------------------------------
 
 @pytest.mark.django_db
-def test_board_offers_a_non_drag_status_move(client_local, org):
+def test_board_actions_are_non_drag_and_keyboard_reachable(client_local, org):
+    """WCAG 2.5.7: the board must not require dragging. It is now a read-only
+    stage X-ray — cards auto-flow; the only manual actions are Ship (on a
+    ready-to-ship slice) and Drop, both real <button>s, not drag targets."""
+    from tuckit.core.services.plans import create_plan
+    from tuckit.core.services.bites import create_bite
     area = create_area(org, "Backend")
-    create_slice(area, "Retry webhooks", status="building")
+    rts = create_slice(area, "Retry webhooks", spec="ship me")
+    create_bite(create_plan(rts, title="P"), "b", status="done")  # → ready_to_ship
     body = client_local.get(f"{_p(org)}/roadmap/?view=board").content.decode()
-    assert 'aria-label="Move Retry webhooks to planned"' in body
-    assert 'aria-label="Move Retry webhooks to shipped"' in body
+    assert 'aria-label="Ship Retry webhooks"' in body   # real button, not a drag target
+    assert 'aria-label="Drop Retry webhooks"' in body    # real button, not a drag target
 
 
 @pytest.mark.django_db
