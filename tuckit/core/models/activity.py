@@ -13,6 +13,7 @@ class ActivityEvent(models.Model):
         ("noted", "noted"),
         ("promoted", "promoted"),
         ("dismissed", "dismissed"),
+        ("deleted", "deleted"),
         # LEGACY — never written by current code, kept so historical rows keep
         # rendering. 'triaged' predates the Ticket model; 'closed' predates the
         # promoted/dismissed split (it conflated "shipped" with "won't do").
@@ -36,6 +37,7 @@ class ActivityEvent(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["org", "-created_at"]),
+            models.Index(fields=["org", "id"]),
         ]
 
     def __str__(self):

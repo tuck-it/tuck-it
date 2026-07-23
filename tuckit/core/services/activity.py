@@ -48,3 +48,17 @@ def slice_activity(slice_):
                 | Q(target_type="bite", target_id__in=bite_ids))
         .order_by("created_at")
     )
+
+
+def latest_activity_id(org) -> int:
+    """The org's activity cursor: max ActivityEvent id, or 0 when there are none.
+    Monotonic, so a change anywhere in the org strictly increases it."""
+    from django.db.models import Max
+    return ActivityEvent.objects.filter(org=org).aggregate(m=Max("id"))["m"] or 0
+
+
+def events_since(org, since: int) -> list:
+    """Events newer than the `since` cursor, oldest-first, scoped to the org."""
+    return list(
+        ActivityEvent.objects.filter(org=org, id__gt=since).order_by("id")
+    )
