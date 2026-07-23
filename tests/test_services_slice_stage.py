@@ -69,3 +69,27 @@ def test_whitespace_only_spec_still_counts_as_written():
     theirs. This pins the boundary so nobody 'helpfully' adds .strip() later and
     silently reclassifies slices."""
     assert slice_stage("planned", " ", 0, 0, 0) == "needs_plan"
+
+
+from tuckit.core.services.slices import BOARD_STAGE_COLUMNS, stage_column
+
+
+def test_needs_bites_folds_into_the_needs_plan_column():
+    # A Plan is the container its Bites live in; "no plan" and "empty plan" are
+    # one "the plan isn't fleshed out" moment. The card badge tells them apart.
+    assert stage_column("needs_bites") == "needs_plan"
+
+
+def test_board_columns_map_to_themselves():
+    for stage in ("needs_design", "needs_plan", "executing", "ready_to_ship", "shipped"):
+        assert stage_column(stage) == stage
+
+
+def test_dropped_is_not_a_board_column():
+    assert stage_column("dropped") is None
+
+
+def test_board_columns_are_the_five_pipeline_stages_in_order():
+    assert BOARD_STAGE_COLUMNS == (
+        "needs_design", "needs_plan", "executing", "ready_to_ship", "shipped",
+    )

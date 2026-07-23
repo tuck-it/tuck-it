@@ -221,6 +221,23 @@ SLICE_STAGES = (
     "shipped", "dropped",
 )
 
+# Board columns for the stage pipeline. The board groups by derived stage, not
+# stored status. needs_bites folds into the needs_plan column: a Plan is the
+# container its Bites live in, so "no plan" and "empty plan" are one unfinished-
+# plan moment (the card shows a needs plan / needs bites badge to tell them
+# apart). dropped is not a column — the page surfaces it as a header count.
+BOARD_STAGE_COLUMNS = ("needs_design", "needs_plan", "executing", "ready_to_ship", "shipped")
+
+
+def stage_column(stage: str) -> str | None:
+    """The board column a derived stage belongs to, or None if it is not a
+    column (dropped). Pure — mirrors slice_stage()'s output onto five columns."""
+    if stage == "needs_bites":
+        return "needs_plan"
+    if stage in BOARD_STAGE_COLUMNS:
+        return stage
+    return None
+
 
 def slice_stage(status: str, spec: str, plan_count: int,
                 bites_done: int, bites_total: int) -> str:
