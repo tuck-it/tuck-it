@@ -73,7 +73,7 @@
          x-on:keydown.tab="trapFocus($event)">
       {% block sidebar %}{% include "web/partials/_sidebar.html" %}{% endblock %}
     </div>
-    <main class="main" id="main-content" tabindex="-1">{% block main %}{% endblock %}</main>
+    <main class="main {% block main_class %}{% endblock %}" id="main-content" tabindex="-1">{% block main %}{% endblock %}</main>
   </div>
   {% comment %}
     The one detail overlay. It is a scrim and nothing else: the card htmx swaps

@@ -40,6 +40,16 @@ body { padding: 0; }
   padding: var(--main-pad-y) var(--main-pad-x) var(--main-pad-b);
 }
 
+/* Board page only: bound the content column to the viewport so the PAGE never
+   grows — each column scrolls internally instead (A-model, like Linear/Jira).
+   Scoped to .main--board so Home/Inbox/Settings keep normal page scroll. */
+.main--board {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .side-top { display: flex; align-items: center; gap: 4px; padding: 0 4px 4px; }
 .side-top-ws { flex: 1 1 auto; padding: 0 !important; }
 .side-collapse {
@@ -348,55 +358,37 @@ body { padding: 0; }
   box-shadow: 0 1px 2px var(--shadow);
 }
 
-/* Board: a structured planning surface. The state columns share a calm
-   background while individual work remains on raised cards. */
+/* The board fills the height left under the page header; its columns — not the
+   page — scroll. Transparent frame: the card is the only surface (시안 B). */
 .board {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-6);
-  align-items: start;
-  margin-top: 20px;
-  padding: var(--space-6);
-  background: var(--paper-deep);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;              /* let the flex child actually shrink so columns scroll */
+  margin-top: 16px;
 }
 
-/* Active stage columns share the top row and flex to fill it — no fixed width,
-   so four columns never force a horizontal scroll (they wrap on narrow
-   viewports instead). */
+/* Columns are transparent: just a header + a scrolling card stack. */
 .board-col {
-  flex: 1 1 200px;
-  min-width: 180px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-/* Shipped is the archive, not a pipeline stage — drop it to its own full-width
-   row below the four active columns and lay its cards out as a wrapping strip. */
-.board-col[data-stage="shipped"] {
-  flex-basis: 100%;
-}
-.board-col[data-stage="shipped"] .board-col-cards {
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 0;
-}
-.board-col[data-stage="shipped"] .slice-card {
-  flex: 1 1 220px;
-  max-width: 300px;
-  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .board-col-cards {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 112px;
-  padding: 10px;
+  padding: 8px 2px 4px;
 }
+.board-col-cards::-webkit-scrollbar { width: 8px; }
+.board-col-cards::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
 
 .board-col-head {
   display: flex;
@@ -530,11 +522,12 @@ body { padding: 0; }
 .board-col-more { padding-left: 8px; }
 .board-col-more:hover, .group-more:hover { color: var(--ink); }
 
-/* Mobile: the desktop rule already wraps, so stack every column full-width
-   instead of scrolling sideways. */
+/* Mobile: stack columns and let the page scroll normally (no fixed height). */
 @media (max-width: 767px) {
-  .board { padding: var(--space-4); }
-  .board-col { flex-basis: 100%; min-width: 0; }
+  .main--board { height: auto; overflow: visible; }
+  .board { flex-direction: column; }
+  .board-col { flex: 0 0 auto; }
+  .board-col-cards { overflow-y: visible; }
 }
 
 /* Inline "+ Area" add form in the sidebar. */

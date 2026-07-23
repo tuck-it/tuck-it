@@ -301,3 +301,12 @@ def test_roadmap_dropped_status_filter_lists_dropped(client_local, org):
     assert 'id="board"' not in body     # flat filter list, not the kanban
 
 
+@pytest.mark.django_db
+def test_board_view_is_viewport_bounded(client_local, org):
+    p = f"/{org.slug}"
+    body = client_local.get(f"{p}/roadmap/?view=board").content.decode()
+    assert "main--board" in body          # A-model: fixed-height board page
+    list_body = client_local.get(f"{p}/roadmap/?view=list").content.decode()
+    assert "main--board" not in list_body  # list scrolls normally
+
+
